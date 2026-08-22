@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão** | 1.0.0 |
+| **Versão** | 1.1.0 |
 | **Última revisão** | 2026-08-22 |
 | **Fonte da verdade** | [`requisitos.json`](./requisitos.json) |
 | **Matriz derivada** | [`matriz-rastreabilidade.md`](./matriz-rastreabilidade.md) |
@@ -19,6 +19,12 @@
 > Essa é a mesma regra que vale para `arquitetura-sistema.json` e `design-sistema.md`, aplicada a
 > um par de arquivos diferente. Requisito **não** entra em `arquitetura-sistema.json` — arquitetura
 > e requisito mudam por motivos diferentes e em ritmos diferentes.
+
+> [!NOTE]
+> **Versão 1.1.0 — o que mudou.** O [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md)
+> removeu o Supabase do MVP. `RF001`, `RNF001`, `RNF004` e `RNF017` foram reescritos, e
+> `RNF019` a `RNF022` nasceram para cobrir o que a autenticação própria passou a exigir: ciclo de
+> vida do token, proteção contra força bruta e enumeração, token de recuperação e log de auditoria.
 
 ---
 
@@ -43,7 +49,7 @@ atual — fica registrado para não ser redescoberto do zero depois.
 
 | Código | Descrição | Módulos | Criado em |
 |---|---|---|---|
-| **RF001** | O sistema deve permitir cadastro, login, recuperação de senha e encerramento de sessão dos usuários. | autenticacao | 2026-08-19 |
+| **RF001** | O sistema deve permitir cadastro, login, recuperação de senha por e-mail e encerramento de sessão dos usuários. | autenticacao | 2026-08-19 |
 | **RF002** | O sistema deve atribuir a uma conta um ou mais papéis entre cliente, profissional e administrador, permitindo que a mesma pessoa contrate e preste serviços. | autenticacao, usuarios | 2026-08-19 |
 | **RF003** | O sistema deve permitir que o profissional monte um portfólio com foto de capa e galeria de imagens dos trabalhos já realizados. | profissionais | 2026-08-19 |
 | **RF004** | O sistema deve permitir que o cliente filtre a busca de serviços por categoria, faixa de preço e localização. | servicos, profissionais | 2026-08-19 |
@@ -62,7 +68,7 @@ atual — fica registrado para não ser redescoberto do zero depois.
 | **RF017** | O sistema deve permitir que o profissional aceite ou recuse uma solicitação de orçamento recebida, respondendo com o valor proposto. | contratacoes | 2026-08-22 |
 | **RF018** | O sistema deve permitir que cliente ou profissional cancele uma contratação ainda não concluída, registrando o motivo. | contratacoes | 2026-08-22 |
 | **RF019** | O sistema deve calcular e exibir a nota média do profissional e a quantidade de avaliações recebidas. | avaliacoes, profissionais | 2026-08-22 |
-| **RF020** | O sistema deve permitir que qualquer usuário denuncie um serviço, perfil ou avaliação inadequado, e que o administrador analise a denúncia. | servicos, usuarios | 2026-08-22 |
+| **RF020** | O sistema deve permitir que qualquer usuário denuncie um serviço, perfil ou avaliação inadequado, e que o administrador registre o resultado da análise. | servicos, usuarios | 2026-08-22 |
 | **RF021** | O sistema deve permitir que o administrador liste os usuários da plataforma filtrando por ativos e inativos. | usuarios | 2026-08-22 |
 | **RF022** | O sistema deve permitir que o administrador suspenda e reative contas de usuário, registrando o motivo da ação. | usuarios | 2026-08-22 |
 
@@ -91,15 +97,19 @@ Quase todos já eram decisão tomada — estavam espalhados pelos ADRs e pelo `d
 nunca terem sido escritos como requisito. Aqui eles viram requisito verificável, com a origem
 apontada.
 
+Os quatro últimos (`RNF019`–`RNF022`) são consequência direta do
+[ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md): ao assumir a autenticação, o
+projeto assumiu junto as garantias que o fornecedor dava de graça.
+
 | Código | Descrição | Módulos | Origem |
 |---|---|---|---|
-| **RNF001** | A identidade é gerenciada pelo Supabase Auth. O backend valida o JWT por JWKS e nunca armazena senha ou hash de senha. | autenticacao, transversal | ADR-0002 |
-| **RNF002** | A autorização é decidida pelo papel lido da base de dados, nunca por claim do JWT. | autenticacao, usuarios | CLAUDE.md, seção Nunca faça |
+| **RNF001** | A identidade é do próprio backend. A senha é armazenada com hash Argon2id e a senha em claro nunca é persistida, logada nem devolvida pela API. | autenticacao | ADR-0006 |
+| **RNF002** | A autorização é decidida pelo papel lido da base de dados, nunca por claim do JWT. | autenticacao, usuarios | ADR-0006; CLAUDE.md, seção Nunca faça |
 | **RNF003** | Todo tráfego entre frontend, backend e Supabase ocorre sobre HTTPS com TLS 1.2 ou superior. | transversal | Revisão de requisitos 2026-08-22 |
-| **RNF004** | Nenhum segredo é versionado. A SUPABASE_SERVICE_ROLE_KEY existe apenas no backend e nunca é exposta ao navegador. | transversal | ADR-0002; CLAUDE.md |
+| **RNF004** | Nenhum segredo é versionado. Chave privada RSA de assinatura, credenciais do MinIO e do SMTP vivem em variável de ambiente, somente no backend. | transversal | ADR-0006 |
 | **RNF005** | A busca de profissionais e serviços responde em até 2 segundos no percentil 95 com 10 mil registros na base. | servicos, profissionais | Revisão de requisitos 2026-08-22 |
 | **RNF006** | Toda listagem da API é paginada, com máximo de 50 itens por página, usando os tipos de `comum/paginacao`. | transversal | design-sistema.md §10.2 |
-| **RNF007** | A interface é responsiva e utilizável de 360px de largura até desktop, sem rolagem horizontal. | transversal | Revisão de requisitos 2026-08-22 |
+| **RNF007** | A interface é responsiva e utilizável de 372px de largura até desktop, sem rolagem horizontal. | transversal | Revisão de requisitos 2026-08-22 |
 | **RNF008** | Os fluxos de cadastro, busca e contratação atendem ao WCAG 2.1 nível AA, incluindo navegação por teclado e contraste mínimo. | transversal | Revisão de requisitos 2026-08-22 |
 | **RNF009** | Todo erro da API é devolvido como ProblemDetail no formato RFC 9457, sem expor stack trace nem detalhe interno. | transversal | design-sistema.md §9.1 |
 | **RNF010** | Toda alteração de schema nasce como migration versionada do Flyway. Alterar schema pelo painel do Supabase é proibido. | transversal | design-sistema.md §5 |
@@ -109,8 +119,12 @@ apontada.
 | **RNF014** | CPF, telefone e endereço completo só são visíveis ao próprio titular e ao administrador. O cliente vê do profissional apenas dados públicos. | usuarios, profissionais | LGPD, Lei 13.709/2018 |
 | **RNF015** | O usuário pode solicitar a exclusão da conta. Os dados pessoais são anonimizados preservando o histórico de contratações e as avaliações. | usuarios | LGPD, Lei 13.709/2018 |
 | **RNF016** | Toda tabela de domínio registra `criado_em` e `atualizado_em` pela MappedSuperclass de `comum/auditoria`. | transversal | design-sistema.md §10.2 |
-| **RNF017** | Imagens de portfólio e anexos ficam no Supabase Storage, limitados a 5 MB por arquivo nos formatos JPEG, PNG e WebP. | profissionais, contratacoes | design-sistema.md §6.1 |
-| **RNF018** | O cálculo de distância do RF013 usa coordenadas persistidas na base. A geocodificação de endereço é feita por adapter isolado em `lib/`, nunca chamada de dentro de um módulo. | profissionais, contratacoes | Decorrência da decisão de manter RF013 no MVP; pendente de ADR-0006 |
+| **RNF017** | Imagens de portfólio e anexos ficam no MinIO, acessados por URL pré-assinada de expiração curta, limitados a 5 MB por arquivo nos formatos JPEG, PNG e WebP. | profissionais, contratacoes | ADR-0006 |
+| **RNF018** | O cálculo de distância do RF013 usa coordenadas persistidas na base. A geocodificação de endereço é feita por adapter isolado em `lib/`, nunca chamada de dentro de um módulo. | profissionais, contratacoes | Decorrência da decisão de manter RF013 no MVP; fornecedor de geocodificação ainda pendente de ADR |
+| **RNF019** | O access token expira em 15 minutos e o refresh token em 30 dias, sendo rotacionado a cada uso; o reuso de um token já rotacionado revoga a família inteira. | autenticacao | ADR-0006 |
+| **RNF020** | O login limita tentativas por conta e por origem, e o fluxo de recuperação de senha responde de forma idêntica para e-mail existente e inexistente, para não permitir enumeração de usuários. | autenticacao | ADR-0006 |
+| **RNF021** | O token de recuperação de senha é opaco, de uso único, armazenado com hash e invalidado no primeiro uso ou ao expirar. | autenticacao | ADR-0006 |
+| **RNF022** | Toda ação sensível do sistema é registrada em log de auditoria com autor, tipo de ação, alvo, data e endereço de origem, em tabela somente de escrita. | transversal, usuarios | Revisão de banco 2026-08-22 |
 
 ---
 
@@ -154,11 +168,43 @@ Seis vieram do canvas PBB e da revisão. Estavam no quadro da aula mas nunca che
 | **Chat fica fora do MVP** | `RF023` e `RF024` marcados `pos-mvp` |
 | **`RF015` é anexo, não chat** | Foto passa a ser anexo da solicitação de orçamento. Sobrevive ao corte do chat porque não depende dele |
 
+### 4.4 Versão 1.1.0 — saída do Supabase
+
+O [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md) removeu o Supabase do MVP. O
+motivo não foi técnico: o argumento do ADR-0002 continua correto. Foi de **objetivo** — a
+disciplina existe para ensinar banco de dados, e terceirizar identidade e persistência
+terceirizava justamente o que se quer aprender.
+
+| Requisito | O que mudou |
+|---|---|
+| `RF001` | Recuperação de senha passa a ser **por e-mail nosso**, com token próprio. Ganhou `tb_refresh_tokens` e `tb_tokens_recuperacao` |
+| `RNF001` | Era "identidade pelo Supabase Auth, backend nunca armazena senha". Virou o oposto: **hash Argon2id em `tb_usuarios`** |
+| `RNF004` | `SUPABASE_SERVICE_ROLE_KEY` deixou de existir. Os segredos agora são a chave RSA de assinatura e as credenciais de MinIO e SMTP |
+| `RNF017` | Supabase Storage → **MinIO com URL pré-assinada** |
+
+**Quatro RNFs novos**, todos garantias que o fornecedor dava de graça e agora são código nosso:
+
+| Código | O que garante |
+|---|---|
+| `RNF019` | Ciclo de vida do token: 15 min de access, 30 dias de refresh **rotacionado**, com revogação de família no reuso |
+| `RNF020` | Limite de tentativas de login e resposta idêntica no fluxo de recuperação, contra **enumeração de usuário** |
+| `RNF021` | Token de recuperação opaco, de uso único e **armazenado com hash** |
+| `RNF022` | **Log de auditoria** de ações sensíveis — a tabela nova que você propôs |
+
+> [!WARNING]
+> Esta é a mudança mais cara do documento até aqui. Autenticação é a superfície onde bug custa
+> mais: erro de comparação de hash ou de validação de token não falha ruidoso, falha silencioso e
+> explorável. `RNF019` a `RNF022` existem para que essas garantias sejam **testáveis**, não
+> presumidas.
+
 ---
 
 ## 5. Pendências
 
-- [ ] **ADR-0006** para o serviço externo de geocodificação exigido por `RF013` / `RNF018`
+- [ ] **ADR-0007** para o serviço externo de geocodificação exigido por `RF013` / `RNF018`.
+      O número 0006 foi consumido pela remoção do Supabase
+- [ ] **`docker-compose.yml`** com PostgreSQL, MinIO e um SMTP de desenvolvimento (MailHog ou
+      Mailpit). Sem ele, ninguém da equipe sobe o projeto depois do ADR-0006
 - [ ] **Corrigir o quadro "é – não é – faz – não faz"** no PDF de especificação: ele promete chat,
       que saiu do MVP
 - [ ] **Critérios de aceite.** O PDF tem oito histórias de usuário, mas sete delas repetem

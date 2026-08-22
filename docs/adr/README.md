@@ -9,10 +9,11 @@ alguém, seis meses depois, refazer uma discussão já encerrada.
 | # | Título | Tópico | Status | Data |
 |---|---|---|---|---|
 | [0001](./0001-adotar-adrs-para-decisoes-de-arquitetura.md) | Adotar ADRs para registrar decisões de arquitetura | Processo | Aceito | 2026-08-22 |
-| [0002](./0002-supabase-como-baas.md) | Supabase como BaaS (Postgres + Auth + Storage) | Infra | Aceito | 2026-08-22 |
+| [0002](./0002-supabase-como-baas.md) | Supabase como BaaS (Postgres + Auth + Storage) | Infra | ~~Substituído por [0006](./0006-remover-supabase-infraestrutura-propria.md)~~ | 2026-08-22 |
 | [0003](./0003-spring-boot-4-java-21-maven.md) | Spring Boot 4.1 com Java 21 e Maven | Backend | Aceito | 2026-08-22 |
 | [0004](./0004-estrutura-modular-por-dominio.md) | Estrutura modular por domínio no backend | Backend | Aceito | 2026-08-22 |
 | [0005](./0005-src-api-como-unica-fronteira.md) | `src/api` como única fronteira do frontend | Frontend | Aceito | 2026-08-22 |
+| [0006](./0006-remover-supabase-infraestrutura-propria.md) | Remover o Supabase e assumir infraestrutura própria | Infra · Backend · Banco | Aceito | 2026-08-22 |
 
 ## Como criar um ADR
 

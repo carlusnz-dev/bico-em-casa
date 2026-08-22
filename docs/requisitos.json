@@ -1,7 +1,7 @@
 {
   "_meta": {
     "projeto": "Bico em Casa",
-    "versao": "1.0.0",
+    "versao": "1.1.0",
     "atualizado_em": "2026-08-22",
     "descricao": "Fonte da verdade dos requisitos. A chave de cada entrada é o código do requisito. `docs/requisitos.md` é o espelho legível e `docs/matriz-rastreabilidade.md` é derivado deste arquivo.",
     "modulos_validos": [
@@ -13,7 +13,10 @@
       "avaliacoes",
       "transversal"
     ],
-    "status_validos": ["mvp", "pos-mvp"],
+    "status_validos": [
+      "mvp",
+      "pos-mvp"
+    ],
     "campos": {
       "codigo": "Identificador estável. Nunca é reaproveitado nem renumerado.",
       "tipo": "funcional | nao-funcional",
@@ -25,33 +28,50 @@
       "data_criada": "AAAA-MM-DD"
     }
   },
-
   "RF001": {
     "codigo": "RF001",
     "tipo": "funcional",
-    "descricao": "O sistema deve permitir cadastro, login, recuperação de senha e encerramento de sessão dos usuários.",
-    "modulos": ["autenticacao"],
-    "entidades": ["tb_usuarios"],
+    "descricao": "O sistema deve permitir cadastro, login, recuperação de senha por e-mail e encerramento de sessão dos usuários.",
+    "modulos": [
+      "autenticacao"
+    ],
+    "entidades": [
+      "tb_usuarios",
+      "tb_refresh_tokens",
+      "tb_tokens_recuperacao"
+    ],
     "status": "mvp",
-    "origem": "Tabela de requisitos do grupo",
+    "origem": "Tabela de requisitos do grupo (revisado pelo ADR-0006: autenticação própria)",
     "data_criada": "2026-08-19"
   },
   "RF002": {
     "codigo": "RF002",
     "tipo": "funcional",
     "descricao": "O sistema deve atribuir a uma conta um ou mais papéis entre cliente, profissional e administrador, permitindo que a mesma pessoa contrate e preste serviços.",
-    "modulos": ["autenticacao", "usuarios"],
-    "entidades": ["tb_usuarios", "tb_usuario_papeis"],
+    "modulos": [
+      "autenticacao",
+      "usuarios"
+    ],
+    "entidades": [
+      "tb_usuarios",
+      "tb_perfis"
+    ],
     "status": "mvp",
-    "origem": "Tabela de requisitos do grupo (revisado: papéis múltiplos)",
+    "origem": "Tabela de requisitos do grupo (revisado: papéis múltiplos via um perfil por papel)",
     "data_criada": "2026-08-19"
   },
   "RF003": {
     "codigo": "RF003",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o profissional monte um portfólio com foto de capa e galeria de imagens dos trabalhos já realizados.",
-    "modulos": ["profissionais"],
-    "entidades": ["tb_profissionais", "tb_portfolios", "tb_portfolio_fotos"],
+    "modulos": [
+      "profissionais"
+    ],
+    "entidades": [
+      "tb_perfis",
+      "tb_portfolios",
+      "tb_portfolio_fotos"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
     "data_criada": "2026-08-19"
@@ -60,8 +80,16 @@
     "codigo": "RF004",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o cliente filtre a busca de serviços por categoria, faixa de preço e localização.",
-    "modulos": ["servicos", "profissionais"],
-    "entidades": ["tb_servicos", "tb_categorias", "tb_profissionais"],
+    "modulos": [
+      "servicos",
+      "profissionais"
+    ],
+    "entidades": [
+      "tb_servicos",
+      "tb_tags",
+      "tb_servico_tags",
+      "tb_perfis"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Pesquisa serviço)",
     "data_criada": "2026-08-19"
@@ -70,8 +98,13 @@
     "codigo": "RF005",
     "tipo": "funcional",
     "descricao": "O sistema deve exibir o status de disponibilidade do profissional e os horários em que ele atende.",
-    "modulos": ["profissionais"],
-    "entidades": ["tb_profissionais", "tb_disponibilidades"],
+    "modulos": [
+      "profissionais"
+    ],
+    "entidades": [
+      "tb_perfis",
+      "tb_disponibilidades"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
     "data_criada": "2026-08-19"
@@ -80,8 +113,13 @@
     "codigo": "RF006",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o cliente avalie com nota de 1 a 5 o profissional de uma contratação que foi concluída.",
-    "modulos": ["avaliacoes"],
-    "entidades": ["tb_avaliacoes", "tb_contratacoes"],
+    "modulos": [
+      "avaliacoes"
+    ],
+    "entidades": [
+      "tb_avaliacoes",
+      "tb_contratacoes"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
     "data_criada": "2026-08-19"
@@ -90,8 +128,12 @@
     "codigo": "RF007",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o cliente escreva um comentário junto da avaliação do profissional que contratou.",
-    "modulos": ["avaliacoes"],
-    "entidades": ["tb_avaliacoes"],
+    "modulos": [
+      "avaliacoes"
+    ],
+    "entidades": [
+      "tb_avaliacoes"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
     "data_criada": "2026-08-19"
@@ -100,8 +142,13 @@
     "codigo": "RF008",
     "tipo": "funcional",
     "descricao": "O sistema deve exibir ao cliente a etapa atual da contratação e o histórico de transições de status.",
-    "modulos": ["contratacoes"],
-    "entidades": ["tb_contratacoes", "tb_contratacao_status_historico"],
+    "modulos": [
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_contratacoes",
+      "tb_contratacao_status_historico"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Ver status do serviço realizado)",
     "data_criada": "2026-08-19"
@@ -110,8 +157,14 @@
     "codigo": "RF009",
     "tipo": "funcional",
     "descricao": "O sistema deve listar os profissionais em tabela paginada, ordenada por disponibilidade e nota média por padrão.",
-    "modulos": ["profissionais", "servicos"],
-    "entidades": ["tb_profissionais", "tb_avaliacoes"],
+    "modulos": [
+      "profissionais",
+      "servicos"
+    ],
+    "entidades": [
+      "tb_perfis",
+      "tb_avaliacoes"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Ordenar por notas de avaliações)",
     "data_criada": "2026-08-19"
@@ -120,8 +173,14 @@
     "codigo": "RF010",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o profissional cadastre serviços pré-definidos com título, descrição, categoria e preço de referência.",
-    "modulos": ["servicos"],
-    "entidades": ["tb_servicos", "tb_categorias"],
+    "modulos": [
+      "servicos"
+    ],
+    "entidades": [
+      "tb_servicos",
+      "tb_tags",
+      "tb_servico_tags"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Cadastrar serviço prestado)",
     "data_criada": "2026-08-19"
@@ -130,8 +189,13 @@
     "codigo": "RF011",
     "tipo": "funcional",
     "descricao": "O sistema deve calcular e exibir o preço médio praticado por categoria de serviço na plataforma.",
-    "modulos": ["servicos"],
-    "entidades": ["tb_servicos", "tb_categorias"],
+    "modulos": [
+      "servicos"
+    ],
+    "entidades": [
+      "tb_servicos",
+      "tb_tags"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Visualizar preços pré-definidos)",
     "data_criada": "2026-08-19"
@@ -140,8 +204,13 @@
     "codigo": "RF012",
     "tipo": "funcional",
     "descricao": "O sistema deve notificar o cliente quando a sua solicitação for aceita ou recusada pelo profissional.",
-    "modulos": ["contratacoes"],
-    "entidades": ["tb_contratacoes", "tb_notificacoes"],
+    "modulos": [
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_contratacoes",
+      "tb_notificacoes"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
     "data_criada": "2026-08-19"
@@ -150,8 +219,15 @@
     "codigo": "RF013",
     "tipo": "funcional",
     "descricao": "O sistema deve calcular e exibir a distância em quilômetros entre o endereço do serviço e a base de atendimento do profissional.",
-    "modulos": ["profissionais", "contratacoes"],
-    "entidades": ["tb_profissionais", "tb_enderecos", "tb_contratacoes"],
+    "modulos": [
+      "profissionais",
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_perfis",
+      "tb_enderecos",
+      "tb_contratacoes"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
     "data_criada": "2026-08-19"
@@ -160,8 +236,12 @@
     "codigo": "RF014",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o cliente envie ao profissional uma solicitação de orçamento descrevendo o serviço desejado.",
-    "modulos": ["contratacoes"],
-    "entidades": ["tb_contratacoes"],
+    "modulos": [
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_contratacoes"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Enviar solicitação de serviço)",
     "data_criada": "2026-08-19"
@@ -170,8 +250,13 @@
     "codigo": "RF015",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o cliente anexe fotos à solicitação de orçamento para ilustrar o problema.",
-    "modulos": ["contratacoes"],
-    "entidades": ["tb_contratacoes", "tb_contratacao_anexos"],
+    "modulos": [
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_contratacoes",
+      "tb_contratacao_anexos"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo (revisado: anexo na solicitação, não em chat)",
     "data_criada": "2026-08-19"
@@ -180,8 +265,12 @@
     "codigo": "RF016",
     "tipo": "funcional",
     "descricao": "O sistema deve persistir e exibir ao cliente o histórico das contratações que ele já realizou.",
-    "modulos": ["contratacoes"],
-    "entidades": ["tb_contratacoes"],
+    "modulos": [
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_contratacoes"
+    ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo (era o segundo RF016 duplicado)",
     "data_criada": "2026-08-19"
@@ -190,8 +279,12 @@
     "codigo": "RF017",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o profissional aceite ou recuse uma solicitação de orçamento recebida, respondendo com o valor proposto.",
-    "modulos": ["contratacoes"],
-    "entidades": ["tb_contratacoes"],
+    "modulos": [
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_contratacoes"
+    ],
     "status": "mvp",
     "origem": "Lacuna encontrada na revisão: RF012 notificava um aceite que nenhum requisito criava",
     "data_criada": "2026-08-22"
@@ -200,8 +293,12 @@
     "codigo": "RF018",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que cliente ou profissional cancele uma contratação ainda não concluída, registrando o motivo.",
-    "modulos": ["contratacoes"],
-    "entidades": ["tb_contratacoes"],
+    "modulos": [
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_contratacoes"
+    ],
     "status": "mvp",
     "origem": "PBB (Cancelar serviço)",
     "data_criada": "2026-08-22"
@@ -210,8 +307,14 @@
     "codigo": "RF019",
     "tipo": "funcional",
     "descricao": "O sistema deve calcular e exibir a nota média do profissional e a quantidade de avaliações recebidas.",
-    "modulos": ["avaliacoes", "profissionais"],
-    "entidades": ["tb_avaliacoes", "tb_profissionais"],
+    "modulos": [
+      "avaliacoes",
+      "profissionais"
+    ],
+    "entidades": [
+      "tb_avaliacoes",
+      "tb_perfis"
+    ],
     "status": "mvp",
     "origem": "PBB (Visualizar nota média do profissional)",
     "data_criada": "2026-08-22"
@@ -219,9 +322,14 @@
   "RF020": {
     "codigo": "RF020",
     "tipo": "funcional",
-    "descricao": "O sistema deve permitir que qualquer usuário denuncie um serviço, perfil ou avaliação inadequado, e que o administrador analise a denúncia.",
-    "modulos": ["servicos", "usuarios"],
-    "entidades": ["tb_denuncias"],
+    "descricao": "O sistema deve permitir que qualquer usuário denuncie um serviço, perfil ou avaliação inadequado, e que o administrador registre o resultado da análise.",
+    "modulos": [
+      "servicos",
+      "usuarios"
+    ],
+    "entidades": [
+      "tb_denuncias"
+    ],
     "status": "mvp",
     "origem": "PBB (Denunciar serviços inadequados)",
     "data_criada": "2026-08-22"
@@ -230,8 +338,12 @@
     "codigo": "RF021",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o administrador liste os usuários da plataforma filtrando por ativos e inativos.",
-    "modulos": ["usuarios"],
-    "entidades": ["tb_usuarios"],
+    "modulos": [
+      "usuarios"
+    ],
+    "entidades": [
+      "tb_usuarios"
+    ],
     "status": "mvp",
     "origem": "PBB (Visualizar usuários ativos e inativos no site)",
     "data_criada": "2026-08-22"
@@ -240,8 +352,13 @@
     "codigo": "RF022",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que o administrador suspenda e reative contas de usuário, registrando o motivo da ação.",
-    "modulos": ["usuarios"],
-    "entidades": ["tb_usuarios", "tb_moderacao_acoes"],
+    "modulos": [
+      "usuarios"
+    ],
+    "entidades": [
+      "tb_usuarios",
+      "tb_log_acoes"
+    ],
     "status": "mvp",
     "origem": "PBB (Gerenciamento de usuários)",
     "data_criada": "2026-08-22"
@@ -250,8 +367,13 @@
     "codigo": "RF023",
     "tipo": "funcional",
     "descricao": "O sistema deve oferecer um chat entre cliente e profissional para negociação do serviço.",
-    "modulos": ["contratacoes"],
-    "entidades": ["tb_conversas", "tb_mensagens"],
+    "modulos": [
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_conversas",
+      "tb_mensagens"
+    ],
     "status": "pos-mvp",
     "origem": "PDF de especificação, quadro é–não é–faz–não faz; PBB (Falar com o profissional)",
     "data_criada": "2026-08-22"
@@ -260,38 +382,53 @@
     "codigo": "RF024",
     "tipo": "funcional",
     "descricao": "O sistema deve permitir o envio de mensagens de áudio na conversa entre cliente e profissional.",
-    "modulos": ["contratacoes"],
-    "entidades": ["tb_mensagens"],
+    "modulos": [
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_mensagens"
+    ],
     "status": "pos-mvp",
     "origem": "Tabela de requisitos do grupo (era o primeiro RF016 duplicado)",
     "data_criada": "2026-08-19"
   },
-
   "RNF001": {
     "codigo": "RNF001",
     "tipo": "nao-funcional",
-    "descricao": "A identidade é gerenciada pelo Supabase Auth. O backend valida o JWT por JWKS e nunca armazena senha ou hash de senha.",
-    "modulos": ["autenticacao", "transversal"],
-    "entidades": ["tb_usuarios"],
+    "descricao": "A identidade é do próprio backend. A senha é armazenada com hash Argon2id e a senha em claro nunca é persistida, logada nem devolvida pela API.",
+    "modulos": [
+      "autenticacao"
+    ],
+    "entidades": [
+      "tb_usuarios"
+    ],
     "status": "mvp",
-    "origem": "ADR-0002",
+    "origem": "ADR-0006",
     "data_criada": "2026-08-22"
   },
   "RNF002": {
     "codigo": "RNF002",
     "tipo": "nao-funcional",
     "descricao": "A autorização é decidida pelo papel lido da base de dados, nunca por claim do JWT.",
-    "modulos": ["autenticacao", "usuarios"],
-    "entidades": ["tb_usuarios", "tb_usuario_papeis"],
+    "modulos": [
+      "autenticacao",
+      "usuarios"
+    ],
+    "entidades": [
+      "tb_usuarios",
+      "tb_perfis"
+    ],
     "status": "mvp",
-    "origem": "CLAUDE.md, seção Nunca faça",
+    "origem": "ADR-0006; CLAUDE.md, seção Nunca faça",
     "data_criada": "2026-08-22"
   },
   "RNF003": {
     "codigo": "RNF003",
     "tipo": "nao-funcional",
     "descricao": "Todo tráfego entre frontend, backend e Supabase ocorre sobre HTTPS com TLS 1.2 ou superior.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "Revisão de requisitos 2026-08-22",
@@ -300,19 +437,27 @@
   "RNF004": {
     "codigo": "RNF004",
     "tipo": "nao-funcional",
-    "descricao": "Nenhum segredo é versionado. A SUPABASE_SERVICE_ROLE_KEY existe apenas no backend e nunca é exposta ao navegador.",
-    "modulos": ["transversal"],
+    "descricao": "Nenhum segredo é versionado. Chave privada RSA de assinatura, credenciais do MinIO e do SMTP vivem em variável de ambiente, somente no backend.",
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
-    "origem": "ADR-0002; CLAUDE.md",
+    "origem": "ADR-0006",
     "data_criada": "2026-08-22"
   },
   "RNF005": {
     "codigo": "RNF005",
     "tipo": "nao-funcional",
     "descricao": "A busca de profissionais e serviços responde em até 2 segundos no percentil 95 com 10 mil registros na base.",
-    "modulos": ["servicos", "profissionais"],
-    "entidades": ["tb_servicos", "tb_profissionais"],
+    "modulos": [
+      "servicos",
+      "profissionais"
+    ],
+    "entidades": [
+      "tb_servicos",
+      "tb_profissionais"
+    ],
     "status": "mvp",
     "origem": "Revisão de requisitos 2026-08-22",
     "data_criada": "2026-08-22"
@@ -321,7 +466,9 @@
     "codigo": "RNF006",
     "tipo": "nao-funcional",
     "descricao": "Toda listagem da API é paginada, com máximo de 50 itens por página, usando os tipos de `comum/paginacao`.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "design-sistema.md §10.2",
@@ -331,7 +478,9 @@
     "codigo": "RNF007",
     "tipo": "nao-funcional",
     "descricao": "A interface é responsiva e utilizável de 372px de largura até desktop, sem rolagem horizontal.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "Revisão de requisitos 2026-08-22",
@@ -341,7 +490,9 @@
     "codigo": "RNF008",
     "tipo": "nao-funcional",
     "descricao": "Os fluxos de cadastro, busca e contratação atendem ao WCAG 2.1 nível AA, incluindo navegação por teclado e contraste mínimo.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "Revisão de requisitos 2026-08-22",
@@ -351,7 +502,9 @@
     "codigo": "RNF009",
     "tipo": "nao-funcional",
     "descricao": "Todo erro da API é devolvido como ProblemDetail no formato RFC 9457, sem expor stack trace nem detalhe interno.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "design-sistema.md §9.1",
@@ -361,7 +514,9 @@
     "codigo": "RNF010",
     "tipo": "nao-funcional",
     "descricao": "Toda alteração de schema nasce como migration versionada do Flyway. Alterar schema pelo painel do Supabase é proibido.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "design-sistema.md §5",
@@ -371,7 +526,9 @@
     "codigo": "RNF011",
     "tipo": "nao-funcional",
     "descricao": "Teste de regra de negócio roda contra PostgreSQL real via Testcontainers. H2 é proibido.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "design-sistema.md §3.3",
@@ -381,7 +538,9 @@
     "codigo": "RNF012",
     "tipo": "nao-funcional",
     "descricao": "Código, comentários, documentação e mensagens de commit são escritos em português, com commits em Conventional Commits.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "design-sistema.md §7.2",
@@ -391,7 +550,9 @@
     "codigo": "RNF013",
     "tipo": "nao-funcional",
     "descricao": "A aplicação funciona nas duas versões mais recentes de Chrome, Firefox, Safari e Edge.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "Revisão de requisitos 2026-08-22",
@@ -401,8 +562,14 @@
     "codigo": "RNF014",
     "tipo": "nao-funcional",
     "descricao": "CPF, telefone e endereço completo só são visíveis ao próprio titular e ao administrador. O cliente vê do profissional apenas dados públicos.",
-    "modulos": ["usuarios", "profissionais"],
-    "entidades": ["tb_usuarios", "tb_enderecos"],
+    "modulos": [
+      "usuarios",
+      "profissionais"
+    ],
+    "entidades": [
+      "tb_usuarios",
+      "tb_enderecos"
+    ],
     "status": "mvp",
     "origem": "LGPD, Lei 13.709/2018",
     "data_criada": "2026-08-22"
@@ -411,8 +578,14 @@
     "codigo": "RNF015",
     "tipo": "nao-funcional",
     "descricao": "O usuário pode solicitar a exclusão da conta. Os dados pessoais são anonimizados preservando o histórico de contratações e as avaliações.",
-    "modulos": ["usuarios"],
-    "entidades": ["tb_usuarios", "tb_contratacoes", "tb_avaliacoes"],
+    "modulos": [
+      "usuarios"
+    ],
+    "entidades": [
+      "tb_usuarios",
+      "tb_contratacoes",
+      "tb_avaliacoes"
+    ],
     "status": "mvp",
     "origem": "LGPD, Lei 13.709/2018",
     "data_criada": "2026-08-22"
@@ -421,7 +594,9 @@
     "codigo": "RNF016",
     "tipo": "nao-funcional",
     "descricao": "Toda tabela de domínio registra `criado_em` e `atualizado_em` pela MappedSuperclass de `comum/auditoria`.",
-    "modulos": ["transversal"],
+    "modulos": [
+      "transversal"
+    ],
     "entidades": [],
     "status": "mvp",
     "origem": "design-sistema.md §10.2",
@@ -430,21 +605,90 @@
   "RNF017": {
     "codigo": "RNF017",
     "tipo": "nao-funcional",
-    "descricao": "Imagens de portfólio e anexos ficam no Supabase Storage, limitados a 5 MB por arquivo nos formatos JPEG, PNG e WebP.",
-    "modulos": ["profissionais", "contratacoes"],
-    "entidades": ["tb_portfolio_fotos", "tb_contratacao_anexos"],
+    "descricao": "Imagens de portfólio e anexos ficam no MinIO, acessados por URL pré-assinada de expiração curta, limitados a 5 MB por arquivo nos formatos JPEG, PNG e WebP.",
+    "modulos": [
+      "profissionais",
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_portfolio_fotos",
+      "tb_contratacao_anexos"
+    ],
     "status": "mvp",
-    "origem": "design-sistema.md §6.1",
+    "origem": "ADR-0006",
     "data_criada": "2026-08-22"
   },
   "RNF018": {
     "codigo": "RNF018",
     "tipo": "nao-funcional",
     "descricao": "O cálculo de distância do RF013 usa coordenadas persistidas na base. A geocodificação de endereço é feita por adapter isolado em `lib/`, nunca chamada de dentro de um módulo.",
-    "modulos": ["profissionais", "contratacoes"],
-    "entidades": ["tb_enderecos"],
+    "modulos": [
+      "profissionais",
+      "contratacoes"
+    ],
+    "entidades": [
+      "tb_enderecos"
+    ],
     "status": "mvp",
-    "origem": "Decorrência da decisão de manter RF013 no MVP; pendente de ADR-0006",
+    "origem": "Decorrência da decisão de manter RF013 no MVP; fornecedor de geocodificação ainda pendente de ADR",
+    "data_criada": "2026-08-22"
+  },
+  "RNF019": {
+    "codigo": "RNF019",
+    "tipo": "nao-funcional",
+    "descricao": "O access token expira em 15 minutos e o refresh token em 30 dias, sendo rotacionado a cada uso; o reuso de um token já rotacionado revoga a família inteira.",
+    "modulos": [
+      "autenticacao"
+    ],
+    "entidades": [
+      "tb_refresh_tokens"
+    ],
+    "status": "mvp",
+    "origem": "ADR-0006",
+    "data_criada": "2026-08-22"
+  },
+  "RNF020": {
+    "codigo": "RNF020",
+    "tipo": "nao-funcional",
+    "descricao": "O login limita tentativas por conta e por origem, e o fluxo de recuperação de senha responde de forma idêntica para e-mail existente e inexistente, para não permitir enumeração de usuários.",
+    "modulos": [
+      "autenticacao"
+    ],
+    "entidades": [
+      "tb_usuarios",
+      "tb_tokens_recuperacao"
+    ],
+    "status": "mvp",
+    "origem": "ADR-0006",
+    "data_criada": "2026-08-22"
+  },
+  "RNF021": {
+    "codigo": "RNF021",
+    "tipo": "nao-funcional",
+    "descricao": "O token de recuperação de senha é opaco, de uso único, armazenado com hash e invalidado no primeiro uso ou ao expirar.",
+    "modulos": [
+      "autenticacao"
+    ],
+    "entidades": [
+      "tb_tokens_recuperacao"
+    ],
+    "status": "mvp",
+    "origem": "ADR-0006",
+    "data_criada": "2026-08-22"
+  },
+  "RNF022": {
+    "codigo": "RNF022",
+    "tipo": "nao-funcional",
+    "descricao": "Toda ação sensível do sistema é registrada em log de auditoria com autor, tipo de ação, alvo, data e endereço de origem, em tabela somente de escrita.",
+    "modulos": [
+      "transversal",
+      "usuarios"
+    ],
+    "entidades": [
+      "tb_log_acoes"
+    ],
+    "status": "mvp",
+    "origem": "Revisão de banco 2026-08-22",
     "data_criada": "2026-08-22"
   }
 }

@@ -29,17 +29,21 @@ extrair um módulo em serviço próprio depois, se a necessidade aparecer.
 ```
 ┌─────────────────┐        HTTPS/JSON        ┌──────────────────────┐
 │   Next.js 16    │ ───────────────────────► │   Spring Boot 4.1    │
-│   (App Router)  │   Bearer JWT (Supabase)  │   API REST           │
-│                 │ ◄─────────────────────── │                      │
+│   (App Router)  │    Bearer JWT próprio    │   API REST           │
+│                 │ ◄─────────────────────── │   + emissão de token │
 └────────┬────────┘      RFC 9457 errors     └──────────┬───────────┘
          │                                              │
-         │ auth + upload assinado                       │ JDBC + JWKS + Storage API
-         ▼                                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                            Supabase                              │
-│      Auth (identidade)  ·  PostgreSQL 18  ·  Storage (arquivos)  │
-└──────────────────────────────────────────────────────────────────┘
+         │ upload por URL pré-assinada                  │ JDBC          │ S3 API / SMTP
+         │                                              ▼               ▼
+         │                                   ┌──────────────────┐  ┌──────────┐
+         └──────────────────────────────────►│  PostgreSQL 18   │  │  MinIO   │
+                                             │  (auto-hospedado)│  │  + SMTP  │
+                                             └──────────────────┘  └──────────┘
 ```
+
+**A identidade é do próprio backend.** O módulo `autenticacao` guarda a credencial, emite o
+access token e o refresh token, e o mesmo backend os valida. Não há provedor externo de
+identidade — ver [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md).
 
 ---
 
@@ -91,31 +95,48 @@ Initializr e menor curva de aprendizado para o time.
 |---|---|
 | **Core** | `spring-boot-starter-web`, `spring-boot-starter-validation`, `spring-boot-starter-actuator` |
 | **Persistência** | `spring-boot-starter-data-jpa`, `org.postgresql:postgresql`, `flyway-core:13.3.x`, `flyway-database-postgresql:13.3.x` |
-| **Segurança** | `spring-boot-starter-security`, `spring-boot-starter-oauth2-resource-server` |
+| **Segurança** | `spring-boot-starter-security`, `spring-boot-starter-oauth2-resource-server`, `org.bouncycastle:bcprov-jdk18on` (requerido pelo `Argon2PasswordEncoder`) |
 | **Produtividade** | `lombok`, `mapstruct:1.6.3`, `mapstruct-processor:1.6.3` |
 | **Documentação** | `springdoc-openapi-starter-webmvc-ui:3.1.x` |
-| **Integrações** | Spring `RestClient` para a Storage API do Supabase |
+| **Integrações** | `software.amazon.awssdk:s3` (cliente S3 do MinIO), `spring-boot-starter-mail` |
 
-#### Removido em relação à versão 1.0.0
+#### Removido
 
 | Artefato | Motivo |
 |---|---|
-| `io.jsonwebtoken:jjwt-*` | A emissão e assinatura de token passou a ser responsabilidade do Supabase Auth. O backend apenas **valida** o JWT via JWKS como OAuth2 Resource Server, o que dispensa biblioteca própria de JWT. |
+| `io.jsonwebtoken:jjwt-*` | Desnecessária. O Spring Security já traz Nimbus JOSE via `spring-security-oauth2-jose`, que **emite** (`NimbusJwtEncoder`) e **valida** (`NimbusJwtDecoder`) o token. Adicionar `jjwt` seria uma segunda biblioteca de JWT no mesmo classpath. |
+| Supabase (todo o BaaS) | Removido pelo [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md). Identidade, banco e armazenamento passam a ser auto-hospedados. |
 
 ### 3.2 Segurança
 
 | Item | Definição |
 |---|---|
-| Provedor de identidade | Supabase Auth |
-| Estratégia | Stateless. O backend atua como **OAuth2 Resource Server** e valida o JWT emitido pelo Supabase contra o JWKS do projeto. |
-| JWKS URI | `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` |
-| Issuer | `https://<project-ref>.supabase.co/auth/v1` |
-| Correlação de identidade | O claim `sub` do JWT (UUID do Supabase) é a chave de correlação com `tb_usuarios` pela coluna `supabase_user_id` |
-| Autorização | Por papel (`CLIENTE`, `PROFISSIONAL`, `ADMIN`), resolvido no backend a partir de `tb_usuarios` — **nunca** confiando em claim editável pelo cliente |
+| Provedor de identidade | **Próprio** — módulo `autenticacao` |
+| Estratégia | Stateless. O backend **emite e valida** JWT próprio, assinado com par de chaves RSA |
+| Emissão do token | `NimbusJwtEncoder` do Spring Security, já disponível via `spring-security-oauth2-jose`. **Não requer biblioteca de JWT adicional** |
+| Validação do token | `NimbusJwtDecoder` com a chave pública RSA local. O backend segue sendo **OAuth2 Resource Server**, agora contra emissor próprio |
+| Access token | 15 minutos |
+| Refresh token | 30 dias. Persistido em `tb_refresh_tokens`, **rotacionado a cada uso** e revogável individualmente ou por usuário |
+| Correlação de identidade | O claim `sub` é o `id` (UUID) de `tb_usuarios`. **Nenhum papel viaja dentro do token** |
+| Autorização | Por papel (`CLIENTE`, `PROFISSIONAL`, `ADMIN`), resolvido no backend a partir de `tb_perfis` — **nunca** confiando em claim editável pelo cliente |
 | CORS | Restrito por ambiente via `CorsConfigurationSource`; origens definidas por profile |
 | CSRF | Desabilitado (API stateless, sem cookie de sessão) |
-| Encoder de senha | Não aplicável — credenciais são custodiadas pelo Supabase Auth |
-| Segredos | Nenhuma chave em código. `SUPABASE_SERVICE_ROLE_KEY` **somente no backend**, jamais exposta ao frontend |
+| Encoder de senha | **Argon2id** via `Argon2PasswordEncoder`. O hash vive em `tb_usuarios.hash_senha`; a senha em claro **nunca** é persistida, logada nem devolvida |
+| Recuperação de senha | Token opaco de uso único, expiração curta, **armazenado com hash** em `tb_tokens_recuperacao` e invalidado no primeiro uso |
+| Segredos | Nenhuma chave em código. Chave privada RSA, credenciais do MinIO e do SMTP vivem em variável de ambiente, **somente no backend** |
+
+> [!IMPORTANT]
+> **Por que o refresh token é rotacionado.** Sem rotação, um refresh token vazado vale 30 dias
+> para o atacante e a vítima não percebe nada. Com rotação, o token usado é invalidado e um novo
+> é emitido — se o atacante usar o antigo, o backend detecta o reuso e revoga a família inteira,
+> derrubando as duas sessões. A vítima é forçada a logar de novo, que é o sinal de que algo houve.
+
+> [!WARNING]
+> **O que assumimos ao sair do Supabase Auth.** Hash de senha, emissão e rotação de token,
+> expiração de sessão, recuperação de senha e envio de e-mail passam a ser código nosso — e
+> código nosso tem bug nosso. Autenticação é a superfície onde bug custa mais caro. A decisão foi
+> tomada com esse custo em vista e está registrada no
+> [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md).
 
 ### 3.3 Testes
 
@@ -150,13 +171,14 @@ no editor ficam ordens de grandeza mais rápidos, mantendo a mesma semântica de
 | **Estado e dados** | `@tanstack/react-query@5.101.x`, `zustand@5.0.x` |
 | **Estilo e UI** | `tailwindcss@4.3.x`, `lucide-react`, `clsx`, `tailwind-merge`, `radix-ui` |
 | **Formulários** | `react-hook-form`, `zod@4.4.x`, `@hookform/resolvers` |
-| **Integração** | `@supabase/supabase-js`, `@supabase/ssr` |
+| **Integração** | Nenhuma. O acesso ao backend usa exclusivamente o `fetch` nativo encapsulado em `src/api/client.ts` |
 
-#### Removido em relação à versão 1.0.0
+#### Removido
 
 | Pacote | Motivo |
 |---|---|
 | `axios` | O `fetch` nativo do Next 16 participa do cache e da revalidação do App Router; o axios contorna esse mecanismo. O cliente HTTP próprio vive em `src/api/client.ts`. |
+| `@supabase/supabase-js`, `@supabase/ssr` | Consequência do [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md). A sessão passa a ser gerida pelo backend próprio: o access token fica em memória e o refresh token em cookie `httpOnly` emitido pela API. |
 
 ### 4.2 Política de Fronteira
 
@@ -187,27 +209,29 @@ no meio de um componente.
 | Item | Valor |
 |---|---|
 | Engine | PostgreSQL 18 |
-| Hospedagem | Supabase (instância gerenciada) |
+| Hospedagem | **Auto-hospedada** — container Docker em desenvolvimento, instância dedicada em produção |
 | Ferramenta de migration | Flyway 13.3.x |
 | Caminho das migrations | `backend/src/main/resources/db/migration` |
 
 **Política de migration:** toda alteração de schema nasce como migration versionada do Flyway.
-É **proibido** alterar schema pelo painel do Supabase — a alteração some do histórico e o próximo
-`flyway migrate` diverge.
+É **proibido** alterar schema manualmente em qualquer ambiente — a alteração some do histórico e o
+próximo `flyway migrate` diverge.
 
 ### 5.1 Schemas
 
 | Schema | Papel |
 |---|---|
-| `public` | Tabelas de domínio da aplicação, gerenciadas pelo Flyway |
-| `auth` | Schema proprietário do Supabase Auth. Somente leitura para a aplicação; **jamais** versionado pelo Flyway |
+| `public` | Tabelas de domínio da aplicação, **integralmente** gerenciadas pelo Flyway |
+
+Com a saída do Supabase, o schema `auth` deixou de existir. **Toda** tabela do banco, credencial
+inclusive, é versionada pelo Flyway e pertence à aplicação.
 
 ### 5.2 Convenções de Nomenclatura
 
 | Elemento | Convenção | Exemplo |
 |---|---|---|
 | Tabelas | `snake_case` plural com prefixo `tb_` | `tb_usuarios`, `tb_contratacoes` |
-| Colunas | `snake_case` | `created_at`, `usuario_id` |
+| Colunas | `snake_case` **em português** | `criado_em`, `usuario_id` |
 | Chave primária | `id UUID DEFAULT gen_random_uuid()` | `id` |
 | Chave estrangeira | `fk_{tabela_origem}_{tabela_destino}` | `fk_contratacoes_profissionais` |
 | Índice | `idx_{tabela}_{coluna}` | `idx_profissionais_cidade` |
@@ -216,32 +240,45 @@ no meio de um componente.
 
 ---
 
-## 6. Serviços Externos — Supabase
+## 6. Serviços Externos
 
-**Papel:** Backend as a Service — banco gerenciado, identidade e armazenamento de arquivos.
+O [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md) removeu o Supabase. Sobraram
+dois serviços externos, ambos auto-hospedáveis e ambos isolados atrás de adapter em `lib/`.
 
-### 6.1 O que é usado
+### 6.1 MinIO — armazenamento de objetos
 
-| Capacidade | Uso |
+| Item | Definição |
 |---|---|
-| **Database** | PostgreSQL 18 gerenciado, acessado pelo backend via JDBC e versionado por Flyway |
-| **Auth** | Cadastro, login, refresh token e recuperação de senha. Emissor do JWT validado pelo backend |
-| **Storage** | Bucket `portfolios` para as imagens de portfólio dos profissionais e bucket `avatares` para fotos de perfil |
+| Papel | Armazenamento de objetos compatível com a **API S3**, auto-hospedado |
+| Por quê | Sobe no `docker-compose` junto do PostgreSQL, tem custo zero, e fala a API S3 — que é o padrão de mercado. Trocar por S3 real depois muda **uma pasta** |
+| Biblioteca | `software.amazon.awssdk:s3` |
+| Adapter | `br.com.bicoemcasa.api.lib.armazenamento` |
 
-### 6.2 O que **não** é usado
-
-| Capacidade | Por que não |
+| Bucket | Conteúdo |
 |---|---|
-| **RLS como autorização primária** | A autorização de negócio é responsabilidade do backend Spring. O RLS entra apenas como defesa em profundidade, **nunca** como única barreira. |
-| **Acesso direto via PostgREST** | O frontend **não** acessa tabelas de domínio direto pelo `supabase-js`. Todo dado de negócio passa pela API Spring. |
+| `portfolios` | Imagens de portfólio dos profissionais (`RF003`) |
+| `anexos` | Fotos anexadas às solicitações de orçamento (`RF015`) |
+| `avatares` | Fotos de perfil |
 
-**Escopo no cliente:** no frontend, o `supabase-js` é usado exclusivamente para o fluxo de
-autenticação e para upload assinado no Storage.
+**Padrão de acesso:** o backend gera **URL pré-assinada** com expiração curta. O navegador faz
+upload e download direto no MinIO, sem que os bytes trafeguem pela API. Isso mantém a aplicação
+fora do caminho de arquivos grandes — que é o que derruba uma API primeiro sob carga.
 
-**Onde vive o adapter:**
+### 6.2 SMTP — e-mail transacional
 
-- Backend — `br.com.bicoemcasa.api.lib.supabase`
-- Frontend — `src/api/` (cliente) e `src/middleware.ts` (sessão)
+| Item | Definição |
+|---|---|
+| Papel | Envio de e-mail transacional |
+| Por quê | A recuperação de senha (`RF001`) deixou de ser responsabilidade do Supabase Auth |
+| Escopo | **Somente** transacional: recuperação de senha e confirmação de cadastro. Não é canal de marketing |
+| Adapter | `br.com.bicoemcasa.api.lib.email` |
+
+### 6.3 Pendente de decisão — geocodificação
+
+`RF013` exige distância em quilômetros, o que depende de geocodificar endereço em latitude e
+longitude. **O fornecedor ainda não foi escolhido** e precisa de ADR próprio antes de qualquer
+implementação. Enquanto isso, `tb_enderecos` já nasce com as colunas de coordenada, para que a
+migration não precise ser refeita.
 
 ---
 
@@ -389,7 +426,8 @@ backend/
     │   │   ├── config/          # SecurityFilterChain, CORS, OpenAPI, Jackson,
     │   │   │                    # beans globais e @ConfigurationProperties
     │   │   ├── lib/             # adapters de serviços EXTERNOS
-    │   │   │   └── supabase/    # SupabaseProperties, SupabaseStorageClient, JwtDecoder
+    │   │   │   ├── armazenamento/  # ClienteArmazenamentoS3 (upload e URL pré-assinada)
+    │   │   │   └── email/          # EnviadorEmail (e-mail transacional)
     │   │   ├── comum/           # núcleo compartilhado entre módulos
     │   │   │   ├── excecao/     # exceções de domínio + @RestControllerAdvice (RFC 9457)
     │   │   │   ├── paginacao/   # tipos de paginação e ordenação da API
@@ -416,11 +454,11 @@ Três pastas transversais com responsabilidades que não se sobrepõem:
 | Pasta | Responsabilidade | Regra |
 |---|---|---|
 | `config/` | Configuração **da nossa aplicação**: security, CORS, OpenAPI, beans | Só configuração, sem lógica |
-| `lib/` | Adapters de serviços **externos** (Supabase, e-mail, mapas) | **Nada de regra de negócio.** Só tradução entre o mundo externo e tipos internos |
+| `lib/` | Adapters de serviços **externos** (armazenamento, e-mail, mapas) | **Nada de regra de negócio.** Só tradução entre o mundo externo e tipos internos |
 | `comum/` | Núcleo compartilhado entre módulos | Não depende de nenhum módulo; é dependido por todos |
 
-O valor de `lib/` é o isolamento do fornecedor: se o Supabase for trocado amanhã, **só essa
-pasta muda**.
+O valor de `lib/` é o isolamento do fornecedor: se o MinIO virar S3 da AWS amanhã, **só essa
+pasta muda**. A saída do Supabase foi o primeiro teste dessa regra — e ela se pagou.
 
 #### Estrutura interna de um módulo
 
@@ -497,7 +535,7 @@ acoplamento acidental simplesmente não tem por onde entrar.
 ```
 frontend/
 └── src/
-    ├── middleware.ts             # refresh da sessão Supabase e proteção de rotas
+    ├── middleware.ts             # refresh da sessão contra a API própria e proteção de rotas
     ├── app/                      # App Router — só roteamento, layout e composição
     │   ├── (publico)/            # landing, busca de profissionais, páginas abertas
     │   ├── (auth)/               # login, cadastro, recuperação de senha
