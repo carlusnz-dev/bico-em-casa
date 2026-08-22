@@ -40,6 +40,8 @@ troca de versão de framework não deveria sujar o diff dos requisitos.
 | [`requisitos.json`](./requisitos.json) | **Fonte da verdade dos requisitos.** Um objeto por requisito, com módulos, entidades, status e origem | Para automatizar validação ou gerar a matriz |
 | [`requisitos.md`](./requisitos.md) | Espelho legível dos requisitos, com o histórico da revisão | Para **entender** o escopo e o que mudou desde a tabela de aula |
 | [`matriz-rastreabilidade.md`](./matriz-rastreabilidade.md) | **Derivado.** Requisito → módulo → entidade, e a leitura inversa | Antes de mexer num módulo, para saber o que ele precisa continuar cumprindo |
+| [`modelo-dados.dbml`](./modelo-dados.dbml) | As 18 tabelas em DBML, colável no dbdiagram.io | Para ver o diagrama ou escrever a migration |
+| [`modelo-dados.md`](./modelo-dados.md) | O modelo explicado: decisões, o par serviço/contratação e a política de exclusão | Para **entender** por que o schema é assim |
 | [`adr/`](./adr/) | Decisões de arquitetura e seus porquês | Antes de questionar ou mudar uma escolha estrutural |
 | [`planos/`](./planos/) | Planos de execução, escritos antes do trabalho | Ao iniciar um trabalho de mais de uma sessão |
 | [`relatorios/`](./relatorios/) | Relatórios de sessão, escritos depois | Para reconstruir o que aconteceu e quando |

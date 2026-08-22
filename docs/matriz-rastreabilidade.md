@@ -27,8 +27,9 @@ A matriz responde três perguntas que aparecem sempre e nunca têm resposta pron
 3. **"Esse módulo tem requisito que o justifique?"** — módulo sem requisito é escopo inventado;
    requisito sem módulo é escopo esquecido
 
-O campo **Entidades** é **projeção**, não fato: as migrations do Flyway ainda não existem. Ele
-vira fato quando o schema for escrito, e é revisado nesse momento.
+O campo **Entidades** deixou de ser projeção: as tabelas estão definidas em
+[`modelo-dados.dbml`](./modelo-dados.dbml). Vira fato pleno quando as migrations do Flyway
+existirem — o nome da tabela já é o definitivo, o DDL ainda não foi escrito.
 
 ---
 
@@ -64,7 +65,7 @@ vira fato quando o schema for escrito, e é revisado nesse momento.
 | **RNF002** | autenticacao, usuarios | tb_usuarios, tb_perfis | mvp | ADR-0006; CLAUDE.md, seção Nunca faça |
 | **RNF003** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
 | **RNF004** | transversal | — | mvp | ADR-0006 |
-| **RNF005** | servicos, profissionais | tb_servicos, tb_profissionais | mvp | Revisão de requisitos 2026-08-22 |
+| **RNF005** | servicos, profissionais | tb_servicos, tb_perfis | mvp | Revisão de requisitos 2026-08-22 |
 | **RNF006** | transversal | — | mvp | design-sistema.md §10.2 |
 | **RNF007** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
 | **RNF008** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
@@ -98,6 +99,8 @@ Leitura inversa. Antes de mexer num módulo, esta é a lista do que ele precisa 
 | `servicos` | 6 | RF004, RF009, RF010, RF011, RF020, RNF005 |
 | `transversal` | 12 | RNF003, RNF004, RNF006, RNF007, RNF008, RNF009, RNF010, RNF011, RNF012, RNF013, RNF016, RNF022 |
 | `usuarios` | 8 | RF002, RF020, RF021, RF022, RNF002, RNF014, RNF015, RNF022 |
+
+---
 
 ## 3. Leitura da cobertura
 

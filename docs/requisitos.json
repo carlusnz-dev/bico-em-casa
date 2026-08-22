@@ -456,7 +456,7 @@
     ],
     "entidades": [
       "tb_servicos",
-      "tb_profissionais"
+      "tb_perfis"
     ],
     "status": "mvp",
     "origem": "Revisão de requisitos 2026-08-22",
