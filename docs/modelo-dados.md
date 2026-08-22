@@ -196,6 +196,11 @@ dado dela.
 - [ ] **Índice geoespacial.** Se `RF013` filtrar por raio, o índice B-tree em `(latitude,
       longitude)` não serve — vai precisar de PostGIS ou de `earthdistance`. Decidir junto do ADR-0007
 - [ ] **`unidade_preco` está como `varchar`** com valores fixos. Vira `enum` se a lista estabilizar
+- [ ] **Incorporar o que veio do rascunho de 2026-08-22**
+      ([`modelo-dados-rascunho-2026-08-22.dbml`](./modelo-dados-rascunho-2026-08-22.dbml)):
+      `ultimo_login` em `tb_usuarios`, `contratacao_id` em `tb_denuncias` e `slug_url` único em
+      `tb_portfolios`. O rascunho ainda não tem controle de login, auditoria e endereço — o autor
+      atualiza numa próxima rodada
 
 ---
 
