@@ -1,0 +1,51 @@
+name: Paridade da Documentação
+
+# docs/arquitetura-sistema.json e a fonte da verdade da arquitetura e
+# docs/design-sistema.md e o espelho legivel dele. Alterar um sem alterar o
+# outro deixa a documentacao mentindo, entao o PR falha.
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  paridade:
+    name: Verificar paridade JSON ↔ Markdown
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validar sintaxe do JSON de arquitetura
+        run: |
+          jq empty docs/arquitetura-sistema.json
+          echo "docs/arquitetura-sistema.json e um JSON valido"
+
+      - name: Verificar paridade
+        run: |
+          base="origin/${{ github.base_ref }}"
+          alterados="$(git diff --name-only "$base"...HEAD)"
+
+          json_mudou=false
+          md_mudou=false
+          grep -qx 'docs/arquitetura-sistema.json' <<< "$alterados" && json_mudou=true
+          grep -qx 'docs/design-sistema.md'        <<< "$alterados" && md_mudou=true
+
+          if [ "$json_mudou" = true ] && [ "$md_mudou" = false ]; then
+            echo "::error file=docs/design-sistema.md::arquitetura-sistema.json foi alterado sem atualizar design-sistema.md. As duas alteracoes devem ir no mesmo PR."
+            exit 1
+          fi
+
+          if [ "$md_mudou" = true ] && [ "$json_mudou" = false ]; then
+            echo "::error file=docs/arquitetura-sistema.json::design-sistema.md foi alterado sem alterar arquitetura-sistema.json. O JSON e a fonte da verdade e deve ser alterado primeiro."
+            exit 1
+          fi
+
+          if [ "$json_mudou" = true ]; then
+            echo "Paridade OK: os dois arquivos foram alterados neste PR."
+          else
+            echo "Nenhuma alteracao de arquitetura neste PR."
+          fi
