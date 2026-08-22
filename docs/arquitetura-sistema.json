@@ -1,0 +1,445 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project_metadata": {
+    "name": "bico-em-casa",
+    "version": "2.0.0",
+    "updated_at": "2026-08-22",
+    "description": "Plataforma de contratacao de profissionais autonomos para servicos rapidos. O cliente encontra o profissional, consulta o portfolio (opcional) e contrata sem burocracia.",
+    "architecture_pattern": "Arquitetura Modular por Dominio (Modular Monolith) com Ports & Adapters na fronteira",
+    "source_of_truth": "docs/arquitetura-sistema.json",
+    "parity_document": "docs/design-sistema.md"
+  },
+
+  "documentation_governance": {
+    "rule": "Este JSON e a UNICA fonte da verdade da arquitetura. docs/design-sistema.md e um espelho legivel dele.",
+    "order_of_change": [
+      "1. Alterar docs/arquitetura-sistema.json",
+      "2. Refletir a MESMA alteracao em docs/design-sistema.md no mesmo commit",
+      "3. Registrar o porque em um ADR sob docs/adr/ quando a mudanca for estrutural"
+    ],
+    "forbidden": [
+      "Editar design-sistema.md sem antes editar arquitetura-sistema.json",
+      "Commitar alteracao em arquitetura-sistema.json sem atualizar design-sistema.md",
+      "Introduzir pasta ou camada nao descrita aqui sem ADR de aprovacao"
+    ],
+    "adr": {
+      "path": "docs/adr/",
+      "template": "docs/adr/TEMPLATE.md",
+      "numbering": "NNNN-titulo-em-kebab-case.md, sequencial a partir de 0001",
+      "statuses": ["Proposto", "Aceito", "Rejeitado", "Depreciado", "Substituido por ADR-NNNN"]
+    }
+  },
+
+  "backend": {
+    "runtime": "Java 21 (LTS)",
+    "framework": "Spring Boot 4.1.x",
+    "spring_framework": "7.0.x",
+    "spring_security": "7.1.x",
+    "build_tool": "Maven",
+    "base_package": "br.com.bicoemcasa.api",
+    "rationale": {
+      "spring_boot_4": "A linha 3.5.x encerrou o suporte OSS em 30/06/2026. A 4.1.x e a linha GA suportada e mantem Java 21 como runtime valido (baseline minimo 17).",
+      "maven": "Padrao dominante no ecossistema Spring, integracao direta com Spring Initializr e menor curva para o time."
+    },
+    "dependencies": {
+      "core": [
+        "org.springframework.boot:spring-boot-starter-web",
+        "org.springframework.boot:spring-boot-starter-validation",
+        "org.springframework.boot:spring-boot-starter-actuator"
+      ],
+      "database_and_persistence": [
+        "org.springframework.boot:spring-boot-starter-data-jpa",
+        "org.postgresql:postgresql",
+        "org.flywaydb:flyway-core:13.3.x",
+        "org.flywaydb:flyway-database-postgresql:13.3.x"
+      ],
+      "security": [
+        "org.springframework.boot:spring-boot-starter-security",
+        "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+      ],
+      "productivity_and_mapping": [
+        "org.projectlombok:lombok",
+        "org.mapstruct:mapstruct:1.6.3",
+        "org.mapstruct:mapstruct-processor:1.6.3"
+      ],
+      "documentation": [
+        "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.x"
+      ],
+      "external_integrations": [
+        "Spring WebClient (RestClient) para a Storage API do Supabase"
+      ],
+      "removed": [
+        {
+          "artifact": "io.jsonwebtoken:jjwt-*",
+          "reason": "A emissao e assinatura de token passou a ser responsabilidade do Supabase Auth. O backend apenas VALIDA o JWT via JWKS como OAuth2 Resource Server, o que dispensa biblioteca propria de JWT."
+        }
+      ]
+    },
+    "security_configuration": {
+      "identity_provider": "Supabase Auth",
+      "strategy": "Stateless. O backend atua como OAuth2 Resource Server e valida o JWT emitido pelo Supabase contra o endpoint JWKS do projeto.",
+      "jwks_uri": "https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json",
+      "issuer": "https://<project-ref>.supabase.co/auth/v1",
+      "claim_mapping": "O claim 'sub' do JWT (UUID do Supabase) e a chave de correlacao com a tabela tb_usuarios via coluna supabase_user_id.",
+      "authorization": "Autorizacao por papel (CLIENTE, PROFISSIONAL, ADMIN) resolvida no backend a partir de tb_usuarios, nunca confiando em claim editavel pelo cliente.",
+      "cors": "Restrito por ambiente via CorsConfigurationSource; origens definidas por profile.",
+      "csrf": "Desabilitado (API stateless sem cookie de sessao).",
+      "password_encoder": "Nao aplicavel: credenciais sao custodiadas pelo Supabase Auth.",
+      "secrets": "Nenhuma chave em codigo. SUPABASE_SERVICE_ROLE_KEY somente no backend, jamais exposta ao frontend."
+    },
+    "testing_modules": {
+      "unit_and_integration": [
+        "org.springframework.boot:spring-boot-starter-test",
+        "org.junit.jupiter:junit-jupiter",
+        "org.mockito:mockito-core",
+        "org.mockito:mockito-junit-jupiter",
+        "org.assertj:assertj-core"
+      ],
+      "containers_and_db_mock": [
+        "org.testcontainers:testcontainers:2.0.x",
+        "org.testcontainers:junit-jupiter:2.0.x",
+        "org.testcontainers:postgresql:2.0.x"
+      ],
+      "security_testing": [
+        "org.springframework.security:spring-security-test"
+      ],
+      "policy": "Teste de integracao sobe PostgreSQL 18 real via Testcontainers. Proibido validar regra de negocio contra banco em memoria (H2)."
+    }
+  },
+
+  "frontend": {
+    "framework": "Next.js 16.3.x (App Router)",
+    "runtime": "Node.js 24 LTS",
+    "language": "TypeScript 7.0.x (strict mode)",
+    "rationale": {
+      "typescript_7": "Compilador nativo em Go, GA desde 08/07/2026. Typecheck e feedback de editor ordens de grandeza mais rapidos, com a mesma semantica de tipos da linha 5.x."
+    },
+    "dependencies": {
+      "core": [
+        "next@16.3.x",
+        "react@19.2.x",
+        "react-dom@19.2.x",
+        "typescript@7.0.x"
+      ],
+      "state_and_data_fetching": [
+        "@tanstack/react-query@5.101.x",
+        "zustand@5.0.x"
+      ],
+      "styling_and_ui": [
+        "tailwindcss@4.3.x",
+        "lucide-react",
+        "clsx",
+        "tailwind-merge",
+        "radix-ui"
+      ],
+      "forms_and_validation": [
+        "react-hook-form",
+        "zod@4.4.x",
+        "@hookform/resolvers"
+      ],
+      "backend_integration": [
+        "@supabase/supabase-js",
+        "@supabase/ssr"
+      ],
+      "removed": [
+        {
+          "artifact": "axios",
+          "reason": "O fetch nativo do Next 16 participa do cache e da revalidacao do App Router; axios contorna esse mecanismo. O cliente HTTP proprio vive em src/api/client.ts."
+        }
+      ]
+    },
+    "boundary_policy": {
+      "principle": "O frontend nao conhece nem confia na implementacao do backend. Todo contato atravessa src/api/, que e a unica fronteira.",
+      "rules": [
+        "Somente src/api/ conhece URLs, headers e formato de payload do backend",
+        "Toda resposta do backend e validada por schema Zod em src/api/contratos/ antes de entrar na aplicacao",
+        "Os tipos da aplicacao sao INFERIDOS dos schemas Zod (z.infer), nunca escritos a mao em paralelo",
+        "Componentes e hooks jamais chamam fetch diretamente: consomem os hooks de src/api/",
+        "Erro de rede ou payload invalido e normalizado em src/api/ para um tipo de erro unico da aplicacao"
+      ]
+    },
+    "testing_modules": {
+      "unit_and_component": [
+        "vitest@4.1.x",
+        "@testing-library/react",
+        "@testing-library/jest-dom",
+        "@testing-library/user-event",
+        "jsdom"
+      ],
+      "e2e": [
+        "@playwright/test@1.62.x"
+      ]
+    }
+  },
+
+  "database": {
+    "engine": "PostgreSQL 18",
+    "hosting": "Supabase (instancia gerenciada)",
+    "migration_tool": "Flyway 13.3.x",
+    "migration_path": "backend/src/main/resources/db/migration",
+    "migration_policy": "Toda alteracao de schema nasce como migration versionada do Flyway. Proibido alterar schema pelo painel do Supabase.",
+    "schemas": {
+      "public": "Tabelas de dominio da aplicacao, gerenciadas pelo Flyway",
+      "auth": "Schema proprietario do Supabase Auth. Somente leitura para a aplicacao; jamais versionado pelo Flyway"
+    },
+    "naming_conventions": {
+      "tables": "snake_case plural com prefixo tb_ (ex: tb_usuarios, tb_contratacoes)",
+      "columns": "snake_case (ex: created_at, usuario_id)",
+      "primary_keys": "id UUID DEFAULT gen_random_uuid()",
+      "foreign_keys": "fk_{tabela_origem}_{tabela_destino}",
+      "indexes": "idx_{tabela}_{coluna}",
+      "unique_constraints": "uq_{tabela}_{coluna}",
+      "check_constraints": "ck_{tabela}_{regra}"
+    }
+  },
+
+  "external_services": {
+    "supabase": {
+      "role": "Backend as a Service: banco gerenciado, identidade e armazenamento de arquivos",
+      "capabilities_used": {
+        "database": "PostgreSQL 18 gerenciado, acessado pelo backend via JDBC e versionado por Flyway",
+        "auth": "Cadastro, login, refresh token e recuperacao de senha. Emissor do JWT validado pelo backend",
+        "storage": "Bucket 'portfolios' para as imagens de portfolio dos profissionais e bucket 'avatares' para fotos de perfil"
+      },
+      "capabilities_not_used": {
+        "row_level_security_as_primary_authz": "A autorizacao de negocio e responsabilidade do backend Spring. RLS entra apenas como defesa em profundidade, nunca como unica barreira.",
+        "postgrest_direct_access": "O frontend NAO acessa tabelas de dominio direto pelo supabase-js. Todo dado de negocio passa pela API Spring."
+      },
+      "client_side_scope": "No frontend, o supabase-js e usado exclusivamente para o fluxo de autenticacao e para upload assinado no Storage.",
+      "adapter_location": "backend: br.com.bicoemcasa.api.lib.supabase | frontend: src/api/ (cliente) e src/app (middleware de sessao)"
+    }
+  },
+
+  "git_and_version_control": {
+    "branching_strategy": {
+      "main": "Producao. Deploy versionado por tags vX.Y.Z. Commits diretos proibidos.",
+      "develop": "Staging/homologacao. Branch de integracao das features concluidas.",
+      "feature": "feat/<ticket-id>-<descricao-curta>, originada de develop e mesclada via Pull Request",
+      "bugfix": "fix/<ticket-id>-<descricao-curta>, originada de develop",
+      "hotfix": "hotfix/<ticket-id>-<descricao-curta>, originada de main e retroportada para develop",
+      "docs": "docs/<descricao-curta> para alteracoes exclusivas de documentacao"
+    },
+    "conventional_commits": {
+      "format": "<type>(<scope>): <descricao curta>",
+      "types": [
+        "feat: nova funcionalidade para o usuario",
+        "fix: correcao de bug",
+        "docs: alteracoes apenas em documentacao",
+        "style: formatacao sem alteracao logica",
+        "refactor: refatoracao sem alterar comportamento",
+        "perf: melhoria de performance",
+        "test: adicao ou correcao de testes",
+        "chore: build, dependencias ou ferramentas de CI"
+      ],
+      "scopes": ["backend", "frontend", "db", "docs", "ci", "<nome-do-modulo>"],
+      "rules": [
+        "Descricao em portugues, modo imperativo",
+        "Sem ponto final no titulo",
+        "Limite de 72 caracteres no cabecalho",
+        "Alteracao em arquitetura-sistema.json e design-sistema.md vao no MESMO commit"
+      ]
+    }
+  },
+
+  "ci_cd_github_actions": {
+    "workflows": [
+      {
+        "name": "backend-ci.yml",
+        "triggers": ["pull_request -> develop", "pull_request -> main"],
+        "steps": [
+          "Checkout do repositorio",
+          "Setup Java 21 (Temurin) com cache Maven",
+          "Verificar formatacao com Spotless",
+          "Executar testes unitarios e de integracao com Testcontainers",
+          "Build do artefato JAR (mvn -B package)",
+          "Upload de relatorio de cobertura (JaCoCo)"
+        ]
+      },
+      {
+        "name": "frontend-ci.yml",
+        "triggers": ["pull_request -> develop", "pull_request -> main"],
+        "steps": [
+          "Checkout do repositorio",
+          "Setup Node.js 24 com cache de dependencias",
+          "Executar ESLint e Prettier em modo check",
+          "Executar typecheck (tsc --noEmit)",
+          "Executar testes unitarios com Vitest",
+          "Build do Next.js (next build)"
+        ]
+      },
+      {
+        "name": "docs-parity.yml",
+        "triggers": ["pull_request -> develop", "pull_request -> main"],
+        "steps": [
+          "Falhar o build se docs/arquitetura-sistema.json foi alterado sem alteracao em docs/design-sistema.md no mesmo PR",
+          "Validar que o JSON e sintaticamente valido"
+        ]
+      }
+    ]
+  },
+
+  "code_standards_and_style": {
+    "backend": {
+      "formatter": "Spotless com Google Java Style",
+      "linter": "SonarLint / Checkstyle",
+      "rules": [
+        "Principios SOLID e Clean Code rigorosos",
+        "Tratamento global de excecoes via @RestControllerAdvice com RFC 9457 (ProblemDetail)",
+        "Imutabilidade prioritaria: records para DTOs, colecoes nao modificaveis",
+        "Injecao de dependencia estrita por construtor (campos final)",
+        "Todo service publico tem interface em contrato/ e implementacao em service/ terminada em Impl",
+        "Entidade JPA nunca cruza a fronteira do controller: sempre DTO",
+        "Um modulo so acessa outro pela interface exposta em contrato/, nunca pelo repository alheio"
+      ]
+    },
+    "frontend": {
+      "linter": "ESLint com eslint-config-next e @typescript-eslint/recommended",
+      "formatter": "Prettier com prettier-plugin-tailwindcss",
+      "rules": [
+        "Server Components por padrao; 'use client' apenas para interatividade e hooks",
+        "Componentes funcionais com tipagem explicita de props",
+        "Validacao de entrada e saida com schemas Zod na fronteira src/api/",
+        "Proibido 'any'; use 'unknown' com narrowing por schema",
+        "Nenhum fetch fora de src/api/"
+      ]
+    },
+    "commenting_and_documentation": {
+      "policy": "Codigo autoexplicativo substitui comentario redundante.",
+      "language": "Comentarios, Javadoc e TSDoc em portugues",
+      "allowed_comments": [
+        "Javadoc/TSDoc em interfaces publicas de contrato/ e utilitarios complexos",
+        "Justificativa de decisao de negocio nao trivial ou de complexidade algoritmica",
+        "TODO/FIXME vinculados a um issue explicito (ex: // TODO(BEC-123): revisar apos migracao V2)"
+      ],
+      "forbidden_comments": [
+        "Codigo comentado (dead code)",
+        "Comentario narrando a sintaxe obvia do codigo"
+      ]
+    }
+  },
+
+  "directory_structure": {
+    "repository_root": {
+      "backend/": "Aplicacao Spring Boot (Maven)",
+      "frontend/": "Aplicacao Next.js",
+      "docs/": "Documentacao viva do projeto (design, ADRs, planos, relatorios)",
+      ".claude/": "Configuracao do Claude Code: settings, agentes, comandos e skills",
+      ".github/workflows/": "Pipelines de CI"
+    },
+
+    "backend": {
+      "root": "backend/",
+      "pom.xml": "Manifesto Maven do projeto",
+      "src/main/java/br/com/bicoemcasa/api": {
+        "BicoEmCasaApplication.java": "Classe de entrada da aplicacao",
+        "config/": "Configuracao transversal da aplicacao: SecurityFilterChain, CORS, OpenAPI, Jackson, beans globais e propriedades tipadas (@ConfigurationProperties)",
+        "lib/": {
+          "descricao": "Adapters de servicos EXTERNOS. Isola o fornecedor do resto do sistema: se o Supabase for trocado, so esta pasta muda.",
+          "supabase/": "SupabaseProperties, SupabaseStorageClient (upload/URL assinada) e configuracao do JWKS decoder",
+          "regra": "Nada em lib/ contem regra de negocio. Somente traducao entre o mundo externo e tipos internos."
+        },
+        "comum/": {
+          "descricao": "Nucleo compartilhado entre modulos. Depende de nada e e dependido por todos.",
+          "excecao/": "Excecoes de dominio e @RestControllerAdvice global com RFC 9457",
+          "paginacao/": "Tipos de paginacao e ordenacao padronizados da API",
+          "auditoria/": "Superclasse @MappedSuperclass com created_at, updated_at e auditoria de usuario"
+        },
+        "modulos/": {
+          "descricao": "Um pacote por dominio de negocio. Cada modulo e autocontido e nao acessa o interior de outro.",
+          "modulos_v1": [
+            "autenticacao",
+            "usuarios",
+            "profissionais",
+            "servicos",
+            "contratacoes",
+            "avaliacoes"
+          ],
+          "estrutura_interna_do_modulo": {
+            "controller/": "Endpoints REST (@RestController)",
+            "service/": "Implementacoes das regras de negocio, sufixo Impl",
+            "repository/": "Interfaces Spring Data JPA",
+            "models/": "Entidades JPA e enums do dominio",
+            "dto/": "Records de entrada (request) e saida (response), com Jakarta Validation na entrada",
+            "contrato/": "Interfaces que definem o que uma classe do modulo deve cumprir. Ex.: ProfissionalService (interface) implementada por service/ProfissionalServiceImpl",
+            "mapper/": "OPCIONAL. Mapeadores MapStruct entre entidade e DTO, quando o mapeamento deixa de ser trivial"
+          },
+          "regra_de_pasta_vs_arquivo": {
+            "principio": "A pasta so existe quando ha MAIS DE UM arquivo daquele tipo. Com um unico arquivo, ele fica na raiz do modulo.",
+            "exemplo_modulo_simples": [
+              "modulos/avaliacoes/AvaliacaoController.java",
+              "modulos/avaliacoes/AvaliacaoServiceImpl.java",
+              "modulos/avaliacoes/AvaliacaoService.java  (interface de contrato)",
+              "modulos/avaliacoes/AvaliacaoRepository.java",
+              "modulos/avaliacoes/Avaliacao.java",
+              "modulos/avaliacoes/dto/  (request e response = mais de um arquivo, vira pasta)"
+            ],
+            "exemplo_modulo_composto": [
+              "modulos/contratacoes/controller/ContratacaoController.java",
+              "modulos/contratacoes/controller/ContratacaoStatusController.java",
+              "modulos/contratacoes/service/ContratacaoServiceImpl.java",
+              "modulos/contratacoes/service/ContratacaoStatusServiceImpl.java",
+              "modulos/contratacoes/contrato/ContratacaoService.java",
+              "modulos/contratacoes/contrato/ContratacaoStatusService.java",
+              "modulos/contratacoes/repository/ContratacaoRepository.java",
+              "modulos/contratacoes/models/Contratacao.java",
+              "modulos/contratacoes/models/StatusContratacao.java",
+              "modulos/contratacoes/dto/ContratacaoRequest.java",
+              "modulos/contratacoes/dto/ContratacaoResponse.java"
+            ],
+            "promocao": "Ao surgir o segundo arquivo de um tipo, cria-se a pasta e movem-se AMBOS no mesmo commit."
+          },
+          "regras_de_acoplamento": [
+            "Modulo A chama modulo B apenas pela interface publicada em B/contrato/",
+            "Proibido injetar o repository de outro modulo",
+            "Proibido relacionamento JPA cruzando modulos: referencie pelo id (UUID)"
+          ]
+        }
+      },
+      "src/main/resources": {
+        "db/migration/": "Migrations Flyway versionadas (V1__criar_usuarios.sql, V2__criar_profissionais.sql)",
+        "application.yml": "Configuracao base",
+        "application-dev.yml": "Profile de desenvolvimento",
+        "application-prod.yml": "Profile de producao"
+      },
+      "src/test/java": "Estrutura espelhada de src/main/java, incluindo modulos/, com fixtures e testes de integracao"
+    },
+
+    "frontend": {
+      "root": "frontend/",
+      "src": {
+        "app/": {
+          "descricao": "App Router do Next.js. Apenas roteamento, layout e composicao. Sem regra de negocio.",
+          "(publico)/": "Landing page, busca de profissionais e paginas abertas",
+          "(auth)/": "Login, cadastro e recuperacao de senha",
+          "(app)/": "Area autenticada: painel do cliente e do profissional",
+          "layout.tsx": "Root layout com providers globais (React Query, tema, sessao)",
+          "page.tsx": "Landing page publica",
+          "middleware.ts": "Refresh da sessao Supabase e protecao de rotas (na raiz de src/)"
+        },
+        "components/": {
+          "descricao": "Componentes de interface. Recebem dados por props e nao buscam dados por conta propria.",
+          "ui/": "Componentes atomicos reutilizaveis (Botao, Input, Modal, Card)",
+          "layout/": "Composicoes estruturais (Cabecalho, Rodape, BarraLateral)",
+          "forms/": "Formularios integrados a React Hook Form e aos schemas Zod de src/api/contratos"
+        },
+        "hooks/": {
+          "descricao": "Custom hooks de comportamento e reatividade de UI que nao falam com o backend.",
+          "exemplos": ["useDebounce", "useMediaQuery", "useDisclosure", "useSessao"]
+        },
+        "api/": {
+          "descricao": "A FRONTEIRA. Unica camada que conhece o backend. Tudo que sai daqui ja esta tipado e validado.",
+          "client.ts": "Wrapper do fetch nativo: base URL, injecao do token Supabase, tratamento de status e normalizacao de erro",
+          "erros.ts": "Tipo de erro unico da aplicacao, traduzido a partir do ProblemDetail (RFC 9457) do backend",
+          "contratos/": "Schemas Zod por recurso e tipos inferidos por z.infer. E o contrato do backend expresso em TypeScript",
+          "<recurso>/": "Um arquivo ou pasta por recurso (profissionais, servicos, contratacoes, avaliacoes) com as funcoes de fetch e os hooks TanStack Query correspondentes",
+          "regra_de_pasta_vs_arquivo": "Mesma regra do backend: <recurso>.ts enquanto for um arquivo; vira pasta <recurso>/ ao surgir o segundo."
+        }
+      },
+      "excluded_by_design": {
+        "types/": "Tipos globais nao existem. Todo tipo de dominio nasce inferido dos schemas Zod em src/api/contratos/.",
+        "services/": "Substituida por src/api/, que concentra cliente HTTP, contratos e hooks de dados.",
+        "utils/": "Nao definida nesta versao. Ver docs/adr/ antes de criar."
+      }
+    }
+  }
+}
