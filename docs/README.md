@@ -8,18 +8,26 @@ Request como código.
 ## Regra número um
 
 > [!IMPORTANT]
-> **`arquitetura-sistema.json` é a única fonte da verdade da arquitetura.**
-> `design-sistema.md` é o espelho legível dele.
+> **O JSON manda, o markdown espelha, os dois mudam no mesmo commit.**
 >
-> **Ordem obrigatória de alteração:**
-> 1. Alterar `arquitetura-sistema.json`
-> 2. Refletir a mesma alteração em `design-sistema.md` — **no mesmo commit**
-> 3. Registrar o *porquê* em um ADR quando a mudança for estrutural
+> A regra vale para **dois pares independentes**:
+>
+> | Fonte da verdade | Espelho legível | Derivado |
+> |---|---|---|
+> | `arquitetura-sistema.json` | `design-sistema.md` | — |
+> | `requisitos.json` | `requisitos.md` | `matriz-rastreabilidade.md` |
+>
+> **Ordem obrigatória:** alterar o JSON → refletir no markdown → ADR se a mudança for estrutural.
+> No caso dos requisitos, rodar `/revisar-matriz` para regenerar o derivado.
 >
 > Editar o markdown sem antes editar o JSON é proibido. Divergência entre os dois é bug.
 
 Essa ordem existe porque o JSON é consumível por ferramenta (CI, geradores, validação) e o
 markdown é consumível por gente. Se o markdown liderar, a máquina lê algo que ninguém garantiu.
+
+Os dois pares são **separados de propósito**: arquitetura e requisito mudam por motivos
+diferentes e em ritmos diferentes. Requisito novo não deveria sujar o diff da arquitetura, e
+troca de versão de framework não deveria sujar o diff dos requisitos.
 
 ---
 
@@ -27,8 +35,14 @@ markdown é consumível por gente. Se o markdown liderar, a máquina lê algo qu
 
 | Artefato | O que é | Quando consultar |
 |---|---|---|
-| [`arquitetura-sistema.json`](./arquitetura-sistema.json) | **Fonte da verdade.** Estrutura, versões, dependências e convenções em formato de máquina | Para saber a versão exata de algo ou automatizar validação |
+| [`arquitetura-sistema.json`](./arquitetura-sistema.json) | **Fonte da verdade da arquitetura.** Estrutura, versões, dependências e convenções em formato de máquina | Para saber a versão exata de algo ou automatizar validação |
 | [`design-sistema.md`](./design-sistema.md) | Espelho legível do JSON, com diagramas e exemplos | Para **entender** a arquitetura |
+| [`requisitos.json`](./requisitos.json) | **Fonte da verdade dos requisitos.** Um objeto por requisito, com módulos, entidades, status e origem | Para automatizar validação ou gerar a matriz |
+| [`requisitos.md`](./requisitos.md) | Espelho legível dos requisitos, com o histórico da revisão | Para **entender** o escopo e o que mudou desde a tabela de aula |
+| [`matriz-rastreabilidade.md`](./matriz-rastreabilidade.md) | **Derivado.** Requisito → módulo → entidade, e a leitura inversa | Antes de mexer num módulo, para saber o que ele precisa continuar cumprindo |
+| [`modelo-dados.dbml`](./modelo-dados.dbml) | As 18 tabelas em DBML, colável no dbdiagram.io | Para ver o diagrama ou escrever a migration |
+| [`modelo-dados.md`](./modelo-dados.md) | O modelo explicado: decisões, o par serviço/contratação e a política de exclusão | Para **entender** por que o schema é assim |
+| [`modelo-dados-rascunho-2026-08-22.dbml`](./modelo-dados-rascunho-2026-08-22.dbml) | **Rascunho, não é fonte da verdade.** Revisão feita no dbdiagram, preservada como está | Para recuperar as ideias dessa revisão antes de incorporá-las |
 | [`adr/`](./adr/) | Decisões de arquitetura e seus porquês | Antes de questionar ou mudar uma escolha estrutural |
 | [`planos/`](./planos/) | Planos de execução, escritos antes do trabalho | Ao iniciar um trabalho de mais de uma sessão |
 | [`relatorios/`](./relatorios/) | Relatórios de sessão, escritos depois | Para reconstruir o que aconteceu e quando |

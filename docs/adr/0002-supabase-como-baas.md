@@ -7,8 +7,19 @@
 | **Autor** | Carlos Antunes |
 | **Data** | 2026-08-22 |
 | **Tópico** | Infra |
-| **Status** | Aceito |
+| **Status** | **Substituído por [ADR-0006](./0006-remover-supabase-infraestrutura-propria.md)** (2026-08-22) |
 | **LLM utilizada** | `Claude Opus 5 (Claude Code)` |
+
+---
+
+> [!WARNING]
+> **Esta decisão não vale mais.** O Supabase foi removido do MVP pelo
+> [ADR-0006](./0006-remover-supabase-infraestrutura-propria.md), no mesmo dia em que este ADR foi
+> escrito.
+>
+> O texto abaixo é preservado como registro histórico: o raciocínio continua tecnicamente correto,
+> e o ADR-0006 o contesta pelo objetivo do projeto, não pela técnica. Ler os dois em sequência é a
+> melhor forma de entender o trade-off entre velocidade de entrega e profundidade de aprendizado.
 
 ---
 

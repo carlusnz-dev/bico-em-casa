@@ -9,7 +9,6 @@
     "source_of_truth": "docs/arquitetura-sistema.json",
     "parity_document": "docs/design-sistema.md"
   },
-
   "documentation_governance": {
     "rule": "Este JSON e a UNICA fonte da verdade da arquitetura. docs/design-sistema.md e um espelho legivel dele.",
     "order_of_change": [
@@ -26,10 +25,15 @@
       "path": "docs/adr/",
       "template": "docs/adr/TEMPLATE.md",
       "numbering": "NNNN-titulo-em-kebab-case.md, sequencial a partir de 0001",
-      "statuses": ["Proposto", "Aceito", "Rejeitado", "Depreciado", "Substituido por ADR-NNNN"]
+      "statuses": [
+        "Proposto",
+        "Aceito",
+        "Rejeitado",
+        "Depreciado",
+        "Substituido por ADR-NNNN"
+      ]
     }
   },
-
   "backend": {
     "runtime": "Java 21 (LTS)",
     "framework": "Spring Boot 4.1.x",
@@ -55,7 +59,8 @@
       ],
       "security": [
         "org.springframework.boot:spring-boot-starter-security",
-        "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+        "org.springframework.boot:spring-boot-starter-oauth2-resource-server",
+        "org.bouncycastle:bcprov-jdk18on (requerido pelo Argon2PasswordEncoder)"
       ],
       "productivity_and_mapping": [
         "org.projectlombok:lombok",
@@ -66,26 +71,34 @@
         "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.x"
       ],
       "external_integrations": [
-        "Spring WebClient (RestClient) para a Storage API do Supabase"
+        "software.amazon.awssdk:s3 (cliente S3 para o MinIO)",
+        "org.springframework.boot:spring-boot-starter-mail (e-mail de recuperacao de senha)"
       ],
       "removed": [
         {
           "artifact": "io.jsonwebtoken:jjwt-*",
-          "reason": "A emissao e assinatura de token passou a ser responsabilidade do Supabase Auth. O backend apenas VALIDA o JWT via JWKS como OAuth2 Resource Server, o que dispensa biblioteca propria de JWT."
+          "reason": "Desnecessaria. O Spring Security ja traz Nimbus JOSE via spring-security-oauth2-jose, que emite (NimbusJwtEncoder) e valida (NimbusJwtDecoder) o token. Adicionar jjwt seria uma segunda biblioteca de JWT no mesmo classpath."
+        },
+        {
+          "artifact": "Supabase (todo o BaaS)",
+          "reason": "Removido pelo ADR-0006. Identidade, banco e armazenamento passam a ser auto-hospedados para permitir estudo aprofundado de banco de dados, customizacao e controle de custo e de seguranca."
         }
       ]
     },
     "security_configuration": {
-      "identity_provider": "Supabase Auth",
-      "strategy": "Stateless. O backend atua como OAuth2 Resource Server e valida o JWT emitido pelo Supabase contra o endpoint JWKS do projeto.",
-      "jwks_uri": "https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json",
-      "issuer": "https://<project-ref>.supabase.co/auth/v1",
-      "claim_mapping": "O claim 'sub' do JWT (UUID do Supabase) e a chave de correlacao com a tabela tb_usuarios via coluna supabase_user_id.",
-      "authorization": "Autorizacao por papel (CLIENTE, PROFISSIONAL, ADMIN) resolvida no backend a partir de tb_usuarios, nunca confiando em claim editavel pelo cliente.",
+      "identity_provider": "Propria. Modulo autenticacao do proprio backend.",
+      "strategy": "Stateless. O backend emite e valida JWT proprio assinado com par de chaves RSA. Access token de curta duracao acompanhado de refresh token persistido, rotacionado e revogavel.",
+      "token_issuing": "NimbusJwtEncoder do Spring Security, ja disponivel via spring-security-oauth2-jose. Nao requer biblioteca de JWT adicional.",
+      "token_validation": "NimbusJwtDecoder configurado com a chave publica RSA local. O backend segue atuando como OAuth2 Resource Server, agora contra emissor proprio.",
+      "access_token_ttl": "15 minutos",
+      "refresh_token_ttl": "30 dias. Persistido em tb_refresh_tokens, rotacionado a cada uso e revogavel individualmente ou por usuario.",
+      "claim_mapping": "O claim sub do JWT e o id (UUID) de tb_usuarios. Nenhum papel viaja dentro do token.",
+      "authorization": "Autorizacao por papel (CLIENTE, PROFISSIONAL, ADMIN) resolvida no backend a partir de tb_perfis, nunca confiando em claim editavel pelo cliente.",
       "cors": "Restrito por ambiente via CorsConfigurationSource; origens definidas por profile.",
       "csrf": "Desabilitado (API stateless sem cookie de sessao).",
-      "password_encoder": "Nao aplicavel: credenciais sao custodiadas pelo Supabase Auth.",
-      "secrets": "Nenhuma chave em codigo. SUPABASE_SERVICE_ROLE_KEY somente no backend, jamais exposta ao frontend."
+      "password_encoder": "Argon2id via Argon2PasswordEncoder do Spring Security. O hash vive em tb_usuarios.hash_senha; a senha em claro nunca e persistida, logada nem devolvida.",
+      "password_reset": "Token opaco de uso unico com expiracao curta, persistido com hash em tb_tokens_recuperacao e invalidado no primeiro uso.",
+      "secrets": "Nenhuma chave em codigo. Chave privada RSA de assinatura, credenciais do MinIO e credenciais de SMTP vivem em variavel de ambiente, somente no backend."
     },
     "testing_modules": {
       "unit_and_integration": [
@@ -106,7 +119,6 @@
       "policy": "Teste de integracao sobe PostgreSQL 18 real via Testcontainers. Proibido validar regra de negocio contra banco em memoria (H2)."
     }
   },
-
   "frontend": {
     "framework": "Next.js 16.3.x (App Router)",
     "runtime": "Node.js 24 LTS",
@@ -138,13 +150,16 @@
         "@hookform/resolvers"
       ],
       "backend_integration": [
-        "@supabase/supabase-js",
-        "@supabase/ssr"
+        "Nenhuma. O acesso ao backend usa exclusivamente o fetch nativo encapsulado em src/api/client.ts."
       ],
       "removed": [
         {
           "artifact": "axios",
           "reason": "O fetch nativo do Next 16 participa do cache e da revalidacao do App Router; axios contorna esse mecanismo. O cliente HTTP proprio vive em src/api/client.ts."
+        },
+        {
+          "artifact": "@supabase/supabase-js, @supabase/ssr",
+          "reason": "Consequencia do ADR-0006. A sessao passa a ser gerida pelo backend proprio; o frontend guarda o access token em memoria e o refresh token em cookie httpOnly emitido pela API."
         }
       ]
     },
@@ -171,20 +186,18 @@
       ]
     }
   },
-
   "database": {
     "engine": "PostgreSQL 18",
-    "hosting": "Supabase (instancia gerenciada)",
+    "hosting": "Auto-hospedada. PostgreSQL em container Docker no desenvolvimento, instancia dedicada em producao.",
     "migration_tool": "Flyway 13.3.x",
     "migration_path": "backend/src/main/resources/db/migration",
-    "migration_policy": "Toda alteracao de schema nasce como migration versionada do Flyway. Proibido alterar schema pelo painel do Supabase.",
+    "migration_policy": "Toda alteracao de schema nasce como migration versionada do Flyway. Alterar schema manualmente em qualquer ambiente e proibido.",
     "schemas": {
-      "public": "Tabelas de dominio da aplicacao, gerenciadas pelo Flyway",
-      "auth": "Schema proprietario do Supabase Auth. Somente leitura para a aplicacao; jamais versionado pelo Flyway"
+      "public": "Tabelas de dominio da aplicacao, integralmente gerenciadas pelo Flyway"
     },
     "naming_conventions": {
       "tables": "snake_case plural com prefixo tb_ (ex: tb_usuarios, tb_contratacoes)",
-      "columns": "snake_case (ex: created_at, usuario_id)",
+      "columns": "snake_case em portugues (ex: criado_em, usuario_id)",
       "primary_keys": "id UUID DEFAULT gen_random_uuid()",
       "foreign_keys": "fk_{tabela_origem}_{tabela_destino}",
       "indexes": "idx_{tabela}_{coluna}",
@@ -192,24 +205,29 @@
       "check_constraints": "ck_{tabela}_{regra}"
     }
   },
-
   "external_services": {
-    "supabase": {
-      "role": "Backend as a Service: banco gerenciado, identidade e armazenamento de arquivos",
-      "capabilities_used": {
-        "database": "PostgreSQL 18 gerenciado, acessado pelo backend via JDBC e versionado por Flyway",
-        "auth": "Cadastro, login, refresh token e recuperacao de senha. Emissor do JWT validado pelo backend",
-        "storage": "Bucket 'portfolios' para as imagens de portfolio dos profissionais e bucket 'avatares' para fotos de perfil"
+    "minio": {
+      "role": "Armazenamento de objetos compativel com a API S3, auto-hospedado",
+      "rationale": "Substitui o Supabase Storage (ADR-0006). Sobe no docker-compose junto do PostgreSQL, tem custo zero e fala a API S3, que e o padrao de mercado.",
+      "buckets_used": {
+        "portfolios": "Imagens de portfolio dos profissionais (RF003)",
+        "anexos": "Fotos anexadas as solicitacoes de orcamento (RF015)",
+        "avatares": "Fotos de perfil"
       },
-      "capabilities_not_used": {
-        "row_level_security_as_primary_authz": "A autorizacao de negocio e responsabilidade do backend Spring. RLS entra apenas como defesa em profundidade, nunca como unica barreira.",
-        "postgrest_direct_access": "O frontend NAO acessa tabelas de dominio direto pelo supabase-js. Todo dado de negocio passa pela API Spring."
-      },
-      "client_side_scope": "No frontend, o supabase-js e usado exclusivamente para o fluxo de autenticacao e para upload assinado no Storage.",
-      "adapter_location": "backend: br.com.bicoemcasa.api.lib.supabase | frontend: src/api/ (cliente) e src/app (middleware de sessao)"
+      "access_pattern": "O backend gera URL pre-assinada com expiracao curta. O navegador faz upload e download direto no MinIO, sem que os bytes trafeguem pela API.",
+      "client_library": "software.amazon.awssdk:s3",
+      "adapter_location": "backend: br.com.bicoemcasa.api.lib.armazenamento"
+    },
+    "smtp": {
+      "role": "Envio de e-mail transacional",
+      "rationale": "Necessario para a recuperacao de senha (RF001), que deixou de ser responsabilidade do Supabase Auth.",
+      "usage": "Somente e-mail transacional: recuperacao de senha e confirmacao de cadastro.",
+      "adapter_location": "backend: br.com.bicoemcasa.api.lib.email"
+    },
+    "_pendente_decisao": {
+      "geocodificacao": "RF013 exige distancia em quilometros, o que depende de geocodificar endereco em latitude e longitude. O fornecedor ainda nao foi escolhido e precisa de ADR proprio antes da implementacao."
     }
   },
-
   "git_and_version_control": {
     "branching_strategy": {
       "main": "Producao. Deploy versionado por tags vX.Y.Z. Commits diretos proibidos.",
@@ -231,7 +249,14 @@
         "test: adicao ou correcao de testes",
         "chore: build, dependencias ou ferramentas de CI"
       ],
-      "scopes": ["backend", "frontend", "db", "docs", "ci", "<nome-do-modulo>"],
+      "scopes": [
+        "backend",
+        "frontend",
+        "db",
+        "docs",
+        "ci",
+        "<nome-do-modulo>"
+      ],
       "rules": [
         "Descricao em portugues, modo imperativo",
         "Sem ponto final no titulo",
@@ -240,12 +265,14 @@
       ]
     }
   },
-
   "ci_cd_github_actions": {
     "workflows": [
       {
         "name": "backend-ci.yml",
-        "triggers": ["pull_request -> develop", "pull_request -> main"],
+        "triggers": [
+          "pull_request -> develop",
+          "pull_request -> main"
+        ],
         "steps": [
           "Checkout do repositorio",
           "Setup Java 21 (Temurin) com cache Maven",
@@ -257,7 +284,10 @@
       },
       {
         "name": "frontend-ci.yml",
-        "triggers": ["pull_request -> develop", "pull_request -> main"],
+        "triggers": [
+          "pull_request -> develop",
+          "pull_request -> main"
+        ],
         "steps": [
           "Checkout do repositorio",
           "Setup Node.js 24 com cache de dependencias",
@@ -269,7 +299,10 @@
       },
       {
         "name": "docs-parity.yml",
-        "triggers": ["pull_request -> develop", "pull_request -> main"],
+        "triggers": [
+          "pull_request -> develop",
+          "pull_request -> main"
+        ],
         "steps": [
           "Falhar o build se docs/arquitetura-sistema.json foi alterado sem alteracao em docs/design-sistema.md no mesmo PR",
           "Validar que o JSON e sintaticamente valido"
@@ -277,7 +310,6 @@
       }
     ]
   },
-
   "code_standards_and_style": {
     "backend": {
       "formatter": "Spotless com Google Java Style",
@@ -317,7 +349,6 @@
       ]
     }
   },
-
   "directory_structure": {
     "repository_root": {
       "backend/": "Aplicacao Spring Boot (Maven)",
@@ -326,7 +357,6 @@
       ".claude/": "Configuracao do Claude Code: settings, agentes, comandos e skills",
       ".github/workflows/": "Pipelines de CI"
     },
-
     "backend": {
       "root": "backend/",
       "pom.xml": "Manifesto Maven do projeto",
@@ -334,9 +364,10 @@
         "BicoEmCasaApplication.java": "Classe de entrada da aplicacao",
         "config/": "Configuracao transversal da aplicacao: SecurityFilterChain, CORS, OpenAPI, Jackson, beans globais e propriedades tipadas (@ConfigurationProperties)",
         "lib/": {
-          "descricao": "Adapters de servicos EXTERNOS. Isola o fornecedor do resto do sistema: se o Supabase for trocado, so esta pasta muda.",
-          "supabase/": "SupabaseProperties, SupabaseStorageClient (upload/URL assinada) e configuracao do JWKS decoder",
-          "regra": "Nada em lib/ contem regra de negocio. Somente traducao entre o mundo externo e tipos internos."
+          "descricao": "Adapters de servicos EXTERNOS. Isola o fornecedor do resto do sistema: trocar o armazenamento ou o provedor de e-mail muda so esta pasta.",
+          "regra": "Nada em lib/ contem regra de negocio. Somente traducao entre o mundo externo e tipos internos.",
+          "armazenamento/": "ArmazenamentoProperties e ClienteArmazenamentoS3 (upload e URL pre-assinada no MinIO)",
+          "email/": "EmailProperties e EnviadorEmail (e-mail transacional de recuperacao de senha)"
         },
         "comum/": {
           "descricao": "Nucleo compartilhado entre modulos. Depende de nada e e dependido por todos.",
@@ -403,7 +434,6 @@
       },
       "src/test/java": "Estrutura espelhada de src/main/java, incluindo modulos/, com fixtures e testes de integracao"
     },
-
     "frontend": {
       "root": "frontend/",
       "src": {
@@ -414,7 +444,7 @@
           "(app)/": "Area autenticada: painel do cliente e do profissional",
           "layout.tsx": "Root layout com providers globais (React Query, tema, sessao)",
           "page.tsx": "Landing page publica",
-          "middleware.ts": "Refresh da sessao Supabase e protecao de rotas (na raiz de src/)"
+          "middleware.ts": "Refresh da sessao contra a API propria e protecao de rotas (na raiz de src/)"
         },
         "components/": {
           "descricao": "Componentes de interface. Recebem dados por props e nao buscam dados por conta propria.",
@@ -424,11 +454,16 @@
         },
         "hooks/": {
           "descricao": "Custom hooks de comportamento e reatividade de UI que nao falam com o backend.",
-          "exemplos": ["useDebounce", "useMediaQuery", "useDisclosure", "useSessao"]
+          "exemplos": [
+            "useDebounce",
+            "useMediaQuery",
+            "useDisclosure",
+            "useSessao"
+          ]
         },
         "api/": {
           "descricao": "A FRONTEIRA. Unica camada que conhece o backend. Tudo que sai daqui ja esta tipado e validado.",
-          "client.ts": "Wrapper do fetch nativo: base URL, injecao do token Supabase, tratamento de status e normalizacao de erro",
+          "client.ts": "Wrapper do fetch nativo: base URL, injecao do access token proprio, refresh transparente, tratamento de status e normalizacao de erro",
           "erros.ts": "Tipo de erro unico da aplicacao, traduzido a partir do ProblemDetail (RFC 9457) do backend",
           "contratos/": "Schemas Zod por recurso e tipos inferidos por z.infer. E o contrato do backend expresso em TypeScript",
           "<recurso>/": "Um arquivo ou pasta por recurso (profissionais, servicos, contratacoes, avaliacoes) com as funcoes de fetch e os hooks TanStack Query correspondentes",
