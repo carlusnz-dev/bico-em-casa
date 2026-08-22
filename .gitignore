@@ -1,3 +1,8 @@
 node_modules
 .vscode
 .env
+
+# Artefatos de aula em formato binario pesado — ficam fora do versionamento.
+# O conteudo relevante ja esta transcrito em docs/requisitos.md e docs/design-sistema.md.
+docs/*.pdf
+*.docx
