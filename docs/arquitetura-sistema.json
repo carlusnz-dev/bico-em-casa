@@ -92,7 +92,7 @@
       "token_validation": "NimbusJwtDecoder configurado com a chave publica RSA local. O backend segue atuando como OAuth2 Resource Server, agora contra emissor proprio.",
       "access_token_ttl": "15 minutos",
       "refresh_token_ttl": "30 dias. Persistido em tb_refresh_tokens, rotacionado a cada uso e revogavel individualmente ou por usuario.",
-      "claim_mapping": "O claim sub do JWT e o id (UUID) de tb_usuarios. Nenhum papel viaja dentro do token.",
+      "claim_mapping": "O claim sub do JWT e o id (BIGINT, ver ADR-0007) de tb_usuarios. Nenhum papel viaja dentro do token.",
       "authorization": "Autorizacao por papel (CLIENTE, PROFISSIONAL, ADMIN) resolvida no backend a partir de tb_perfis, nunca confiando em claim editavel pelo cliente.",
       "cors": "Restrito por ambiente via CorsConfigurationSource; origens definidas por profile.",
       "csrf": "Desabilitado (API stateless sem cookie de sessao).",
@@ -198,7 +198,8 @@
     "naming_conventions": {
       "tables": "snake_case plural com prefixo tb_ (ex: tb_usuarios, tb_contratacoes)",
       "columns": "snake_case em portugues (ex: criado_em, usuario_id)",
-      "primary_keys": "id UUID DEFAULT gen_random_uuid()",
+      "primary_keys": "Mista, definida pelo ADR-0007. Tabelas de cadastro (tb_usuarios, tb_perfis, tb_enderecos, tb_portfolios) usam id BIGINT GENERATED ALWAYS AS IDENTITY. Tabelas transacionais usam id UUID DEFAULT gen_random_uuid().",
+      "polymorphic_references": "Colunas de alvo polimorfico (tb_log_acoes.alvo_id, tb_notificacoes.alvo_id, tb_denuncias.alvo_id) sao varchar(64) sem foreign key, porque o alvo pode ser bigint ou uuid. A integridade delas e responsabilidade do service, nao do banco.",
       "foreign_keys": "fk_{tabela_origem}_{tabela_destino}",
       "indexes": "idx_{tabela}_{coluna}",
       "unique_constraints": "uq_{tabela}_{coluna}",
@@ -422,7 +423,7 @@
           "regras_de_acoplamento": [
             "Modulo A chama modulo B apenas pela interface publicada em B/contrato/",
             "Proibido injetar o repository de outro modulo",
-            "Proibido relacionamento JPA cruzando modulos: referencie pelo id (UUID)"
+            "Proibido relacionamento JPA cruzando modulos: referencie pelo id (Long ou UUID, conforme ADR-0007)"
           ]
         }
       },

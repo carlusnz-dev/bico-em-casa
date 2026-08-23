@@ -117,7 +117,7 @@ Initializr e menor curva de aprendizado para o time.
 | Validação do token | `NimbusJwtDecoder` com a chave pública RSA local. O backend segue sendo **OAuth2 Resource Server**, agora contra emissor próprio |
 | Access token | 15 minutos |
 | Refresh token | 30 dias. Persistido em `tb_refresh_tokens`, **rotacionado a cada uso** e revogável individualmente ou por usuário |
-| Correlação de identidade | O claim `sub` é o `id` (UUID) de `tb_usuarios`. **Nenhum papel viaja dentro do token** |
+| Correlação de identidade | O claim `sub` é o `id` (`BIGINT`, ver [ADR-0007](./adr/0007-chave-primaria-mista.md)) de `tb_usuarios`. **Nenhum papel viaja dentro do token** |
 | Autorização | Por papel (`CLIENTE`, `PROFISSIONAL`, `ADMIN`), resolvido no backend a partir de `tb_perfis` — **nunca** confiando em claim editável pelo cliente |
 | CORS | Restrito por ambiente via `CorsConfigurationSource`; origens definidas por profile |
 | CSRF | Desabilitado (API stateless, sem cookie de sessão) |
@@ -232,7 +232,9 @@ inclusive, é versionada pelo Flyway e pertence à aplicação.
 |---|---|---|
 | Tabelas | `snake_case` plural com prefixo `tb_` | `tb_usuarios`, `tb_contratacoes` |
 | Colunas | `snake_case` **em português** | `criado_em`, `usuario_id` |
-| Chave primária | `id UUID DEFAULT gen_random_uuid()` | `id` |
+| Chave primária — cadastro | `id BIGINT GENERATED ALWAYS AS IDENTITY` | `tb_usuarios`, `tb_perfis`, `tb_enderecos`, `tb_portfolios` |
+| Chave primária — transacional | `id UUID DEFAULT gen_random_uuid()` | as demais 14 tabelas |
+| Referência polimórfica | `varchar(64)` **sem** FK — o alvo pode ser `bigint` ou `uuid` | `tb_log_acoes.alvo_id`, `tb_notificacoes.alvo_id`, `tb_denuncias.alvo_id` |
 | Chave estrangeira | `fk_{tabela_origem}_{tabela_destino}` | `fk_contratacoes_profissionais` |
 | Índice | `idx_{tabela}_{coluna}` | `idx_profissionais_cidade` |
 | Constraint única | `uq_{tabela}_{coluna}` | `uq_usuarios_email` |
@@ -525,7 +527,7 @@ mesmo commit. Nunca deixe um na raiz e outro na pasta.
 
 - Módulo A chama módulo B **apenas** pela interface publicada em `B/contrato/`
 - **Proibido** injetar o repository de outro módulo
-- **Proibido** relacionamento JPA cruzando módulos — referencie pelo `id` (UUID)
+- **Proibido** relacionamento JPA cruzando módulos — referencie pelo `id` (`Long` ou `UUID`, conforme [ADR-0007](./adr/0007-chave-primaria-mista.md))
 
 A terceira regra é a que sustenta as outras duas: sem `@ManyToOne` cruzando fronteira, o
 acoplamento acidental simplesmente não tem por onde entrar.

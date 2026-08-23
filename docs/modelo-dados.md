@@ -2,12 +2,12 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão** | 2.0.0 |
+| **Versão** | 3.0.0 |
 | **Data** | 2026-08-22 |
 | **Engine** | PostgreSQL 18 |
 | **Fonte** | [`modelo-dados.dbml`](./modelo-dados.dbml) — cole em [dbdiagram.io](https://dbdiagram.io) |
 | **Convenções** | [`design-sistema.md`](./design-sistema.md) §5.2 |
-| **Tabelas** | 18 |
+| **Tabelas** | 18 · 28 relacionamentos · 4 enums |
 
 ---
 
@@ -15,13 +15,15 @@
 > **As migrations do Flyway ainda não existem.** Este modelo está aprovado no papel; o DDL é o
 > próximo passo. Enquanto não houver `V1__*.sql`, o `.dbml` é a referência.
 
+> [!NOTE]
+> A **3.0.0** incorpora a revisão que o autor fez no dbdiagram em 2026-08-22
+> ([rascunho preservado](./modelo-dados-rascunho-2026-08-22.dbml)). O que veio de lá: chave
+> primária mista, `ultimo_login`, `nome_usuario`, `slug_url`, `denuncias.contratacao_id`,
+> `refresh_tokens.substituido_por` e `denuncias.fotos`.
+
 ---
 
 ## 1. Visão por módulo
-
-As 18 tabelas se distribuem pelos seis módulos do
-[ADR-0004](./adr/0004-estrutura-modular-por-dominio.md). Nenhuma tabela existe sem requisito que
-a justifique, e nenhum requisito do MVP ficou sem tabela — verificado nos dois sentidos.
 
 | Módulo | Tabelas | Requisitos atendidos |
 |---|---|---|
@@ -32,11 +34,146 @@ a justifique, e nenhum requisito do MVP ficou sem tabela — verificado nos dois
 | `contratacoes` | `tb_contratacoes`, `tb_contratacao_status_historico`, `tb_contratacao_anexos`, `tb_notificacoes` | RF008, RF012, RF014, RF015, RF016, RF017, RF018 |
 | `avaliacoes` | `tb_avaliacoes`, `tb_denuncias` | RF006, RF007, RF019, RF020 |
 
+Nenhuma tabela existe sem requisito que a justifique, e nenhum requisito do MVP ficou sem tabela.
+
 ---
 
-## 2. A distinção que mais confunde: `tb_servicos` × `tb_contratacoes`
+## 2. Índice único × índice comum
 
-São entidades diferentes com nomes parecidos. Cardápio e pedido.
+Os dois são a mesma estrutura de dados — uma B-tree. A diferença não é de desempenho, é de
+**autoridade**: o índice comum é uma sugestão ao planejador; o único é uma **regra do banco**.
+
+| | `UNIQUE` | comum |
+|---|---|---|
+| Acelera busca | Sim | Sim |
+| Impede duplicata | **Sim** | Não |
+| Onde a regra vive | No banco, para sempre | Em lugar nenhum |
+| Efeito no `INSERT` | Pode falhar (`23505`) | Nunca falha por causa dele |
+| `NULL` | Vários `NULL` convivem¹ | — |
+
+¹ No PostgreSQL, `NULL` nunca é igual a `NULL`. Um `UNIQUE` numa coluna nulável aceita **infinitas**
+linhas com `NULL`. É por isso que `cpf` pode ser único e opcional ao mesmo tempo.
+
+**Por que isso importa mais do que parece.** Sem o `UNIQUE`, a unicidade vira responsabilidade
+do código, e o código roda concorrente:
+
+```
+requisição A          requisição B
+SELECT ... WHERE email = 'joao@x.com'   → 0 linhas
+                      SELECT ... WHERE email = 'joao@x.com'   → 0 linhas
+INSERT joao@x.com     ✅
+                      INSERT joao@x.com     ✅   ← duas contas, mesmo e-mail
+```
+
+As duas requisições checaram antes de inserir, as duas viram "não existe", as duas inseriram.
+`SELECT` seguido de `INSERT` **não é atômico**. Só o `UNIQUE` fecha essa janela, porque a
+verificação acontece dentro da mesma operação que grava.
+
+**A regra prática:** se a duplicata for um *bug de negócio*, o índice é `UNIQUE`. Se for apenas
+uma consulta lenta, é comum.
+
+Neste modelo:
+
+| Índice | Tipo | O que a duplicata causaria |
+|---|---|---|
+| `uq_usuarios_email` | único | Duas contas com o mesmo login |
+| `uq_perfis_usuario_tipo` | único **composto** | Dois perfis `PROFISSIONAL` para a mesma pessoa |
+| `uq_perfis_nome_usuario` | único | Duas pessoas disputando `/p/joao-encanador` |
+| `uq_portfolios_slug_url` | único | Duas páginas no mesmo endereço público |
+| `uq_avaliacoes_contratacao_id` | único | Cliente irritado avalia dez vezes e afunda a média do `RF019` |
+| `idx_contratacoes_cliente` | comum | Nada. Um cliente **deve** ter várias contratações |
+| `idx_disponibilidades_perfil_dia` | comum | Nada. Um profissional atende em vários dias |
+| `idx_notificacoes_destinatario_lida` | comum | Nada |
+
+### 2.1 Único **composto** não é o mesmo que dois únicos
+
+Este é o ponto que mais confunde:
+
+```sql
+UNIQUE (usuario_id, tipo)   -- ✅ o par não se repete
+UNIQUE (usuario_id), UNIQUE (tipo)  -- ❌ um usuário só, e um CLIENTE no sistema inteiro
+```
+
+O composto restringe a **combinação**. É o que faz o `RF002` funcionar: o mesmo João pode ser
+`CLIENTE` e `PROFISSIONAL`, mas não pode ser `PROFISSIONAL` duas vezes.
+
+**A ordem das colunas importa para leitura.** Uma B-tree em `(a, b)` serve para `WHERE a = ?` e
+para `WHERE a = ? AND b = ?`, mas **não** para `WHERE b = ?` sozinho — é a mesma razão pela qual
+uma lista telefônica ordenada por sobrenome não ajuda a achar alguém pelo primeiro nome. Por isso
+`idx_servico_tags_tag_id` existe: a PK composta `(servico_id, tag_id)` já cobre "quais tags tem
+este serviço", mas não cobre "quais serviços têm esta tag" — que é justamente a busca do `RF004`.
+
+---
+
+## 3. As três decisões estruturais desta versão
+
+### 3.1 Chave primária mista — `bigint` e `uuid` na mesma base
+
+Registrado no [ADR-0007](./adr/0007-chave-primaria-mista.md).
+
+| Tipo | Tabelas | Critério |
+|---|---|---|
+| `bigint` identity | `tb_usuarios`, `tb_perfis`, `tb_enderecos`, `tb_portfolios` | Cadastro: cresce devagar, é o alvo da maioria dos `JOIN` |
+| `uuid` | as outras 14 | Transacional: nasce por evento, cresce rápido, aparece em URL |
+
+**Por que a mistura se sustenta.** `bigint` ocupa 8 bytes e é sequencial, então cada nível da
+B-tree cabe mais denso e a inserção sempre acontece na ponta direita da árvore. `uuid` ocupa 16
+bytes e é aleatório: cada `INSERT` cai numa página diferente, o que espalha a escrita. Em
+`tb_perfis`, que quase toda consulta faz `JOIN`, os 8 bytes valem. Em `tb_contratacoes`, que
+aparece em URL e nasce a cada solicitação, o `uuid` vale mais — id sequencial em URL pública
+permite varrer a base contando de 1 em 1.
+
+**O preço, que é real e você paga em dois lugares:**
+
+1. **Nenhuma coluna polimórfica pode ter FK.** `tb_log_acoes.alvo_id` e
+   `tb_notificacoes.alvo_id` apontam ora para um `bigint`, ora para um `uuid`. Como uma coluna
+   tem um tipo só, eles são `varchar(64)` guardando o id como texto. O banco **não valida** esses
+   dois campos — a integridade deles depende do código.
+2. **Toda leitura de `alvo_id` exige converter.** `WHERE alvo_id = '42'`, com aspas, sempre. Um
+   `WHERE alvo_id = 42` compara texto com inteiro e o PostgreSQL recusa.
+
+Em `tb_log_acoes` isso é aceitável de qualquer forma, porque **a auditoria não deveria ter FK**:
+uma FK com `CASCADE` apagaria a prova junto com o crime, e com `RESTRICT` impediria apagar
+qualquer linha já auditada. Em `tb_notificacoes` é o custo direto da mistura.
+
+### 3.2 `NOT NULL` descreve o momento do `INSERT`, não a regra de negócio
+
+O rascunho tinha `cancelamento_perfil_id bigint [not null]` em `tb_contratacoes`. A regra por
+trás é correta — *toda contratação cancelada tem alguém que cancelou* — mas o `NOT NULL` diz
+outra coisa: *toda contratação, desde o instante em que nasce, tem alguém que cancelou*. Como
+nenhuma contratação nasce cancelada, **nenhum `INSERT` passaria**.
+
+A regra é condicional, e o `NOT NULL` não sabe expressar condição. Quem sabe é o `CHECK`:
+
+```sql
+ALTER TABLE tb_contratacoes ADD CONSTRAINT ck_contratacoes_cancelamento_coerente
+  CHECK (status <> 'CANCELADA' OR cancelado_por_perfil_id IS NOT NULL);
+```
+
+Agora o banco aceita a contratação nova **e** recusa marcá-la como cancelada sem dizer por quem.
+
+A leitura geral: **`NOT NULL` é para o que já é verdade quando a linha nasce.** Tudo que depende
+de um evento futuro — `concluida_em`, `valor_orcado`, `analisado_em`, `lida_em` — é nulável, e a
+coerência é `CHECK`.
+
+### 3.3 `UNIQUE` numa FK muda a cardinalidade do relacionamento
+
+`disponibilidade.perfil_id [unique]` no rascunho parecia inofensivo. Ele transforma 1:N em 1:1 —
+e um índice `(perfil_id, dias_semana)` na mesma tabela vira uma contradição, porque só pode
+existir uma linha por perfil.
+
+O efeito prático: cada profissional podia declarar **um** dia da semana e **uma** faixa de
+horário, para sempre. O `RF005` fala em "os horários em que ele atende", plural. Sem o `UNIQUE`,
+"segunda a sexta 8h–12h e 14h–18h, sábado 8h–12h" são 11 linhas, e o modelo aceita.
+
+A mesma pergunta vale para toda FK: **um pai tem um filho ou vários?** Onde a resposta é um —
+`tb_portfolios.perfil_id`, `tb_avaliacoes.contratacao_id` — o `UNIQUE` fica. Onde é vários, sai.
+
+---
+
+## 4. `tb_servicos` × `tb_contratacoes` — cardápio e pedido
+
+São entidades diferentes com nomes parecidos.
 
 | | `tb_servicos` | `tb_contratacoes` |
 |---|---|---|
@@ -45,106 +182,38 @@ São entidades diferentes com nomes parecidos. Cardápio e pedido.
 | Dono | O profissional | Cliente **e** profissional |
 | Existe sem o outro? | Sim, mesmo sem ninguém contratar | Não, sempre tem as duas pontas |
 | Tem status? | Só `ativo` | Sim: `SOLICITADA` → … → `CONCLUIDA` |
-| Cardinalidade | Um serviço gera **N** contratações | |
 
 **Por que não podem ser uma tabela só:**
 
-1. **Duplicação** — título, descrição e categoria se repetiriam em cada contratação
+1. **Duplicação** — título, descrição e tags se repetiriam em cada contratação
 2. **Histórico de preço** — hoje o serviço custa R$ 120, mas uma contratação de março precisa
    guardar os R$ 100 combinados naquele dia. Por isso `valor_final` é **congelado** na
    contratação e não lê `tb_servicos` depois
 3. **Status sem sentido** — uma oferta de catálogo não tem "em andamento"
 4. **Exclusão destrutiva** — apagar um serviço apagaria o histórico (`RF016`) e as avaliações
 
-No rascunho do `dbdiagram`, a tabela `servico` tinha `cliente_id`, `profissional_id` e
-`preco_previo`: **já era uma contratação com o nome errado**, e a oferta do catálogo não existia
-em tabela nenhuma.
-
 ---
 
-## 3. Decisões deste modelo
+## 5. Outras escolhas, em uma linha cada
 
-### 3.1 `tb_usuarios` × `tb_perfis` — e como um papel duplo funciona
-
-`tb_usuarios` guarda **credencial e identidade**: e-mail, hash de senha, CPF, se está ativo.
-`tb_perfis` guarda **como a pessoa aparece em cada papel**: nome de exibição, telefone, foto, bio.
-
-A chave é a UNIQUE composta:
-
-```sql
-CONSTRAINT uq_perfis_usuario_tipo UNIQUE (usuario_id, tipo)
-```
-
-Um usuário tem **N perfis, um por papel**. O mesmo João pode ter um perfil `CLIENTE` e um
-`PROFISSIONAL` na mesma conta — que é o `RF002`. A UNIQUE impede dois perfis do mesmo tipo.
-
-No rascunho, `perfil.usuario_id` era UNIQUE simples, o que travava em um papel por conta: um
-pintor não conseguia contratar um chaveiro sem criar outra conta.
-
-### 3.2 Chaves primárias — UUID em todas
-
-O rascunho misturava `bigint` em três tabelas e `uuid` em duas. A convenção do projeto (§5.2) é
-`uuid DEFAULT gen_random_uuid()` em **todas**, e a regra de fronteira entre módulos (`ADR-0004`)
-depende disso: módulo referencia módulo pelo UUID.
-
-### 3.3 Dinheiro é `numeric(10,2)`
-
-`preco_previo int` do rascunho não dizia se era reais ou centavos. `float` seria pior — não
-representa `0.10` exatamente e erra em soma. `numeric` é exato, que é o requisito de dinheiro.
-
-### 3.4 `tb_log_acoes` é somente de escrita
-
-Sua ideia, e ela ancorou o `RNF022`. Uma escolha deliberada: **a tabela não tem
-`atualizado_em`**. Registro de auditoria que pode ser alterado não é auditoria. A aplicação só
-faz `INSERT`; nunca `UPDATE` nem `DELETE`.
-
-### 3.5 `tb_denuncias` — o que mudou do que você descreveu
-
-Você propôs *(nome, réu, autor, data de criação e atualização)*. Duas alterações:
-
-- **`nome` virou `motivo` + `descricao`** — "nome" de uma denúncia não diz nada ao administrador.
-  `motivo` é categórico e filtrável; `descricao` é o relato livre
-- **Quatro colunas de análise entraram:** `status`, `analisado_por_perfil_id`, `analisado_em`,
-  `parecer`. Sem elas a denúncia entra no sistema e nunca sai — e `RF020` diz explicitamente
-  *"e que o administrador analise"*
-
-`alvo_tipo` + `alvo_id` permitem denunciar serviço, perfil **ou** avaliação, como `RF020` pede.
-
-### 3.6 Tabelas que você não listou e por que entraram
-
-| Tabela | Por que é obrigatória |
+| Escolha | Por quê |
 |---|---|
-| `tb_avaliacoes` | `RF006`, `RF007` e `RF019` a exigem. **Não existia no rascunho** |
-| `tb_refresh_tokens` | `RNF019`. Sem revogação no banco, logout não existe de verdade |
-| `tb_tokens_recuperacao` | `RNF021`. Consequência do ADR-0006 |
-| `tb_enderecos` | `RF013` precisa de latitude e longitude; `varchar(100)` não calcula distância |
-| `tb_disponibilidades` | `RF005` pede horários, não só um booleano |
-| `tb_contratacao_status_historico` | `RF008` pede "a duração e qual etapa" — a duração exige o histórico de transições |
-| `tb_contratacao_anexos` | `RF015` |
-| `tb_notificacoes` | `RF012` |
-| `tb_portfolio_fotos` | Era `fotos_galeria jsonb`. Virou tabela: jsonb impede FK, impede ordenar e obriga a ler o documento inteiro para uma foto |
-| `tb_servico_tags` | `RF004`. Com uma tag só por serviço, "reforma de banheiro" some do filtro de hidráulica **ou** do de alvenaria |
+| `preco_previo numeric(10,2)`, nunca `int` | `int` não representa R$ 120,50, e nada no schema diz se `120` é real ou centavo |
+| `ip_origem inet` | Não existe tipo `inet6` no PostgreSQL. `inet` já cobre IPv4 e IPv6 |
+| Rótulos de enum sempre em MAIÚSCULA | Rótulo é string sensível a caixa: `'ACEITA'` e `'aceita'` são valores diferentes |
+| `RECUSADA` separada de `CANCELADA` | `RF017` recusa antes do aceite; `RF018` cancela depois. `RF012` precisa distinguir para notificar |
+| `tb_perfis` sem coluna `email` | Duplicar o e-mail obriga a decidir, em cada consulta, qual dos dois está certo quando divergirem |
+| `denunciado_perfil_id`, não `culpado_id` | Quem decide culpa é a análise do admin, que acontece depois. Nome de coluna não antecipa veredito |
+| `tb_denuncias.contratacao_id` **não** é único | Cliente e profissional podem se denunciar pelo mesmo trabalho; as duas denúncias são legítimas |
+| `tb_denuncias.fotos` fica `jsonb` | Evidência é escrita uma vez, nunca reordenada, nunca consultada foto a foto — ao contrário da galeria do portfólio |
+| `tb_portfolio_fotos` é tabela, não `jsonb` | A galeria **é** reordenável e consultada foto a foto; com `jsonb`, mudar a ordem reescreve o documento inteiro |
+| `tb_log_acoes` sem `atualizado_em` | Registro de auditoria que pode ser alterado não é auditoria (`RNF022`) |
+| `familia_id` **e** `substituido_por` em refresh token | `substituido_por` dá a corrente e serve para auditar; `familia_id` revoga o conjunto todo em um `UPDATE`, sem recursão (`RNF019`) |
+| `length(trim(nome))`, não `lenght(...)` | A função do PostgreSQL é `length`. O typo derruba a migration |
 
 ---
 
-## 4. Erros do rascunho, corrigidos
-
-| Onde | Era | Virou |
-|---|---|---|
-| `usuario.hash_senha` | Contradizia o ADR-0002 (Supabase custodiava a senha) | Correto agora — o [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md) trouxe a credencial para casa, com **Argon2id** |
-| `tag.nome` | `check: nome.lenght > 0` — typo e SQL inválido | `CHECK (length(trim(nome)) > 0)` |
-| Nomes de tabela | `usuario`, `perfil`, `servico` | `tb_usuarios`, `tb_perfis`, `tb_servicos` — §5.2 exige prefixo e plural |
-| PKs | `bigint` e `uuid` misturados | `uuid` em todas |
-| `perfil.email` | Duplicava `usuario.email` | Removido. Dado duplicado diverge |
-| `servico` | Misturava oferta e contratação, sem `status` | Separado em `tb_servicos` e `tb_contratacoes` |
-| Preço | `int` sem unidade | `numeric(10,2)` |
-| Avaliação | Não existia | `tb_avaliacoes`, com `CHECK (nota BETWEEN 1 AND 5)` |
-
----
-
-## 5. FK no banco × relacionamento JPA — não confunda
-
-Isto costuma gerar dúvida, então fica explícito:
+## 6. FK no banco × relacionamento JPA — não confunda
 
 > **As FKs do banco cruzam módulo. Os relacionamentos JPA, não.**
 
@@ -152,15 +221,12 @@ O `design-sistema.md` proíbe **`@ManyToOne` cruzando módulo** — é regra de 
 que o acoplamento acidental não tenha por onde entrar.
 
 No **banco**, a FK entre `tb_contratacoes.cliente_perfil_id` e `tb_perfis.id` **deve existir**: é
-ela que garante integridade referencial. Sem ela, uma contratação órfã é só uma linha com um UUID
-que não aponta para lugar nenhum.
-
-Na prática, dentro do módulo `contratacoes`:
+ela que garante integridade referencial.
 
 ```java
-// ✅ correto — referência por UUID, FK existe no banco
+// ✅ correto — referência por id, FK existe no banco
 @Column(name = "cliente_perfil_id", nullable = false)
-private UUID clientePerfilId;
+private Long clientePerfilId;
 
 // ❌ proibido — relacionamento JPA cruzando a fronteira do módulo
 @ManyToOne
@@ -173,13 +239,14 @@ Para ler os dados do perfil, o módulo `contratacoes` chama a interface publicad
 
 ---
 
-## 6. Política de exclusão
+## 7. Política de exclusão
 
 | Regra | Onde | Por quê |
 |---|---|---|
-| `CASCADE` | Tokens, fotos de portfólio, anexos, histórico de status | São dependentes puros. Sem o pai, não têm sentido |
-| `RESTRICT` | Perfis referenciados por contratação e avaliação | Apagar um perfil apagaria o histórico da outra parte. `RNF015` resolve por **anonimização**, não por exclusão |
-| `SET NULL` | `servico_id` na contratação, `analisado_por` na denúncia | O serviço pode sair do catálogo sem levar junto o trabalho já feito |
+| `CASCADE` | Tokens, fotos de portfólio, anexos, histórico de status, disponibilidades | Dependentes puros. Sem o pai, não têm sentido |
+| `RESTRICT` | Perfis referenciados por contratação, avaliação e denúncia | Apagar um perfil apagaria o histórico da outra parte. `RNF015` resolve por **anonimização**, não por exclusão |
+| `SET NULL` | `servico_id` na contratação, `analisado_por` na denúncia, `endereco_id` no perfil | O serviço pode sair do catálogo sem levar junto o trabalho já feito |
+| **sem FK** | `tb_log_acoes.alvo_id`, `tb_notificacoes.alvo_id` | Coluna polimórfica (ADR-0007). No log é desejável: a auditoria sobrevive ao alvo |
 
 O `RESTRICT` é o que faz `RNF015` (LGPD) funcionar: exclusão de conta **anonimiza**
 `tb_usuarios` e preserva contratações e avaliações, porque o histórico da contraparte também é
@@ -187,27 +254,26 @@ dado dela.
 
 ---
 
-## 7. Pendências
+## 8. Pendências
 
 - [ ] **Migrations do Flyway.** Este modelo ainda não virou `V1__*.sql`
 - [ ] **`docker-compose.yml`** com PostgreSQL, MinIO e SMTP de desenvolvimento
-- [ ] **ADR-0007 — geocodificação.** `tb_enderecos` já tem `latitude`/`longitude`, mas nada as
+- [ ] **ADR-0008 — geocodificação.** `tb_enderecos` já tem `latitude`/`longitude`, mas nada as
       preenche. `RF013` fica descoberto até esse ADR existir
-- [ ] **Índice geoespacial.** Se `RF013` filtrar por raio, o índice B-tree em `(latitude,
-      longitude)` não serve — vai precisar de PostGIS ou de `earthdistance`. Decidir junto do ADR-0007
+- [ ] **Índice geoespacial.** Se `RF013` filtrar por raio, o B-tree em `(latitude, longitude)`
+      não serve — vai precisar de PostGIS ou de `earthdistance`. Decidir junto do ADR-0008
 - [ ] **`unidade_preco` está como `varchar`** com valores fixos. Vira `enum` se a lista estabilizar
-- [ ] **Incorporar o que veio do rascunho de 2026-08-22**
-      ([`modelo-dados-rascunho-2026-08-22.dbml`](./modelo-dados-rascunho-2026-08-22.dbml)):
-      `ultimo_login` em `tb_usuarios`, `contratacao_id` em `tb_denuncias` e `slug_url` único em
-      `tb_portfolios`. O rascunho ainda não tem controle de login, auditoria e endereço — o autor
-      atualiza numa próxima rodada
+- [ ] **`alvo_id` como `varchar(64)` não é validado pelo banco.** Em `tb_notificacoes` isso é
+      dívida assumida do ADR-0007 — o service precisa de teste que garanta o par
+      (`alvo_tipo`, `alvo_id`)
 
 ---
 
 ## Referências
 
 - [`modelo-dados.dbml`](./modelo-dados.dbml) — o modelo em formato executável
-- [`design-sistema.md`](./design-sistema.md) §5 — engine, migrations e convenções de nomenclatura
-- [`requisitos.md`](./requisitos.md) — os requisitos que cada tabela atende
-- [`matriz-rastreabilidade.md`](./matriz-rastreabilidade.md) — requisito → módulo → tabela
+- [`modelo-dados-rascunho-2026-08-22.dbml`](./modelo-dados-rascunho-2026-08-22.dbml) — a primeira revisão do autor, preservada
+- [`design-sistema.md`](./design-sistema.md) §5 — engine, migrations e convenções
+- [`requisitos.md`](./requisitos.md) · [`matriz-rastreabilidade.md`](./matriz-rastreabilidade.md)
 - [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md) — por que a credencial mora aqui
+- [ADR-0007](./adr/0007-chave-primaria-mista.md) — por que há `bigint` e `uuid` na mesma base
