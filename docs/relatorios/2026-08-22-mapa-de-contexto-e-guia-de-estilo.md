@@ -8,7 +8,7 @@
 | **Duração aproximada** | `~2h30` |
 | **LLM utilizada** | `Claude Sonnet 5 (Claude Code)` |
 | **Branch** | `docs/requisitos-e-matriz-rastreabilidade` |
-| **Commits** | `9d5ac04`, `ed137f4` |
+| **Commits** | `9d5ac04`, `ed137f4`, `c2d0e3b` |
 | **Plano relacionado** | Nenhum arquivo em `docs/planos/` — plano feito em modo de planejamento da sessão, não persistido como documento |
 
 ---
@@ -31,7 +31,8 @@ Não havia ferramenta de Google Drive disponível na sessão — o `.docx` final
 em `~/Downloads/Mapa-de-Contexto-do-Projeto_2026-08-22.docx` para o usuário subir manualmente,
 substituindo o arquivo vazio. A branch também foi finalizada: duas decisões pendentes (linha
 `.mcp.json` no `.gitignore` e uma exceção pontual para versionar `reference-doc.docx`) foram
-commitadas, restando push e abertura do PR para `main`.
+commitadas, o relatório de sessão foi commitado, a branch foi enviada para `origin` e o PR para
+`main` foi aberto — **https://github.com/carlusnz-dev/bico-em-casa/pull/2**.
 
 ## O que foi feito
 
@@ -52,6 +53,11 @@ commitadas, restando push e abertura do PR para `main`.
   imagens embutidas, 9 headings de nível 1, 12 tabelas) para upload manual ao Drive
 - Commitada a mudança pendente do `.gitignore` (`.mcp.json`) isoladamente, e depois a exceção
   `!docs/estilo/reference-doc.docx` junto do guia de estilo
+- Trocado o remote `origin` de SSH para HTTPS (via `gh auth setup-git`), porque a chave SSH do
+  ambiente não estava acessível para autenticar no push
+- `git push` da branch para `origin` e `gh pr create` abrindo o PR
+  [#2](https://github.com/carlusnz-dev/bico-em-casa/pull/2) de
+  `docs/requisitos-e-matriz-rastreabilidade` para `main`, reunindo os 15 commits da branch
 
 ## Decisões tomadas
 
@@ -89,6 +95,10 @@ terem sido incluídos na decisão de exceção do `.gitignore`, que cobriu só o
 | `python3 postprocess_metadata.py raw.docx Mapa-de-Contexto...docx` | ✅ sem erro |
 | Inspeção estrutural do `.docx` final via `python-docx` | ✅ 105 parágrafos, 12 tabelas, 9 headings nível 1, 12 imagens embutidas, metadados (título/autor/criado/alterado) corretos |
 | `which soffice / libreoffice` | ❌ nenhum instalado — sem renderização visual página-a-página do `.docx` final nesta sessão |
+| `git push` (via SSH, `origin` original) | ❌ falhou — `Permission denied (publickey)`; sem `ssh-askpass` no ambiente |
+| `gh auth setup-git` + `git remote set-url origin https://...` + `git push` | ✅ push concluído usando a credencial do `gh` sobre HTTPS |
+| `gh pr create --base main --head docs/requisitos-e-matriz-rastreabilidade` | ✅ PR [#2](https://github.com/carlusnz-dev/bico-em-casa/pull/2) criado |
+| `git status` (final) | ✅ working tree limpo, branch sincronizada com `origin` |
 
 **Verificação não executada:** abertura visual completa do `.docx` final num visualizador de Word
 (sem LibreOffice disponível no ambiente). A conferência ficou limitada à inspeção estrutural via
@@ -106,6 +116,11 @@ visualmente antes de subir ao Drive.**
   feita pelo usuário em um terminal próprio, fora da sessão do Claude Code.
 - **Sem LibreOffice no ambiente**, não foi possível gerar um preview visual (PNG/PDF) do `.docx`
   final para conferência automática — só verificação estrutural via `python-docx`.
+- **`git push` via SSH falhou** (`Permission denied (publickey)`, `ssh-askpass` ausente) — a chave
+  `~/.ssh/id_ed25519` não estava utilizável neste ambiente. Contornado trocando o remote `origin`
+  de SSH para HTTPS e autenticando via `gh auth setup-git`. **O remote do repositório local ficou
+  em HTTPS**, não em SSH como estava antes desta sessão — vale o usuário revisar se isso é
+  aceitável ou se prefere reconfigurar SSH e voltar o remote.
 
 ## Pendências
 
@@ -113,17 +128,20 @@ visualmente antes de subir ao Drive.**
       Word/LibreOffice antes de subir ao Drive, conferindo visualmente capa, cabeçalho/rodapé,
       tabelas e os 11 diagramas — não foi possível fazer essa checagem nesta sessão
 - [ ] Substituir o arquivo vazio na pasta do Drive pelo `.docx` gerado (upload manual, decisão
-      desta sessão)
-- [ ] `git push` e `gh pr create` da branch `docs/requisitos-e-matriz-rastreabilidade` para `main`
-      — próximo passo desta mesma sessão, após este relatório
+      desta sessão) — ainda não confirmado que o usuário fez o upload
+- [ ] Revisar se o remote `origin` deve continuar em HTTPS ou voltar para SSH (ver Problemas
+      encontrados) — mudança feita para contornar falha de autenticação, não foi pedida
+- [ ] PR [#2](https://github.com/carlusnz-dev/bico-em-casa/pull/2) aberto, aguardando revisão e
+      merge — nenhuma aprovação ou merge aconteceu nesta sessão
 - [ ] ADR-0009 (geocodificação) segue pendente, já registrado em sessões anteriores — não foi
       tocado nesta sessão
 
 ## Próximos passos
 
-1. Abrir o PR de `docs/requisitos-e-matriz-rastreabilidade` para `main` (próxima ação desta
-   sessão).
-2. Depois do upload manual ao Drive, considerar se os scripts do pipeline (`build_reference_doc.py`,
+1. Usuário conferir visualmente o `.docx` e subi-lo à pasta do Drive, substituindo o arquivo vazio.
+2. Revisar e mergear o PR [#2](https://github.com/carlusnz-dev/bico-em-casa/pull/2).
+3. Decidir se o remote `origin` fica em HTTPS ou volta para SSH.
+4. Depois do upload manual ao Drive, considerar se os scripts do pipeline (`build_reference_doc.py`,
    `postprocess_metadata.py`, `mermaid-theme.json`, hoje só no scratchpad da sessão) valem a pena
    virar ferramenta versionada em `docs/estilo/` para a próxima pessoa não reconstruir do zero —
    não foi decidido nesta sessão, ficou fora do escopo combinado.
