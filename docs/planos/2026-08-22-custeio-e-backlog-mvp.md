@@ -285,7 +285,62 @@ endereço, nunca a cada busca. Essa é a decisão do ADR-0009.
 
 ---
 
-## 4. Pré-requisitos antes de começar a Fase 0
+## 4. Semana 1 — 24 a 30/08, equipe de 6
+
+**Premissa:** 8 h por pessoa na semana = **48 h de capacidade**. A Fase 0 custa 46 h. Cabe, mas
+sem folga — se a média real for 6 h, escorrega para a semana seguinte, e isso é normal.
+
+> [!WARNING]
+> A fundação é a **pior** fase para dividir entre seis pessoas: quase toda tarefa dela é de uma
+> pessoa só. Por isso duas das seis trilhas abaixo são design e documentação, que são
+> genuinamente paralelas e não estão nas 404 h. Não tente colocar seis pessoas nas migrations.
+
+| Trilha | Quem | Entrega da semana | h |
+|---|---|---|---:|
+| **A · Banco** | 2 | `docker-compose` de pé + `V1`–`V6` rodando limpo em base vazia | 16 |
+| **B · Backend esqueleto** | 1 | Projeto Spring Boot: `config/`, security base, `@RestControllerAdvice` + `ProblemDetail`, OpenAPI | 10 |
+| **C · Frontend esqueleto** | 1 | Next.js: App Router, `src/api/client.ts`, Zod, layout base | 8 |
+| **D · CI e testes** | 1 | `backend-ci.yml`, `frontend-ci.yml`, base de Testcontainers + 1 teste de referência | 12 |
+| **E · Design** | 1 | Projeto Figma criado, primeiros rascunhos de logo, paleta e tipografia | 8 |
+| **F · Documentação** | dividida | ADR-0009 da geocodificação, PR da branch atual, decidir a fonte da verdade entre Drive/Notion/repo | — |
+
+### A única dependência dentro da semana
+
+```
+seg ─────────── ter ─────────── qua ─────────── qui ─────────── sex
+A: compose ──── V1–V6 ─────────────►
+                                    D: Testcontainers ─────────►
+B, C, E: independentes o tempo todo ───────────────────────────►
+```
+
+**A trilha D trava se as migrations não estiverem prontas até quarta.** Testcontainers sobe o
+PostgreSQL e roda o Flyway — sem `V1`, não há o que testar. Se a trilha A atrasar, D vira CI
+apenas (sem o teste de integração) e o Testcontainers passa para a semana 2.
+
+### Critério de aceite da semana
+
+- [ ] `docker compose up` sobe PostgreSQL, MinIO e SMTP de desenvolvimento
+- [ ] `flyway migrate` roda limpo numa base vazia e cria as 18 tabelas
+- [ ] `GET /actuator/health` responde 200 no backend
+- [ ] `npm run dev` sobe o frontend com o layout base
+- [ ] CI verde nos dois repositórios em um PR de teste
+- [ ] Projeto Figma existe e tem pelo menos três rascunhos de logo
+
+### Recalculo do prazo com 6 pessoas
+
+| Capacidade | 404 h viram | Observação |
+|---|---:|---|
+| 6 × 8 h = 48 h/semana | **8,5 semanas** | Só se as seis trilhas se mantiverem paralelas |
+| 6 × 6 h = 36 h/semana | **11 semanas** | Cenário mais provável para time acadêmico |
+
+Da Fase 1 em diante o paralelismo melhora — autenticação, perfil e catálogo são módulos com
+fronteira definida pelo ADR-0004, então dá para tocar três de uma vez. **A Fase 4
+(contratações, 86 h) volta a serializar:** a máquina de estados é o coração do fluxo e não se
+divide bem. Planeje duas semanas cheias para ela.
+
+---
+
+## 5. Pré-requisitos antes de começar a Fase 0
 
 - [ ] Abrir o PR de `docs/requisitos-e-matriz-rastreabilidade` para `main` e ver o
       `docs-parity.yml` rodar contra uma mudança real
