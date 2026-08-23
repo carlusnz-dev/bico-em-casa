@@ -37,35 +37,35 @@ existirem — o nome da tabela já é o definitivo, o DDL ainda não foi escrito
 
 | Código | Módulos | Entidades previstas | Status | Origem |
 |---|---|---|---|---|
-| **RF001** | autenticacao | tb_usuarios, tb_refresh_tokens, tb_tokens_recuperacao | mvp | Tabela de requisitos do grupo (revisado pelo ADR-0006: autenticação própria) |
-| **RF002** | autenticacao, usuarios | tb_usuarios, tb_perfis | mvp | Tabela de requisitos do grupo (revisado: papéis múltiplos via um perfil por papel) |
-| **RF003** | profissionais | tb_perfis, tb_portfolios, tb_portfolio_fotos | mvp | Tabela de requisitos do grupo |
-| **RF004** | servicos, profissionais | tb_servicos, tb_tags, tb_servico_tags, tb_perfis | mvp | Tabela de requisitos do grupo; PBB (Pesquisa serviço) |
-| **RF005** | profissionais | tb_perfis, tb_disponibilidades | mvp | Tabela de requisitos do grupo |
-| **RF006** | avaliacoes | tb_avaliacoes, tb_contratacoes | mvp | Tabela de requisitos do grupo |
-| **RF007** | avaliacoes | tb_avaliacoes | mvp | Tabela de requisitos do grupo |
-| **RF008** | contratacoes | tb_contratacoes, tb_contratacao_status_historico | mvp | Tabela de requisitos do grupo; PBB (Ver status do serviço realizado) |
-| **RF009** | profissionais, servicos | tb_perfis, tb_avaliacoes | mvp | Tabela de requisitos do grupo; PBB (Ordenar por notas de avaliações) |
-| **RF010** | servicos | tb_servicos, tb_tags, tb_servico_tags | mvp | Tabela de requisitos do grupo; PBB (Cadastrar serviço prestado) |
-| **RF011** | servicos | tb_servicos, tb_tags | mvp | Tabela de requisitos do grupo; PBB (Visualizar preços pré-definidos) |
-| **RF012** | contratacoes | tb_contratacoes, tb_notificacoes | mvp | Tabela de requisitos do grupo |
-| **RF013** | profissionais, contratacoes | tb_perfis, tb_enderecos, tb_contratacoes | mvp | Tabela de requisitos do grupo |
-| **RF014** | contratacoes | tb_contratacoes | mvp | Tabela de requisitos do grupo; PBB (Enviar solicitação de serviço) |
-| **RF015** | contratacoes | tb_contratacoes, tb_contratacao_anexos | mvp | Tabela de requisitos do grupo (revisado: anexo na solicitação, não em chat) |
-| **RF016** | contratacoes | tb_contratacoes | mvp | Tabela de requisitos do grupo (era o segundo RF016 duplicado) |
-| **RF017** | contratacoes | tb_contratacoes | mvp | Lacuna encontrada na revisão: RF012 notificava um aceite que nenhum requisito criava |
-| **RF018** | contratacoes | tb_contratacoes | mvp | PBB (Cancelar serviço) |
-| **RF019** | avaliacoes, profissionais | tb_avaliacoes, tb_perfis | mvp | PBB (Visualizar nota média do profissional) |
-| **RF020** | servicos, usuarios | tb_denuncias | mvp | PBB (Denunciar serviços inadequados) |
-| **RF021** | usuarios | tb_usuarios | mvp | PBB (Visualizar usuários ativos e inativos no site) |
-| **RF022** | usuarios | tb_usuarios, tb_log_acoes | mvp | PBB (Gerenciamento de usuários) |
-| **RF023** | contratacoes | tb_conversas, tb_mensagens | pos-mvp | PDF de especificação, quadro é–não é–faz–não faz; PBB (Falar com o profissional) |
-| **RF024** | contratacoes | tb_mensagens | pos-mvp | Tabela de requisitos do grupo (era o primeiro RF016 duplicado) |
-| **RNF001** | autenticacao | tb_usuarios | mvp | ADR-0006 |
-| **RNF002** | autenticacao, usuarios | tb_usuarios, tb_perfis | mvp | ADR-0006; CLAUDE.md, seção Nunca faça |
+| **RF001** | autenticacao | usuario, refresh_token, token_recuperacao | mvp | Tabela de requisitos do grupo (revisado pelo ADR-0006: autenticação própria) |
+| **RF002** | autenticacao, usuarios | usuario, perfil | mvp | Tabela de requisitos do grupo (revisado: papéis múltiplos via um perfil por papel) |
+| **RF003** | profissionais | perfil, portfolio, portfolio_foto | mvp | Tabela de requisitos do grupo |
+| **RF004** | servicos, profissionais | servico, tag, servico_tag, perfil | mvp | Tabela de requisitos do grupo; PBB (Pesquisa serviço) |
+| **RF005** | profissionais | perfil, disponibilidade | mvp | Tabela de requisitos do grupo |
+| **RF006** | avaliacoes | avaliacao, contratacao | mvp | Tabela de requisitos do grupo |
+| **RF007** | avaliacoes | avaliacao | mvp | Tabela de requisitos do grupo |
+| **RF008** | contratacoes | contratacao, contratacao_historico | mvp | Tabela de requisitos do grupo; PBB (Ver status do serviço realizado) |
+| **RF009** | profissionais, servicos | perfil, avaliacao | mvp | Tabela de requisitos do grupo; PBB (Ordenar por notas de avaliações) |
+| **RF010** | servicos | servico, tag, servico_tag | mvp | Tabela de requisitos do grupo; PBB (Cadastrar serviço prestado) |
+| **RF011** | servicos | servico, tag | mvp | Tabela de requisitos do grupo; PBB (Visualizar preços pré-definidos) |
+| **RF012** | contratacoes | contratacao, notificacao | mvp | Tabela de requisitos do grupo |
+| **RF013** | profissionais, contratacoes | perfil, endereco, contratacao | mvp | Tabela de requisitos do grupo |
+| **RF014** | contratacoes | contratacao | mvp | Tabela de requisitos do grupo; PBB (Enviar solicitação de serviço) |
+| **RF015** | contratacoes | contratacao, contratacao_anexo | mvp | Tabela de requisitos do grupo (revisado: anexo na solicitação, não em chat) |
+| **RF016** | contratacoes | contratacao | mvp | Tabela de requisitos do grupo (era o segundo RF016 duplicado) |
+| **RF017** | contratacoes | contratacao | mvp | Lacuna encontrada na revisão: RF012 notificava um aceite que nenhum requisito criava |
+| **RF018** | contratacoes | contratacao | mvp | PBB (Cancelar serviço) |
+| **RF019** | avaliacoes, profissionais | avaliacao, perfil | mvp | PBB (Visualizar nota média do profissional) |
+| **RF020** | servicos, usuarios | denuncia | mvp | PBB (Denunciar serviços inadequados) |
+| **RF021** | usuarios | usuario | mvp | PBB (Visualizar usuários ativos e inativos no site) |
+| **RF022** | usuarios | usuario, log_acao | mvp | PBB (Gerenciamento de usuários) |
+| **RF023** | contratacoes | conversa, mensagem | pos-mvp | PDF de especificação, quadro é–não é–faz–não faz; PBB (Falar com o profissional) |
+| **RF024** | contratacoes | mensagem | pos-mvp | Tabela de requisitos do grupo (era o primeiro RF016 duplicado) |
+| **RNF001** | autenticacao | usuario | mvp | ADR-0006 |
+| **RNF002** | autenticacao, usuarios | usuario, perfil | mvp | ADR-0006; CLAUDE.md, seção Nunca faça |
 | **RNF003** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
 | **RNF004** | transversal | — | mvp | ADR-0006 |
-| **RNF005** | servicos, profissionais | tb_servicos, tb_perfis | mvp | Revisão de requisitos 2026-08-22 |
+| **RNF005** | servicos, profissionais | servico, perfil | mvp | Revisão de requisitos 2026-08-22 |
 | **RNF006** | transversal | — | mvp | design-sistema.md §10.2 |
 | **RNF007** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
 | **RNF008** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
@@ -74,15 +74,15 @@ existirem — o nome da tabela já é o definitivo, o DDL ainda não foi escrito
 | **RNF011** | transversal | — | mvp | design-sistema.md §3.3 |
 | **RNF012** | transversal | — | mvp | design-sistema.md §7.2 |
 | **RNF013** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
-| **RNF014** | usuarios, profissionais | tb_usuarios, tb_enderecos | mvp | LGPD, Lei 13.709/2018 |
-| **RNF015** | usuarios | tb_usuarios, tb_contratacoes, tb_avaliacoes | mvp | LGPD, Lei 13.709/2018 |
+| **RNF014** | usuarios, profissionais | usuario, endereco | mvp | LGPD, Lei 13.709/2018 |
+| **RNF015** | usuarios | usuario, contratacao, avaliacao | mvp | LGPD, Lei 13.709/2018 |
 | **RNF016** | transversal | — | mvp | design-sistema.md §10.2 |
-| **RNF017** | profissionais, contratacoes | tb_portfolio_fotos, tb_contratacao_anexos | mvp | ADR-0006 |
-| **RNF018** | profissionais, contratacoes | tb_enderecos | mvp | Decorrência da decisão de manter RF013 no MVP; fornecedor de geocodificação ainda pendente de ADR |
-| **RNF019** | autenticacao | tb_refresh_tokens | mvp | ADR-0006 |
-| **RNF020** | autenticacao | tb_usuarios, tb_tokens_recuperacao | mvp | ADR-0006 |
-| **RNF021** | autenticacao | tb_tokens_recuperacao | mvp | ADR-0006 |
-| **RNF022** | transversal, usuarios | tb_log_acoes | mvp | Revisão de banco 2026-08-22 |
+| **RNF017** | profissionais, contratacoes | portfolio_foto, contratacao_anexo | mvp | ADR-0006 |
+| **RNF018** | profissionais, contratacoes | endereco | mvp | Decorrência da decisão de manter RF013 no MVP; fornecedor de geocodificação ainda pendente de ADR |
+| **RNF019** | autenticacao | refresh_token | mvp | ADR-0006 |
+| **RNF020** | autenticacao | usuario, token_recuperacao | mvp | ADR-0006 |
+| **RNF021** | autenticacao | token_recuperacao | mvp | ADR-0006 |
+| **RNF022** | transversal, usuarios | log_acao | mvp | Revisão de banco 2026-08-22 |
 
 ---
 

@@ -48,7 +48,7 @@ O que precisa estar pronto antes de começar.
 
 > Cada etapa deve ser pequena o bastante para caber num commit e ter um critério de aceite
 > objetivo. "Implementar o módulo" não é etapa; "criar a entidade e a migration de
-> `tb_profissionais`" é.
+> `disponibilidade`" é.
 
 ## Riscos e Mitigações
 

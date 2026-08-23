@@ -15,6 +15,7 @@ alguém, seis meses depois, refazer uma discussão já encerrada.
 | [0005](./0005-src-api-como-unica-fronteira.md) | `src/api` como única fronteira do frontend | Frontend | Aceito | 2026-08-22 |
 | [0006](./0006-remover-supabase-infraestrutura-propria.md) | Remover o Supabase e assumir infraestrutura própria | Infra · Backend · Banco | Aceito | 2026-08-22 |
 | [0007](./0007-chave-primaria-mista.md) | Chave primária mista: `bigint` no cadastro, `uuid` no transacional | Banco | Aceito | 2026-08-22 |
+| [0008](./0008-nomenclatura-de-tabelas.md) | Nomenclatura de tabelas: `snake_case` singular, sem prefixo | Banco | Aceito | 2026-08-22 |
 
 ## Como criar um ADR
 

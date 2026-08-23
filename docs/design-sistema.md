@@ -116,13 +116,13 @@ Initializr e menor curva de aprendizado para o time.
 | Emissão do token | `NimbusJwtEncoder` do Spring Security, já disponível via `spring-security-oauth2-jose`. **Não requer biblioteca de JWT adicional** |
 | Validação do token | `NimbusJwtDecoder` com a chave pública RSA local. O backend segue sendo **OAuth2 Resource Server**, agora contra emissor próprio |
 | Access token | 15 minutos |
-| Refresh token | 30 dias. Persistido em `tb_refresh_tokens`, **rotacionado a cada uso** e revogável individualmente ou por usuário |
-| Correlação de identidade | O claim `sub` é o `id` (`BIGINT`, ver [ADR-0007](./adr/0007-chave-primaria-mista.md)) de `tb_usuarios`. **Nenhum papel viaja dentro do token** |
-| Autorização | Por papel (`CLIENTE`, `PROFISSIONAL`, `ADMIN`), resolvido no backend a partir de `tb_perfis` — **nunca** confiando em claim editável pelo cliente |
+| Refresh token | 30 dias. Persistido em `refresh_token`, **rotacionado a cada uso** e revogável individualmente ou por usuário |
+| Correlação de identidade | O claim `sub` é o `id` (`BIGINT`, ver [ADR-0007](./adr/0007-chave-primaria-mista.md)) de `usuario`. **Nenhum papel viaja dentro do token** |
+| Autorização | Por papel (`CLIENTE`, `PROFISSIONAL`, `ADMIN`), resolvido no backend a partir de `perfil` — **nunca** confiando em claim editável pelo cliente |
 | CORS | Restrito por ambiente via `CorsConfigurationSource`; origens definidas por profile |
 | CSRF | Desabilitado (API stateless, sem cookie de sessão) |
-| Encoder de senha | **Argon2id** via `Argon2PasswordEncoder`. O hash vive em `tb_usuarios.hash_senha`; a senha em claro **nunca** é persistida, logada nem devolvida |
-| Recuperação de senha | Token opaco de uso único, expiração curta, **armazenado com hash** em `tb_tokens_recuperacao` e invalidado no primeiro uso |
+| Encoder de senha | **Argon2id** via `Argon2PasswordEncoder`. O hash vive em `usuario.hash_senha`; a senha em claro **nunca** é persistida, logada nem devolvida |
+| Recuperação de senha | Token opaco de uso único, expiração curta, **armazenado com hash** em `token_recuperacao` e invalidado no primeiro uso |
 | Segredos | Nenhuma chave em código. Chave privada RSA, credenciais do MinIO e do SMTP vivem em variável de ambiente, **somente no backend** |
 
 > [!IMPORTANT]
@@ -230,15 +230,15 @@ inclusive, é versionada pelo Flyway e pertence à aplicação.
 
 | Elemento | Convenção | Exemplo |
 |---|---|---|
-| Tabelas | `snake_case` plural com prefixo `tb_` | `tb_usuarios`, `tb_contratacoes` |
+| Tabelas | `snake_case` **singular**, sem prefixo ([ADR-0008](./adr/0008-nomenclatura-de-tabelas.md)) | `usuario`, `contratacao`, `servico_tag` |
 | Colunas | `snake_case` **em português** | `criado_em`, `usuario_id` |
-| Chave primária — cadastro | `id BIGINT GENERATED ALWAYS AS IDENTITY` | `tb_usuarios`, `tb_perfis`, `tb_enderecos`, `tb_portfolios` |
+| Chave primária — cadastro | `id BIGINT GENERATED ALWAYS AS IDENTITY` | `usuario`, `perfil`, `endereco`, `portfolio` |
 | Chave primária — transacional | `id UUID DEFAULT gen_random_uuid()` | as demais 14 tabelas |
-| Referência polimórfica | `varchar(64)` **sem** FK — o alvo pode ser `bigint` ou `uuid` | `tb_log_acoes.alvo_id`, `tb_notificacoes.alvo_id`, `tb_denuncias.alvo_id` |
-| Chave estrangeira | `fk_{tabela_origem}_{tabela_destino}` | `fk_contratacoes_profissionais` |
+| Referência polimórfica | `varchar(64)` **sem** FK — o alvo pode ser `bigint` ou `uuid` | `log_acao.alvo_id`, `notificacao.alvo_id`, `denuncia.alvo_id` |
+| Chave estrangeira | `fk_{tabela_origem}_{tabela_destino}` | `fk_contratacao_profissionais` |
 | Índice | `idx_{tabela}_{coluna}` | `idx_profissionais_cidade` |
-| Constraint única | `uq_{tabela}_{coluna}` | `uq_usuarios_email` |
-| Constraint de check | `ck_{tabela}_{regra}` | `ck_avaliacoes_nota_valida` |
+| Constraint única | `uq_{tabela}_{coluna}` | `uq_usuario_email` |
+| Constraint de check | `ck_{tabela}_{regra}` | `ck_avaliacao_nota_valida` |
 
 ---
 
@@ -279,7 +279,7 @@ fora do caminho de arquivos grandes — que é o que derruba uma API primeiro so
 
 `RF013` exige distância em quilômetros, o que depende de geocodificar endereço em latitude e
 longitude. **O fornecedor ainda não foi escolhido** e precisa de ADR próprio antes de qualquer
-implementação. Enquanto isso, `tb_enderecos` já nasce com as colunas de coordenada, para que a
+implementação. Enquanto isso, `endereco` já nasce com as colunas de coordenada, para que a
 migration não precise ser refeita.
 
 ---

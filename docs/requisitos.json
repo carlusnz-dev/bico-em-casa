@@ -36,9 +36,9 @@
       "autenticacao"
     ],
     "entidades": [
-      "tb_usuarios",
-      "tb_refresh_tokens",
-      "tb_tokens_recuperacao"
+      "usuario",
+      "refresh_token",
+      "token_recuperacao"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo (revisado pelo ADR-0006: autenticação própria)",
@@ -53,8 +53,8 @@
       "usuarios"
     ],
     "entidades": [
-      "tb_usuarios",
-      "tb_perfis"
+      "usuario",
+      "perfil"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo (revisado: papéis múltiplos via um perfil por papel)",
@@ -68,9 +68,9 @@
       "profissionais"
     ],
     "entidades": [
-      "tb_perfis",
-      "tb_portfolios",
-      "tb_portfolio_fotos"
+      "perfil",
+      "portfolio",
+      "portfolio_foto"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
@@ -85,10 +85,10 @@
       "profissionais"
     ],
     "entidades": [
-      "tb_servicos",
-      "tb_tags",
-      "tb_servico_tags",
-      "tb_perfis"
+      "servico",
+      "tag",
+      "servico_tag",
+      "perfil"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Pesquisa serviço)",
@@ -102,8 +102,8 @@
       "profissionais"
     ],
     "entidades": [
-      "tb_perfis",
-      "tb_disponibilidades"
+      "perfil",
+      "disponibilidade"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
@@ -117,8 +117,8 @@
       "avaliacoes"
     ],
     "entidades": [
-      "tb_avaliacoes",
-      "tb_contratacoes"
+      "avaliacao",
+      "contratacao"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
@@ -132,7 +132,7 @@
       "avaliacoes"
     ],
     "entidades": [
-      "tb_avaliacoes"
+      "avaliacao"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
@@ -146,8 +146,8 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_contratacoes",
-      "tb_contratacao_status_historico"
+      "contratacao",
+      "contratacao_historico"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Ver status do serviço realizado)",
@@ -162,8 +162,8 @@
       "servicos"
     ],
     "entidades": [
-      "tb_perfis",
-      "tb_avaliacoes"
+      "perfil",
+      "avaliacao"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Ordenar por notas de avaliações)",
@@ -177,9 +177,9 @@
       "servicos"
     ],
     "entidades": [
-      "tb_servicos",
-      "tb_tags",
-      "tb_servico_tags"
+      "servico",
+      "tag",
+      "servico_tag"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Cadastrar serviço prestado)",
@@ -193,8 +193,8 @@
       "servicos"
     ],
     "entidades": [
-      "tb_servicos",
-      "tb_tags"
+      "servico",
+      "tag"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Visualizar preços pré-definidos)",
@@ -208,8 +208,8 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_contratacoes",
-      "tb_notificacoes"
+      "contratacao",
+      "notificacao"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
@@ -224,9 +224,9 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_perfis",
-      "tb_enderecos",
-      "tb_contratacoes"
+      "perfil",
+      "endereco",
+      "contratacao"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo",
@@ -240,7 +240,7 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_contratacoes"
+      "contratacao"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo; PBB (Enviar solicitação de serviço)",
@@ -254,8 +254,8 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_contratacoes",
-      "tb_contratacao_anexos"
+      "contratacao",
+      "contratacao_anexo"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo (revisado: anexo na solicitação, não em chat)",
@@ -269,7 +269,7 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_contratacoes"
+      "contratacao"
     ],
     "status": "mvp",
     "origem": "Tabela de requisitos do grupo (era o segundo RF016 duplicado)",
@@ -283,7 +283,7 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_contratacoes"
+      "contratacao"
     ],
     "status": "mvp",
     "origem": "Lacuna encontrada na revisão: RF012 notificava um aceite que nenhum requisito criava",
@@ -297,7 +297,7 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_contratacoes"
+      "contratacao"
     ],
     "status": "mvp",
     "origem": "PBB (Cancelar serviço)",
@@ -312,8 +312,8 @@
       "profissionais"
     ],
     "entidades": [
-      "tb_avaliacoes",
-      "tb_perfis"
+      "avaliacao",
+      "perfil"
     ],
     "status": "mvp",
     "origem": "PBB (Visualizar nota média do profissional)",
@@ -328,7 +328,7 @@
       "usuarios"
     ],
     "entidades": [
-      "tb_denuncias"
+      "denuncia"
     ],
     "status": "mvp",
     "origem": "PBB (Denunciar serviços inadequados)",
@@ -342,7 +342,7 @@
       "usuarios"
     ],
     "entidades": [
-      "tb_usuarios"
+      "usuario"
     ],
     "status": "mvp",
     "origem": "PBB (Visualizar usuários ativos e inativos no site)",
@@ -356,8 +356,8 @@
       "usuarios"
     ],
     "entidades": [
-      "tb_usuarios",
-      "tb_log_acoes"
+      "usuario",
+      "log_acao"
     ],
     "status": "mvp",
     "origem": "PBB (Gerenciamento de usuários)",
@@ -371,8 +371,8 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_conversas",
-      "tb_mensagens"
+      "conversa",
+      "mensagem"
     ],
     "status": "pos-mvp",
     "origem": "PDF de especificação, quadro é–não é–faz–não faz; PBB (Falar com o profissional)",
@@ -386,7 +386,7 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_mensagens"
+      "mensagem"
     ],
     "status": "pos-mvp",
     "origem": "Tabela de requisitos do grupo (era o primeiro RF016 duplicado)",
@@ -400,7 +400,7 @@
       "autenticacao"
     ],
     "entidades": [
-      "tb_usuarios"
+      "usuario"
     ],
     "status": "mvp",
     "origem": "ADR-0006",
@@ -415,8 +415,8 @@
       "usuarios"
     ],
     "entidades": [
-      "tb_usuarios",
-      "tb_perfis"
+      "usuario",
+      "perfil"
     ],
     "status": "mvp",
     "origem": "ADR-0006; CLAUDE.md, seção Nunca faça",
@@ -455,8 +455,8 @@
       "profissionais"
     ],
     "entidades": [
-      "tb_servicos",
-      "tb_perfis"
+      "servico",
+      "perfil"
     ],
     "status": "mvp",
     "origem": "Revisão de requisitos 2026-08-22",
@@ -567,8 +567,8 @@
       "profissionais"
     ],
     "entidades": [
-      "tb_usuarios",
-      "tb_enderecos"
+      "usuario",
+      "endereco"
     ],
     "status": "mvp",
     "origem": "LGPD, Lei 13.709/2018",
@@ -582,9 +582,9 @@
       "usuarios"
     ],
     "entidades": [
-      "tb_usuarios",
-      "tb_contratacoes",
-      "tb_avaliacoes"
+      "usuario",
+      "contratacao",
+      "avaliacao"
     ],
     "status": "mvp",
     "origem": "LGPD, Lei 13.709/2018",
@@ -611,8 +611,8 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_portfolio_fotos",
-      "tb_contratacao_anexos"
+      "portfolio_foto",
+      "contratacao_anexo"
     ],
     "status": "mvp",
     "origem": "ADR-0006",
@@ -627,7 +627,7 @@
       "contratacoes"
     ],
     "entidades": [
-      "tb_enderecos"
+      "endereco"
     ],
     "status": "mvp",
     "origem": "Decorrência da decisão de manter RF013 no MVP; fornecedor de geocodificação ainda pendente de ADR",
@@ -641,7 +641,7 @@
       "autenticacao"
     ],
     "entidades": [
-      "tb_refresh_tokens"
+      "refresh_token"
     ],
     "status": "mvp",
     "origem": "ADR-0006",
@@ -655,8 +655,8 @@
       "autenticacao"
     ],
     "entidades": [
-      "tb_usuarios",
-      "tb_tokens_recuperacao"
+      "usuario",
+      "token_recuperacao"
     ],
     "status": "mvp",
     "origem": "ADR-0006",
@@ -670,7 +670,7 @@
       "autenticacao"
     ],
     "entidades": [
-      "tb_tokens_recuperacao"
+      "token_recuperacao"
     ],
     "status": "mvp",
     "origem": "ADR-0006",
@@ -685,7 +685,7 @@
       "usuarios"
     ],
     "entidades": [
-      "tb_log_acoes"
+      "log_acao"
     ],
     "status": "mvp",
     "origem": "Revisão de banco 2026-08-22",

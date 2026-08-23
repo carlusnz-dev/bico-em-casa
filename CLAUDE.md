@@ -96,7 +96,7 @@ implementação fica em `service/` com sufixo `Impl`. **Sem prefixo `I`.**
 
 - Retornar entidade JPA pelo controller — sempre DTO
 - Injetar repository de outro módulo, ou relacionar entidades JPA cruzando módulos (use o UUID)
-- Autorizar por claim do JWT — o papel é lido de `tb_usuarios`
+- Autorizar por claim do JWT — o papel é lido de `usuario`
 - Usar H2 em teste de regra de negócio — o projeto exige Testcontainers com PostgreSQL
 - Chamar `fetch` fora de `src/api/`
 - Consumir resposta do backend sem validar por schema Zod

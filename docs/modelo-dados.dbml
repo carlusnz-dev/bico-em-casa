@@ -1,27 +1,18 @@
 // =============================================================================
 // Bico em Casa — Modelo de Dados
-// Versao 3.0.0 · 2026-08-22 · PostgreSQL 18
+// Versao 4.0.0 · 2026-08-22 · PostgreSQL 18
 //
 // Espelho legivel: docs/modelo-dados.md  ·  Convencoes: design-sistema.md §5.2
 // Cole este arquivo em https://dbdiagram.io para visualizar.
 //
-// Convencoes obrigatorias:
-//   tabelas   tb_ + snake_case plural
+// Convencoes (ADR-0007, ADR-0008):
+//   tabelas   snake_case SINGULAR, sem prefixo
 //   colunas   snake_case em portugues
-//   PK        bigint GENERATED ALWAYS AS IDENTITY nas tabelas de cadastro
-//             uuid DEFAULT gen_random_uuid() nas tabelas transacionais  (ADR-0007)
-//   dinheiro  numeric(10,2), nunca int nem float
-//   auditoria criado_em / atualizado_em em toda tabela de dominio
-//
-// v3.0.0 — incorpora a revisao do autor feita no dbdiagram em 2026-08-22.
+//   PK        bigint identity nas tabelas de cadastro
+//             uuid gen_random_uuid() nas tabelas transacionais
+//   dinheiro  numeric(10,2)
+//   enums     rotulos sempre em MAIUSCULA
 // =============================================================================
-
-// ---------------------------------------------------------------------------
-// ENUMS
-//
-// Rotulo de enum no PostgreSQL e string sensivel a caixa: 'ACEITA' e 'aceita'
-// sao valores diferentes. Por isso TODOS os rotulos sao MAIUSCULOS, sem excecao.
-// ---------------------------------------------------------------------------
 
 enum tipo_perfil {
   CLIENTE
@@ -30,13 +21,13 @@ enum tipo_perfil {
 }
 
 enum status_contratacao {
-  SOLICITADA    // cliente pediu orcamento (RF014)
-  ORCADA        // profissional respondeu com valor (RF017)
-  ACEITA        // cliente aceitou o orcamento
-  RECUSADA      // profissional recusou (RF017) — distinto de CANCELADA
-  EM_ANDAMENTO  // trabalho comecou
-  CONCLUIDA     // trabalho terminou, libera avaliacao (RF006)
-  CANCELADA     // desistencia de qualquer das partes apos o aceite (RF018)
+  SOLICITADA
+  ORCADA
+  ACEITA
+  RECUSADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
 }
 
 enum tipo_alvo_denuncia {
@@ -52,470 +43,373 @@ enum status_denuncia {
 }
 
 // ---------------------------------------------------------------------------
-// AUTENTICACAO  —  RF001, RNF001, RNF019, RNF020, RNF021
+// autenticacao — RF001, RF002, RNF001, RNF019, RNF020, RNF021
 // ---------------------------------------------------------------------------
 
-Table tb_usuarios {
-  id bigint [pk, note: 'GENERATED ALWAYS AS IDENTITY']
+Table usuario {
+  id bigint [pk, increment]
   nome varchar(150) [not null]
   email varchar(255) [not null, unique]
   email_verificado boolean [not null, default: false]
-  hash_senha varchar(255) [not null, note: 'Argon2id. RNF001: senha em claro nunca e persistida']
-  cpf varchar(11) [unique, note: 'Somente digitos. RNF014: visivel so ao titular e ao admin']
-  ativo boolean [not null, default: true, note: 'RF021/RF022: admin suspende sem apagar']
-  tentativas_login int [not null, default: 0, note: 'RNF020: protecao contra forca bruta']
-  bloqueado_ate timestamptz [note: 'RNF020: null = nao bloqueado']
-  ultimo_login timestamptz [note: 'Ultimo login bem-sucedido. Alimenta RNF022 e a suspensao do RF021']
+  hash_senha varchar(255) [not null, note: 'Argon2id']
+  cpf varchar(11) [unique, note: 'Somente digitos']
+  ativo boolean [not null, default: true]
+  tentativas_login int [not null, default: 0]
+  bloqueado_ate timestamptz
+  ultimo_login timestamptz
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    email [unique, name: 'uq_usuarios_email']
-    cpf   [unique, name: 'uq_usuarios_cpf']
-    ativo [name: 'idx_usuarios_ativo']
+    email [unique, name: 'uq_usuario_email']
+    cpf   [unique, name: 'uq_usuario_cpf']
+    ativo [name: 'idx_usuario_ativo']
   }
-  Note: 'Credencial e identidade. NAO guarda dado de exibicao por papel — isso e tb_perfis.'
 }
 
-Table tb_refresh_tokens {
+Table refresh_token {
   id uuid [pk, default: `gen_random_uuid()`]
   usuario_id bigint [not null]
-  hash_token varchar(255) [not null, unique, note: 'RNF019: guarda o hash, nunca o token']
-  familia_id uuid [not null, note: 'RNF019: reuso detectado revoga a familia inteira']
-  substituido_por uuid [unique, note: 'Rotacao: aponta para o token que o sucedeu']
+  hash_token varchar(255) [not null, unique]
+  familia_id uuid [not null]
+  substituido_por uuid [unique]
   expira_em timestamptz [not null]
   revogado_em timestamptz
-  ip_origem inet [note: 'inet ja cobre IPv4 e IPv6. NAO existe tipo inet6 no PostgreSQL']
+  ip_origem inet
   criado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    hash_token [unique, name: 'uq_refresh_tokens_hash_token']
-    usuario_id [name: 'idx_refresh_tokens_usuario_id']
-    familia_id [name: 'idx_refresh_tokens_familia_id']
+    hash_token [unique, name: 'uq_refresh_token_hash_token']
+    usuario_id [name: 'idx_refresh_token_usuario_id']
+    familia_id [name: 'idx_refresh_token_familia_id']
   }
-  Note: '''
-  RNF019. Rotacionado a cada uso. Sem revogacao no banco, logout nao existe de verdade.
-
-  substituido_por e familia_id nao sao redundantes:
-    substituido_por da a corrente (t1 -> t2 -> t3) e serve para auditar.
-    familia_id da o conjunto em UMA consulta. Detectado reuso de t1, a revogacao
-    e "UPDATE ... WHERE familia_id = X" — nao uma recursao subindo a corrente.
-  '''
 }
 
-Table tb_tokens_recuperacao {
+Table token_recuperacao {
   id uuid [pk, default: `gen_random_uuid()`]
   usuario_id bigint [not null]
-  hash_token varchar(255) [not null, unique, note: 'RNF021: opaco e armazenado com hash']
+  hash_token varchar(255) [not null, unique]
   expira_em timestamptz [not null]
-  usado_em timestamptz [note: 'RNF021: uso unico. Nao-nulo = ja queimado']
+  usado_em timestamptz
   criado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    hash_token [unique, name: 'uq_tokens_recuperacao_hash_token']
-    usuario_id [name: 'idx_tokens_recuperacao_usuario_id']
+    hash_token [unique, name: 'uq_token_recuperacao_hash_token']
+    usuario_id [name: 'idx_token_recuperacao_usuario_id']
   }
-  Note: 'RNF021. Sem esta tabela o "esqueci minha senha" nao tem onde guardar o token de uso unico.'
 }
 
 // ---------------------------------------------------------------------------
-// USUARIOS  —  RF002, RF021, RF022, RNF014, RNF022
+// usuarios — RF002, RF021, RF022, RNF014, RNF022
 // ---------------------------------------------------------------------------
 
-Table tb_perfis {
-  id bigint [pk, note: 'GENERATED ALWAYS AS IDENTITY']
+Table perfil {
+  id bigint [pk, increment]
   usuario_id bigint [not null]
   tipo tipo_perfil [not null, default: 'CLIENTE']
-  nome_usuario varchar(50) [not null, unique, note: 'Handle publico da URL: /p/joao-encanador']
+  nome_usuario varchar(50) [not null, unique]
   nome_exibicao varchar(100) [not null]
-  telefone varchar(20) [note: 'RNF014: dado sensivel']
-  endereco_id bigint [note: 'RF013: base de atendimento do profissional']
-  foto_url varchar(500) [note: 'Chave do objeto no bucket avatares do MinIO']
+  telefone varchar(20)
+  endereco_id bigint
+  foto_url varchar(500)
   bio varchar(500)
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    (usuario_id, tipo) [unique, name: 'uq_perfis_usuario_tipo']
-    nome_usuario [unique, name: 'uq_perfis_nome_usuario']
-    usuario_id [name: 'idx_perfis_usuario_id']
-    tipo [name: 'idx_perfis_tipo']
+    (usuario_id, tipo) [unique, name: 'uq_perfil_usuario_tipo']
+    nome_usuario [unique, name: 'uq_perfil_nome_usuario']
+    usuario_id [name: 'idx_perfil_usuario_id']
+    tipo [name: 'idx_perfil_tipo']
   }
-  Note: '''
-  RF002 — um usuario tem N perfis, um por papel.
-  A UNIQUE composta (usuario_id, tipo) permite que a mesma pessoa seja CLIENTE e
-  PROFISSIONAL sem duplicar conta, e impede dois perfis do mesmo tipo.
-  A autorizacao (RNF002) le o papel daqui, nunca do JWT.
-
-  NAO tem coluna email: o e-mail e da CONTA (tb_usuarios), nao do papel. Duplicar
-  significaria decidir, em cada consulta, qual dos dois esta certo quando divergirem.
-  '''
 }
 
-Table tb_enderecos {
-  id bigint [pk, note: 'GENERATED ALWAYS AS IDENTITY']
-  cep varchar(8) [note: 'Somente digitos']
+Table endereco {
+  id bigint [pk, increment]
+  cep varchar(8)
   logradouro varchar(200)
   numero varchar(20)
   complemento varchar(100)
   bairro varchar(100)
   cidade varchar(100) [not null]
   uf char(2) [not null]
-  latitude numeric(10,7) [note: 'RF013. Preenchido por geocodificacao — fornecedor pendente de ADR-0008']
-  longitude numeric(10,7) [note: 'RF013']
+  latitude numeric(10,7)
+  longitude numeric(10,7)
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    (cidade, uf) [name: 'idx_enderecos_cidade_uf']
-    (latitude, longitude) [name: 'idx_enderecos_coordenadas']
+    (cidade, uf) [name: 'idx_endereco_cidade_uf']
+    (latitude, longitude) [name: 'idx_endereco_coordenadas']
   }
-  Note: '''
-  RF013 exige distancia em km. Texto livre nao calcula distancia — so um par de
-  coordenadas calcula. Por isso o endereco e tabela, e nao um varchar em tb_perfis.
-  '''
 }
 
-Table tb_log_acoes {
+Table log_acao {
   id uuid [pk, default: `gen_random_uuid()`]
-  autor_usuario_id bigint [note: 'Nulo quando a acao e do sistema, nao de uma pessoa']
-  acao varchar(80) [not null, note: 'ex: USUARIO_SUSPENSO, DENUNCIA_ANALISADA, LOGIN_FALHOU']
-  alvo_tipo varchar(40) [note: 'ex: CONTRATACAO, PERFIL, SERVICO']
-  alvo_id varchar(64) [note: 'ADR-0007: guarda id bigint OU uuid como texto. Sem FK de proposito']
-  detalhes jsonb [note: 'Payload livre. O que mudou, de que valor para qual']
+  autor_usuario_id bigint
+  acao varchar(80) [not null]
+  alvo_tipo varchar(40)
+  alvo_id varchar(64) [note: 'Polimorfico, sem FK']
+  detalhes jsonb
   ip_origem inet
   criado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    autor_usuario_id [name: 'idx_log_acoes_autor']
-    (alvo_tipo, alvo_id) [name: 'idx_log_acoes_alvo']
-    criado_em [name: 'idx_log_acoes_criado_em']
-    acao [name: 'idx_log_acoes_acao']
+    autor_usuario_id [name: 'idx_log_acao_autor']
+    (alvo_tipo, alvo_id) [name: 'idx_log_acao_alvo']
+    criado_em [name: 'idx_log_acao_criado_em']
+    acao [name: 'idx_log_acao_acao']
   }
-  Note: '''
-  RNF022 — auditoria. Tabela SOMENTE DE ESCRITA: nunca sofre UPDATE nem DELETE
-  pela aplicacao. Nao tem atualizado_em de proposito — registro de auditoria que
-  pode ser alterado nao e auditoria.
-
-  alvo_id NAO tem FK, e isso e intencional: o log precisa sobreviver ao alvo.
-  Uma FK com CASCADE apagaria a prova junto com o crime; com RESTRICT impediria
-  apagar qualquer linha ja auditada.
-  '''
+  Note: 'RNF022 — somente escrita. Sem atualizado_em de proposito.'
 }
 
 // ---------------------------------------------------------------------------
-// PROFISSIONAIS  —  RF003, RF005
+// profissionais — RF003, RF005
 // ---------------------------------------------------------------------------
 
-Table tb_portfolios {
-  id bigint [pk, note: 'GENERATED ALWAYS AS IDENTITY']
-  perfil_id bigint [not null, unique, note: 'Um portfolio por perfil PROFISSIONAL']
+Table portfolio {
+  id bigint [pk, increment]
+  perfil_id bigint [not null, unique]
   titulo varchar(120) [not null]
   descricao varchar(1000)
-  slug_url varchar(120) [not null, unique, note: 'Chave publica da URL. Slug repetido = duas paginas disputando o mesmo endereco']
+  slug_url varchar(120) [not null, unique]
   foto_capa_url varchar(500)
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    perfil_id [unique, name: 'uq_portfolios_perfil_id']
-    slug_url  [unique, name: 'uq_portfolios_slug_url']
+    perfil_id [unique, name: 'uq_portfolio_perfil_id']
+    slug_url  [unique, name: 'uq_portfolio_slug_url']
   }
 }
 
-Table tb_portfolio_fotos {
+Table portfolio_foto {
   id uuid [pk, default: `gen_random_uuid()`]
   portfolio_id bigint [not null]
-  url varchar(500) [not null, note: 'Chave do objeto no bucket portfolios do MinIO']
+  url varchar(500) [not null]
   legenda varchar(200)
   ordem int [not null, default: 0]
   criado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    (portfolio_id, ordem) [name: 'idx_portfolio_fotos_portfolio_ordem']
+    (portfolio_id, ordem) [name: 'idx_portfolio_foto_portfolio_ordem']
   }
-  Note: '''
-  Era fotos_galeria jsonb no rascunho. Virou tabela porque a galeria e REORDENAVEL
-  e consultada foto a foto: com jsonb, mudar a ordem reescreve o documento inteiro
-  e nao existe FK que garanta que a foto pertence a um portfolio real.
-  '''
 }
 
-Table tb_disponibilidades {
+Table disponibilidade {
   id uuid [pk, default: `gen_random_uuid()`]
-  perfil_id bigint [not null, note: 'SEM unique: um profissional declara varias faixas']
-  dia_semana smallint [not null, note: 'ck_disponibilidades_dia_semana: BETWEEN 0 AND 6 (0=domingo)']
+  perfil_id bigint [not null]
+  dia_semana smallint [not null, note: 'ck_disponibilidade_dia_semana: BETWEEN 0 AND 6']
   hora_inicio time [not null]
-  hora_fim time [not null, note: 'ck_disponibilidades_intervalo: hora_fim > hora_inicio']
+  hora_fim time [not null, note: 'ck_disponibilidade_intervalo: hora_fim > hora_inicio']
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    (perfil_id, dia_semana) [name: 'idx_disponibilidades_perfil_dia']
+    (perfil_id, dia_semana) [name: 'idx_disponibilidade_perfil_dia']
   }
-  Note: '''
-  RF005 — "os horarios em que ele atende", plural.
-  UNIQUE em perfil_id daria UMA linha por profissional, ou seja, UM dia da semana
-  e UMA faixa de horario para a vida inteira. Uma linha por (dia, faixa) permite
-  "seg-sex 8h-12h e 14h-18h, sabado 8h-12h" — que e o caso real.
-  '''
 }
 
 // ---------------------------------------------------------------------------
-// SERVICOS  —  RF004, RF009, RF010, RF011
+// servicos — RF004, RF009, RF010, RF011
 // ---------------------------------------------------------------------------
 
-Table tb_tags {
+Table tag {
   id uuid [pk, default: `gen_random_uuid()`]
-  nome varchar(50) [not null, unique, note: 'ck_tags_nome_nao_vazio: length(trim(nome)) > 0']
-  slug varchar(60) [not null, unique, note: 'Para URL de filtro (RF004)']
+  nome varchar(50) [not null, unique, note: 'ck_tag_nome_nao_vazio: length(trim(nome)) > 0']
+  slug varchar(60) [not null, unique]
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    nome [unique, name: 'uq_tags_nome']
-    slug [unique, name: 'uq_tags_slug']
+    nome [unique, name: 'uq_tag_nome']
+    slug [unique, name: 'uq_tag_slug']
   }
-  Note: 'A funcao do PostgreSQL e length(), nao lenght(). O typo derruba a migration.'
 }
 
-Table tb_servicos {
+Table servico {
   id uuid [pk, default: `gen_random_uuid()`]
-  perfil_id bigint [not null, note: 'O PROFISSIONAL dono da oferta']
+  perfil_id bigint [not null]
   titulo varchar(120) [not null]
   descricao varchar(1000)
-  preco_previo numeric(10,2) [not null, note: 'ck_servicos_preco_nao_negativo: >= 0. Preco de referencia do catalogo']
+  preco_previo numeric(10,2) [not null, note: 'ck_servico_preco_nao_negativo: >= 0']
   unidade_preco varchar(20) [not null, default: 'SERVICO', note: 'SERVICO | HORA | METRO_QUADRADO']
   ativo boolean [not null, default: true]
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    perfil_id [name: 'idx_servicos_perfil_id']
-    ativo [name: 'idx_servicos_ativo']
+    perfil_id [name: 'idx_servico_perfil_id']
+    ativo [name: 'idx_servico_ativo']
   }
-  Note: '''
-  RF010 — a OFERTA do catalogo. Existe mesmo que ninguem contrate.
-  NAO tem cliente_id: quem tem cliente e tb_contratacoes.
-
-  preco_previo e numeric(10,2), nao int. Com int, R$ 120,50 nao cabe, e nada no
-  schema diz se 120 sao reais ou centavos — o proximo dev tem 50% de chance de errar.
-  '''
+  Note: 'A oferta do catalogo. O trabalho contratado e contratacao.'
 }
 
-Table tb_servico_tags {
+Table servico_tag {
   servico_id uuid [not null]
   tag_id uuid [not null]
 
   indexes {
     (servico_id, tag_id) [pk]
-    tag_id [name: 'idx_servico_tags_tag_id']
+    tag_id [name: 'idx_servico_tag_tag_id']
   }
-  Note: '''
-  N:N. Um servico como "reforma de banheiro" e ao mesmo tempo hidraulica e
-  alvenaria — com uma tag so, o filtro do RF004 perde metade dos resultados.
-  '''
 }
 
 // ---------------------------------------------------------------------------
-// CONTRATACOES  —  RF008, RF012, RF013, RF014, RF015, RF016, RF017, RF018
+// contratacoes — RF008, RF012, RF013, RF014, RF015, RF016, RF017, RF018
 // ---------------------------------------------------------------------------
 
-Table tb_contratacoes {
+Table contratacao {
   id uuid [pk, default: `gen_random_uuid()`]
   cliente_perfil_id bigint [not null]
   profissional_perfil_id bigint [not null]
-  servico_id uuid [note: 'Nulo se o cliente descreveu um servico fora do catalogo']
-  endereco_id bigint [not null, note: 'Onde o servico sera prestado (RF013)']
+  servico_id uuid
+  endereco_id bigint [not null]
   titulo varchar(120) [not null]
-  descricao varchar(2000) [not null, note: 'RF014 — o que o cliente precisa. Sem isto a solicitacao nao diz nada']
+  descricao varchar(2000) [not null]
   status status_contratacao [not null, default: 'SOLICITADA']
-  valor_orcado numeric(10,2) [note: 'RF017 — preenchido quando o profissional responde']
-  valor_final numeric(10,2) [note: 'Congelado na aceitacao. NAO le preco de tb_servicos depois']
-  distancia_km numeric(6,2) [note: 'RF013 — calculado na criacao e congelado']
-  motivo_cancelamento varchar(500) [note: 'RF018']
-  cancelado_por_perfil_id bigint [note: 'RF018. NULAVEL: no INSERT ninguem cancelou ainda']
-  concluida_em timestamptz [note: 'Libera a avaliacao (RF006)']
+  valor_orcado numeric(10,2)
+  valor_final numeric(10,2) [note: 'Congelado na aceitacao']
+  distancia_km numeric(6,2)
+  motivo_cancelamento varchar(500)
+  cancelado_por_perfil_id bigint [note: 'ck_contratacao_cancelamento_coerente: status <> CANCELADA OR NOT NULL']
+  concluida_em timestamptz
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    cliente_perfil_id [name: 'idx_contratacoes_cliente']
-    profissional_perfil_id [name: 'idx_contratacoes_profissional']
-    status [name: 'idx_contratacoes_status']
-    (cliente_perfil_id, criado_em) [name: 'idx_contratacoes_cliente_criado_em']
+    cliente_perfil_id [name: 'idx_contratacao_cliente']
+    profissional_perfil_id [name: 'idx_contratacao_profissional']
+    status [name: 'idx_contratacao_status']
+    (cliente_perfil_id, criado_em) [name: 'idx_contratacao_cliente_criado_em']
   }
-  Note: '''
-  O trabalho contratado — uma instancia, nao a oferta.
-
-  valor_final e congelado de proposito: uma contratacao de marco precisa guardar o
-  valor combinado NAQUELE dia. Ler o preco atual de tb_servicos corromperia o
-  historico (RF016) toda vez que o profissional reajustasse a tabela.
-
-  cancelado_por_perfil_id e motivo_cancelamento sao NULAVEIS porque descrevem um
-  evento que ainda nao aconteceu quando a linha nasce. A regra "se status=CANCELADA
-  entao cancelado_por nao e nulo" e um CHECK condicional, nao um NOT NULL:
-    ck_contratacoes_cancelamento_coerente
-      CHECK (status <> 'CANCELADA' OR cancelado_por_perfil_id IS NOT NULL)
-  '''
 }
 
-Table tb_contratacao_status_historico {
+Table contratacao_historico {
   id uuid [pk, default: `gen_random_uuid()`]
   contratacao_id uuid [not null]
-  status_anterior status_contratacao [note: 'Nulo apenas na primeira linha, a criacao']
+  status_anterior status_contratacao
   status_novo status_contratacao [not null]
-  alterado_por_perfil_id bigint [note: 'NULAVEL: transicao automatica do sistema nao tem autor']
+  alterado_por_perfil_id bigint
   observacao varchar(500)
   criado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    (contratacao_id, criado_em) [name: 'idx_contratacao_status_hist_contratacao']
+    (contratacao_id, criado_em) [name: 'idx_contratacao_historico_contratacao']
   }
-  Note: 'RF008 — "ver a duracao e qual etapa esta". Sem esta tabela da para ver a etapa atual, nao a duracao de cada uma.'
 }
 
-Table tb_contratacao_anexos {
+Table contratacao_anexo {
   id uuid [pk, default: `gen_random_uuid()`]
   contratacao_id uuid [not null]
-  url varchar(500) [not null, note: 'Chave do objeto no bucket anexos do MinIO']
+  url varchar(500) [not null]
   nome_arquivo varchar(200) [not null]
-  tamanho_bytes bigint [not null, note: 'RNF017: ck_anexos_tamanho — maximo 5 MB']
+  tamanho_bytes bigint [not null, note: 'ck_contratacao_anexo_tamanho: <= 5 MB (RNF017)']
   tipo_conteudo varchar(80) [not null, note: 'RNF017: image/jpeg, image/png, image/webp']
   criado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    contratacao_id [name: 'idx_contratacao_anexos_contratacao_id']
+    contratacao_id [name: 'idx_contratacao_anexo_contratacao_id']
   }
-  Note: 'RF015 — fotos anexadas a solicitacao de orcamento. Nao e chat (RF023 e pos-MVP).'
 }
 
-Table tb_notificacoes {
+Table notificacao {
   id uuid [pk, default: `gen_random_uuid()`]
   destinatario_perfil_id bigint [not null]
-  tipo varchar(60) [not null, note: 'ex: CONTRATACAO_ACEITA, CONTRATACAO_RECUSADA']
+  tipo varchar(60) [not null]
   titulo varchar(150) [not null]
   mensagem varchar(500)
-  alvo_tipo varchar(40) [note: 'ex: CONTRATACAO, AVALIACAO']
-  alvo_id varchar(64) [note: 'ADR-0007: id do alvo como texto. Sem ele a notificacao nao leva a lugar nenhum']
+  alvo_tipo varchar(40)
+  alvo_id varchar(64) [note: 'Polimorfico, sem FK']
   lida_em timestamptz
   criado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    (destinatario_perfil_id, lida_em) [name: 'idx_notificacoes_destinatario_lida']
+    (destinatario_perfil_id, lida_em) [name: 'idx_notificacao_destinatario_lida']
   }
-  Note: '''
-  RF012 — notificar aceite ou recusa.
-  alvo_tipo sem alvo_id diria ao usuario que "uma contratacao" mudou, sem dizer
-  qual — a notificacao nao teria para onde navegar.
-  '''
 }
 
 // ---------------------------------------------------------------------------
-// AVALIACOES  —  RF006, RF007, RF019, RF020
+// avaliacoes — RF006, RF007, RF019, RF020
 // ---------------------------------------------------------------------------
 
-Table tb_avaliacoes {
+Table avaliacao {
   id uuid [pk, default: `gen_random_uuid()`]
-  contratacao_id uuid [not null, unique, note: 'Uma avaliacao por contratacao']
-  autor_perfil_id bigint [not null, note: 'O CLIENTE que contratou']
-  avaliado_perfil_id bigint [not null, note: 'O PROFISSIONAL avaliado']
-  nota smallint [not null, note: 'ck_avaliacoes_nota_valida: nota BETWEEN 1 AND 5 (RF006)']
-  comentario varchar(1000) [note: 'RF007']
+  contratacao_id uuid [not null, unique]
+  autor_perfil_id bigint [not null]
+  avaliado_perfil_id bigint [not null]
+  nota smallint [not null, note: 'ck_avaliacao_nota_valida: BETWEEN 1 AND 5']
+  comentario varchar(1000)
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    contratacao_id [unique, name: 'uq_avaliacoes_contratacao_id']
-    avaliado_perfil_id [name: 'idx_avaliacoes_avaliado_perfil_id']
-    (avaliado_perfil_id, nota) [name: 'idx_avaliacoes_avaliado_nota']
+    contratacao_id [unique, name: 'uq_avaliacao_contratacao_id']
+    avaliado_perfil_id [name: 'idx_avaliacao_avaliado_perfil_id']
+    (avaliado_perfil_id, nota) [name: 'idx_avaliacao_avaliado_nota']
   }
-  Note: '''
-  A UNIQUE em contratacao_id garante uma avaliacao por trabalho — sem ela, um cliente
-  irritado avalia dez vezes e afunda a media do RF019.
-  A avaliacao so e aceita se a contratacao estiver CONCLUIDA (regra de servico).
-  '''
 }
 
-Table tb_denuncias {
+Table denuncia {
   id uuid [pk, default: `gen_random_uuid()`]
-  autor_perfil_id bigint [not null, note: 'Quem denunciou']
-  denunciado_perfil_id bigint [note: 'Perfil denunciado. Nulo se o alvo nao pertence a um perfil']
-  contratacao_id uuid [note: 'Contratacao que originou a denuncia, quando houver']
-  alvo_tipo tipo_alvo_denuncia [not null, note: 'RF020: servico, perfil OU avaliacao']
-  alvo_id varchar(64) [not null, note: 'ADR-0007: id do alvo como texto']
-  motivo varchar(80) [not null, note: 'ex: CONTEUDO_OFENSIVO, GOLPE, SERVICO_INADEQUADO']
+  autor_perfil_id bigint [not null]
+  denunciado_perfil_id bigint
+  contratacao_id uuid
+  alvo_tipo tipo_alvo_denuncia [not null]
+  alvo_id varchar(64) [not null, note: 'Polimorfico, sem FK']
+  motivo varchar(80) [not null]
   descricao varchar(1000)
-  fotos jsonb [note: 'Evidencias. jsonb aqui e aceitavel: escrita uma vez, nunca reordenada, nunca consultada foto a foto']
+  fotos jsonb
   status status_denuncia [not null, default: 'PENDENTE']
-  analisado_por_perfil_id bigint [note: 'O ADMIN que analisou']
+  analisado_por_perfil_id bigint
   analisado_em timestamptz
-  parecer varchar(1000) [note: 'Justificativa da decisao do admin']
+  parecer varchar(1000)
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
 
   indexes {
-    status [name: 'idx_denuncias_status']
-    (alvo_tipo, alvo_id) [name: 'idx_denuncias_alvo']
-    autor_perfil_id [name: 'idx_denuncias_autor']
-    denunciado_perfil_id [name: 'idx_denuncias_denunciado']
-    contratacao_id [name: 'idx_denuncias_contratacao']
+    status [name: 'idx_denuncia_status']
+    (alvo_tipo, alvo_id) [name: 'idx_denuncia_alvo']
+    autor_perfil_id [name: 'idx_denuncia_autor']
+    denunciado_perfil_id [name: 'idx_denuncia_denunciado']
+    contratacao_id [name: 'idx_denuncia_contratacao']
   }
-  Note: '''
-  RF020 — "denuncie um servico, perfil ou avaliacao ... e que o administrador
-  registre o resultado da analise".
-
-  Sem status, a denuncia entra e nunca sai: o admin nao tem fila para triar.
-  Sem alvo_tipo + alvo_id, so da para denunciar pessoa — o RF020 pede tres alvos.
-
-  contratacao_id NAO e unique: o cliente e o profissional podem denunciar um ao
-  outro pelo mesmo trabalho, e as duas denuncias sao legitimas e independentes.
-
-  A coluna se chama denunciado_perfil_id, nao culpado: quem decide culpa e a
-  analise do admin, e ela acontece depois. Nome de coluna nao antecipa veredito.
-  '''
 }
 
 // ---------------------------------------------------------------------------
 // RELACIONAMENTOS
 // ---------------------------------------------------------------------------
 
-// autenticacao
-Ref: tb_refresh_tokens.usuario_id > tb_usuarios.id [delete: cascade]
-Ref: tb_refresh_tokens.substituido_por - tb_refresh_tokens.id [delete: set null]
-Ref: tb_tokens_recuperacao.usuario_id > tb_usuarios.id [delete: cascade]
+Ref: refresh_token.usuario_id > usuario.id [delete: cascade]
+Ref: refresh_token.substituido_por - refresh_token.id [delete: set null]
+Ref: token_recuperacao.usuario_id > usuario.id [delete: cascade]
 
-// usuarios
-Ref: tb_perfis.usuario_id > tb_usuarios.id [delete: cascade]
-Ref: tb_perfis.endereco_id > tb_enderecos.id [delete: set null]
-Ref: tb_log_acoes.autor_usuario_id > tb_usuarios.id [delete: set null]
+Ref: perfil.usuario_id > usuario.id [delete: cascade]
+Ref: perfil.endereco_id > endereco.id [delete: set null]
+Ref: log_acao.autor_usuario_id > usuario.id [delete: set null]
 
-// profissionais
-Ref: tb_portfolios.perfil_id - tb_perfis.id [delete: cascade]
-Ref: tb_portfolio_fotos.portfolio_id > tb_portfolios.id [delete: cascade]
-Ref: tb_disponibilidades.perfil_id > tb_perfis.id [delete: cascade]
+Ref: portfolio.perfil_id - perfil.id [delete: cascade]
+Ref: portfolio_foto.portfolio_id > portfolio.id [delete: cascade]
+Ref: disponibilidade.perfil_id > perfil.id [delete: cascade]
 
-// servicos
-Ref: tb_servicos.perfil_id > tb_perfis.id [delete: cascade]
-Ref: tb_servico_tags.servico_id > tb_servicos.id [delete: cascade]
-Ref: tb_servico_tags.tag_id > tb_tags.id [delete: cascade]
+Ref: servico.perfil_id > perfil.id [delete: cascade]
+Ref: servico_tag.servico_id > servico.id [delete: cascade]
+Ref: servico_tag.tag_id > tag.id [delete: cascade]
 
-// contratacoes
-Ref: tb_contratacoes.cliente_perfil_id > tb_perfis.id [delete: restrict]
-Ref: tb_contratacoes.profissional_perfil_id > tb_perfis.id [delete: restrict]
-Ref: tb_contratacoes.servico_id > tb_servicos.id [delete: set null]
-Ref: tb_contratacoes.endereco_id > tb_enderecos.id [delete: restrict]
-Ref: tb_contratacoes.cancelado_por_perfil_id > tb_perfis.id [delete: set null]
-Ref: tb_contratacao_status_historico.contratacao_id > tb_contratacoes.id [delete: cascade]
-Ref: tb_contratacao_status_historico.alterado_por_perfil_id > tb_perfis.id [delete: set null]
-Ref: tb_contratacao_anexos.contratacao_id > tb_contratacoes.id [delete: cascade]
-Ref: tb_notificacoes.destinatario_perfil_id > tb_perfis.id [delete: cascade]
+Ref: contratacao.cliente_perfil_id > perfil.id [delete: restrict]
+Ref: contratacao.profissional_perfil_id > perfil.id [delete: restrict]
+Ref: contratacao.servico_id > servico.id [delete: set null]
+Ref: contratacao.endereco_id > endereco.id [delete: restrict]
+Ref: contratacao.cancelado_por_perfil_id > perfil.id [delete: set null]
+Ref: contratacao_historico.contratacao_id > contratacao.id [delete: cascade]
+Ref: contratacao_historico.alterado_por_perfil_id > perfil.id [delete: set null]
+Ref: contratacao_anexo.contratacao_id > contratacao.id [delete: cascade]
+Ref: notificacao.destinatario_perfil_id > perfil.id [delete: cascade]
 
-// avaliacoes
-Ref: tb_avaliacoes.contratacao_id - tb_contratacoes.id [delete: cascade]
-Ref: tb_avaliacoes.autor_perfil_id > tb_perfis.id [delete: restrict]
-Ref: tb_avaliacoes.avaliado_perfil_id > tb_perfis.id [delete: restrict]
-Ref: tb_denuncias.autor_perfil_id > tb_perfis.id [delete: restrict]
-Ref: tb_denuncias.denunciado_perfil_id > tb_perfis.id [delete: restrict]
-Ref: tb_denuncias.contratacao_id > tb_contratacoes.id [delete: set null]
-Ref: tb_denuncias.analisado_por_perfil_id > tb_perfis.id [delete: set null]
+Ref: avaliacao.contratacao_id - contratacao.id [delete: cascade]
+Ref: avaliacao.autor_perfil_id > perfil.id [delete: restrict]
+Ref: avaliacao.avaliado_perfil_id > perfil.id [delete: restrict]
+Ref: denuncia.autor_perfil_id > perfil.id [delete: restrict]
+Ref: denuncia.denunciado_perfil_id > perfil.id [delete: restrict]
+Ref: denuncia.contratacao_id > contratacao.id [delete: set null]
+Ref: denuncia.analisado_por_perfil_id > perfil.id [delete: set null]

@@ -32,7 +32,7 @@ As duas escolhas têm base técnica real, e a diferença aparece em três lugare
    isso se multiplica.
 2. **Exposição em URL.** `/api/perfis/1`, `/api/perfis/2` permite varrer a base contando de 1 em
    1 e descobrir quantos usuários existem. `uuid` não permite.
-3. **Referência polimórfica.** `tb_log_acoes.alvo_id` e `tb_notificacoes.alvo_id` apontam para
+3. **Referência polimórfica.** `log_acao.alvo_id` e `notificacao.alvo_id` apontam para
    entidades de tabelas diferentes. Uma coluna tem um tipo só, então com PK mista esses campos
    não podem ser nem `bigint` nem `uuid`.
 
@@ -45,15 +45,15 @@ A chave primária deste projeto é **mista**, por critério explícito:
 
 | Tipo | Tabelas | Critério |
 |---|---|---|
-| `BIGINT GENERATED ALWAYS AS IDENTITY` | `tb_usuarios`, `tb_perfis`, `tb_enderecos`, `tb_portfolios` | **Cadastro** — cresce devagar, é alvo da maioria dos `JOIN` |
+| `BIGINT GENERATED ALWAYS AS IDENTITY` | `usuario`, `perfil`, `endereco`, `portfolio` | **Cadastro** — cresce devagar, é alvo da maioria dos `JOIN` |
 | `UUID DEFAULT gen_random_uuid()` | as outras 14 tabelas | **Transacional** — nasce por evento, cresce rápido, aparece em URL |
 
 Toda coluna de **alvo polimórfico** é `varchar(64)` **sem foreign key**:
-`tb_log_acoes.alvo_id`, `tb_notificacoes.alvo_id` e `tb_denuncias.alvo_id`. O par
+`log_acao.alvo_id`, `notificacao.alvo_id` e `denuncia.alvo_id`. O par
 (`alvo_tipo`, `alvo_id`) é validado pelo *service*, não pelo banco, e precisa de teste que o
 cubra.
 
-`tb_perfis` recebe `nome_usuario varchar(50) UNIQUE` e `tb_portfolios` recebe
+`perfil` recebe `nome_usuario varchar(50) UNIQUE` e `portfolio` recebe
 `slug_url varchar(120) UNIQUE`, de forma que a URL pública use o *slug* e não o `bigint` —
 isso neutraliza a enumeração no único lugar do MVP onde o id de cadastro sairia para o cliente.
 
@@ -70,14 +70,14 @@ isso neutraliza a enumeração no único lugar do MVP onde o id de cadastro sair
 ### Positivas
 
 - Índice e `JOIN` mais baratos nas quatro tabelas mais referenciadas do modelo
-- `tb_contratacoes`, `tb_avaliacoes` e `tb_denuncias` continuam com id opaco, que é onde a
+- `contratacao`, `avaliacao` e `denuncia` continuam com id opaco, que é onde a
   adivinhação de id teria consequência de acesso
 - O modelo passa a refletir a intenção de quem o desenhou, e não uma convenção herdada de um
   template
 
 ### Negativas
 
-- **`tb_notificacoes.alvo_id` perde a integridade referencial.** O banco não impede uma
+- **`notificacao.alvo_id` perde a integridade referencial.** O banco não impede uma
   notificação apontar para uma contratação que não existe. É dívida assumida, coberta por teste
   de service, não por constraint
 - **Toda comparação de `alvo_id` exige aspas.** `WHERE alvo_id = 42` falha; o correto é
@@ -87,7 +87,7 @@ isso neutraliza a enumeração no único lugar do MVP onde o id de cadastro sair
 
 ### Neutras
 
-- `tb_log_acoes.alvo_id` também fica sem FK, mas ali isso **já era desejável**: uma FK com
+- `log_acao.alvo_id` também fica sem FK, mas ali isso **já era desejável**: uma FK com
   `CASCADE` apagaria a prova junto com o registro auditado, e com `RESTRICT` impediria apagar
   qualquer linha já auditada
 - A §5.2 deixa de ter uma linha de chave primária e passa a ter três
@@ -107,6 +107,6 @@ acoplamento, no mesmo commit.
 ## Referências
 
 - [`modelo-dados.md`](../modelo-dados.md) §3.1 — o mesmo trade-off explicado para quem vai codar
-- [`modelo-dados.dbml`](../modelo-dados.dbml) — o modelo v3.0.0
+- [`modelo-dados.dbml`](../modelo-dados.dbml) — o modelo v4.0.0
 - [ADR-0004](./0004-estrutura-modular-por-dominio.md) — a regra de referência por `id` entre módulos
 - PostgreSQL 18 — `uuid` ocupa 16 bytes, `bigint` 8; `gen_random_uuid()` gera v4 (aleatório)

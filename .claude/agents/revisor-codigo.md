@@ -30,7 +30,7 @@ Revise nesta ordem e não gaste esforço no item seguinte enquanto o anterior ti
 - Interface em `contrato/`, implementação `Impl` em `service/`
 - Exceção tratada por `@RestControllerAdvice` com `ProblemDetail` (RFC 9457) — nunca
   `catch` que engole ou `printStackTrace`
-- Autorização por papel lida de `tb_usuarios`, **jamais** de claim do JWT
+- Autorização por papel lida de `usuario`, **jamais** de claim do JWT
 - H2 em teste de regra de negócio é achado — o projeto exige Testcontainers com PostgreSQL
 - Repository de outro módulo injetado, ou relacionamento JPA cruzando módulo
 

@@ -15,7 +15,7 @@
 ## Contexto
 
 A documentação está pronta: 46 requisitos versionados, matriz de rastreabilidade, arquitetura em
-JSON com espelho legível, sete ADRs e o modelo de dados v3.0.0 com 18 tabelas. **Não existe uma
+JSON com espelho legível, sete ADRs e o modelo de dados v4.0.0 com 18 tabelas. **Não existe uma
 linha de código de aplicação.**
 
 Antes de abrir o primeiro arquivo Java é preciso saber quanto o MVP custa — em horas e em
@@ -30,7 +30,7 @@ em cards prontos para o Trello.
 
 - **Estimar o que já está pronto.** Documentação e modelagem não entram na conta
 - **`RF023` (chat) e demais requisitos pós-MVP** — já marcados como fora do MVP em `requisitos.json`
-- **Definir o fornecedor de geocodificação** — é o ADR-0008, ainda não escrito
+- **Definir o fornecedor de geocodificação** — é o ADR-0009, ainda não escrito
 
 ---
 
@@ -116,7 +116,7 @@ inclui aula, reunião nem o tempo de aprender Spring Security do zero.
 
 | Item | h |
 |---|---:|
-| Máquina de estados + `tb_contratacao_status_historico` (`RF008`, `RF016`) | 14 |
+| Máquina de estados + `contratacao_historico` (`RF008`, `RF016`) | 14 |
 | Solicitação de orçamento com anexos (`RF014`, `RF015`) | 10 |
 | Aceite / recusa com valor proposto (`RF017`) | 8 |
 | Cancelamento com motivo (`RF018`) | 4 |
@@ -187,7 +187,7 @@ BaaS, a infraestrutura é nossa.
 
 Onde isso muda: se a geocodificação sair do Nominatim para o Google Maps, entra em ~US$ 5 por
 1.000 requisições — daí a importância de **persistir a coordenada** e geocodificar uma vez por
-endereço, nunca a cada busca. Essa é a decisão do ADR-0008.
+endereço, nunca a cada busca. Essa é a decisão do ADR-0009.
 
 ---
 
@@ -289,7 +289,7 @@ endereço, nunca a cada busca. Essa é a decisão do ADR-0008.
 
 - [ ] Abrir o PR de `docs/requisitos-e-matriz-rastreabilidade` para `main` e ver o
       `docs-parity.yml` rodar contra uma mudança real
-- [ ] Escrever o **ADR-0008** da geocodificação — `RF013` é o único requisito do MVP sem caminho
+- [ ] Escrever o **ADR-0009** da geocodificação — `RF013` é o único requisito do MVP sem caminho
       técnico definido
 - [ ] Fechar as pendências pequenas: `LICENSE` vazio, `.gitignore` sem `target/` e `.next/`,
       ADR do `utils/` no frontend
@@ -298,7 +298,7 @@ endereço, nunca a cada busca. Essa é a decisão do ADR-0008.
 
 ## Referências
 
-- [`modelo-dados.md`](../modelo-dados.md) — o modelo v3.0.0 explicado
+- [`modelo-dados.md`](../modelo-dados.md) — o modelo v4.0.0 explicado
 - [`requisitos.md`](../requisitos.md) — os 46 requisitos
 - [`matriz-rastreabilidade.md`](../matriz-rastreabilidade.md)
 - [ADR-0006](../adr/0006-remover-supabase-infraestrutura-propria.md) — a origem do custo de infra
