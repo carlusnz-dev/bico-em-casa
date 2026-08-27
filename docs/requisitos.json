@@ -425,7 +425,7 @@
   "RNF003": {
     "codigo": "RNF003",
     "tipo": "nao-funcional",
-    "descricao": "Todo tráfego entre frontend, backend e Supabase ocorre sobre HTTPS com TLS 1.2 ou superior.",
+    "descricao": "Todo tráfego entre frontend, backend, PostgreSQL e MinIO ocorre cifrado com TLS 1.2 ou superior (HTTPS nas chamadas HTTP).",
     "modulos": [
       "transversal"
     ],
@@ -513,7 +513,7 @@
   "RNF010": {
     "codigo": "RNF010",
     "tipo": "nao-funcional",
-    "descricao": "Toda alteração de schema nasce como migration versionada do Flyway. Alterar schema pelo painel do Supabase é proibido.",
+    "descricao": "Toda alteração de schema nasce como migration versionada do Flyway. Alterar schema manualmente em qualquer ambiente é proibido.",
     "modulos": [
       "transversal"
     ],
