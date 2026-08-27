@@ -4,7 +4,7 @@ Plataforma de contratação de profissionais autônomos para serviços rápidos.
 profissional, vê o portfólio (opcional) e contrata sem burocracia.
 
 **Stack:** Java 21 + Spring Boot 4.1 (Maven) · Next.js 16.3 + TypeScript 7 · PostgreSQL 18 e
-identidade via Supabase.
+identidade própria (JWT RSA + Argon2id), storage no MinIO. Ver [ADR-0006](docs/adr/0006-remover-supabase-infraestrutura-propria.md).
 
 O projeto ainda não tem código de aplicação — a fundação é documentação e arquitetura.
 
@@ -20,6 +20,46 @@ As duas alterações vão **no mesmo commit**. Editar o markdown sem antes edita
 
 Um hook `PostToolUse` (`.claude/hooks/paridade-docs.sh`) lembra disso automaticamente, e o
 workflow `docs-parity.yml` falha o PR se a paridade for quebrada.
+
+## Regra nº 2 — quem decide é o desenvolvedor, não a LLM
+
+**Toda decisão de arquitetura ou de código é do desenvolvedor.** A LLM propõe, compara,
+argumenta e mostra o trade-off; **ela não escolhe**. Se a resposta certa depende de uma
+preferência, de um escopo ou de um custo que não está escrito no repositório, a LLM **pergunta
+antes de escrever** — não assume o caminho mais provável e segue.
+
+Vale para quem usa a ferramenta também: **aceitar uma sugestão sem entendê-la é decidir por
+omissão**, e o resultado continua sendo responsabilidade de quem commitou.
+
+Na prática, a LLM **deve parar e perguntar** quando:
+
+- A escolha muda o schema, a fronteira entre módulos ou uma pasta
+- Existe ADR sobre o assunto e a proposta contraria o ADR
+- Um requisito de `docs/requisitos.json` deixaria de ter caminho técnico
+- Há mais de uma solução defensável e a diferença é de preferência, não de correção
+
+E **deve seguir sozinha** no resto: aplicar convenção já registrada, corrigir erro objetivo
+(SQL inválido, tipo inexistente, `NOT NULL` que impede `INSERT`), escrever o que foi pedido.
+
+### Checklist de revisão — antes de fechar uma task ou abrir PR
+
+Isto é **disciplina da equipe, não automação**: não está no workflow de propósito, porque um
+check que a máquina responde sozinha deixa de ser lido. Quem fecha a task responde às cinco
+perguntas, honestamente, e escreve as respostas na descrição do PR ou no card:
+
+1. **Eu revisei o código que a LLM fez?** — linha a linha, não só o resumo dela
+2. **Eu entendo o que a LLM fez?** — se não consegue explicar para outra pessoa, ainda não entendeu
+3. **O que foi gerado nessa sessão está de acordo com o desenvolvimento?** — bate com a
+   arquitetura vigente, com os ADRs e com o que a task pedia
+4. **Há nuances geradas pela LLM?** — coisa que ela mudou, adicionou ou "melhorou" sem ter sido
+   pedida. Toda nuance é decisão implícita: ou vira decisão explícita, ou volta atrás
+5. **A documentação está nos conformes sobre o que eu fiz?** — JSON, markdown espelho, ADR e
+   relatório da sessão
+
+Um "não" em qualquer pergunta **bloqueia o PR**. A ação não é aprovar mesmo assim: é voltar e
+resolver o item.
+
+---
 
 ## Antes de escrever código
 
@@ -39,7 +79,7 @@ do módulo. Ao surgir o segundo, cria-se a pasta e movem-se **ambos** no mesmo c
 | Pasta | Papel |
 |---|---|
 | `config/` | Configuração da aplicação (security, CORS, OpenAPI, beans) |
-| `lib/` | Adapters de serviços externos (`supabase/`). **Sem regra de negócio** |
+| `lib/` | Adapters de serviços externos (`minio/`, `email/`, `geocodificacao/`). **Sem regra de negócio** |
 | `comum/` | Núcleo compartilhado (`excecao/`, `paginacao/`, `auditoria/`) |
 | `modulos/` | Um por domínio: `autenticacao`, `usuarios`, `profissionais`, `servicos`, `contratacoes`, `avaliacoes` |
 
@@ -56,14 +96,14 @@ implementação fica em `service/` com sufixo `Impl`. **Sem prefixo `I`.**
 
 - Retornar entidade JPA pelo controller — sempre DTO
 - Injetar repository de outro módulo, ou relacionar entidades JPA cruzando módulos (use o UUID)
-- Autorizar por claim do JWT — o papel é lido de `tb_usuarios`
+- Autorizar por claim do JWT — o papel é lido de `usuario`
 - Usar H2 em teste de regra de negócio — o projeto exige Testcontainers com PostgreSQL
-- Chamar `fetch` ou `supabase-js` fora de `src/api/`
+- Chamar `fetch` fora de `src/api/`
 - Consumir resposta do backend sem validar por schema Zod
 - Escrever tipo de domínio à mão em vez de `z.infer` do schema
 - Usar `any` — use `unknown` com narrowing
-- Alterar schema do banco pelo painel do Supabase — toda mudança é migration do Flyway
-- Commitar segredo. `SUPABASE_SERVICE_ROLE_KEY` só existe no backend
+- Alterar schema do banco por fora do Flyway — toda mudança é migration versionada
+- Commitar segredo. Chave RSA de assinatura de JWT e credencial do MinIO só existem no backend
 
 ---
 

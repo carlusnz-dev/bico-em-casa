@@ -164,7 +164,7 @@ Seis vieram do canvas PBB e da revisão. Estavam no quadro da aula mas nunca che
 | Decisão | Efeito |
 |---|---|
 | **Uma conta pode ter mais de um papel** | `RF002` reescrito. O enum único `tipo` do rascunho de schema impedia um pintor de contratar um chaveiro. Corrigir depois exige migrar dados de produção |
-| **Distância em km fica no MVP** | `RF013` mantido. Exige coordenadas persistidas e geocodificação de endereço — ver `RNF018`. **Precisa de ADR-0006** para o serviço externo de geocodificação |
+| **Distância em km fica no MVP** | `RF013` mantido. Exige coordenadas persistidas e geocodificação de endereço — ver `RNF018`. **Precisa de ADR-0009** para o serviço externo de geocodificação |
 | **Chat fica fora do MVP** | `RF023` e `RF024` marcados `pos-mvp` |
 | **`RF015` é anexo, não chat** | Foto passa a ser anexo da solicitação de orçamento. Sobrevive ao corte do chat porque não depende dele |
 
@@ -177,8 +177,8 @@ terceirizava justamente o que se quer aprender.
 
 | Requisito | O que mudou |
 |---|---|
-| `RF001` | Recuperação de senha passa a ser **por e-mail nosso**, com token próprio. Ganhou `tb_refresh_tokens` e `tb_tokens_recuperacao` |
-| `RNF001` | Era "identidade pelo Supabase Auth, backend nunca armazena senha". Virou o oposto: **hash Argon2id em `tb_usuarios`** |
+| `RF001` | Recuperação de senha passa a ser **por e-mail nosso**, com token próprio. Ganhou `refresh_token` e `token_recuperacao` |
+| `RNF001` | Era "identidade pelo Supabase Auth, backend nunca armazena senha". Virou o oposto: **hash Argon2id em `usuario`** |
 | `RNF004` | `SUPABASE_SERVICE_ROLE_KEY` deixou de existir. Os segredos agora são a chave RSA de assinatura e as credenciais de MinIO e SMTP |
 | `RNF017` | Supabase Storage → **MinIO com URL pré-assinada** |
 
@@ -201,7 +201,8 @@ terceirizava justamente o que se quer aprender.
 
 ## 5. Pendências
 
-- [ ] **ADR-0007** para o serviço externo de geocodificação exigido por `RF013` / `RNF018`.
+- [ ] **ADR-0009** para o serviço externo de geocodificação exigido por `RF013` / `RNF018`
+      (o número `0007` foi ocupado pela decisão de chave primária mista).
       O número 0006 foi consumido pela remoção do Supabase
 - [ ] **`docker-compose.yml`** com PostgreSQL, MinIO e um SMTP de desenvolvimento (MailHog ou
       Mailpit). Sem ele, ninguém da equipe sobe o projeto depois do ADR-0006
