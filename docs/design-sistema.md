@@ -8,8 +8,8 @@
 | | |
 |---|---|
 | **Projeto** | `bico-em-casa` |
-| **Versão do documento** | 2.0.0 |
-| **Última atualização** | 2026-08-22 |
+| **Versão do documento** | 2.1.0 |
+| **Última atualização** | 2026-08-27 |
 | **Fonte da verdade** | `docs/arquitetura-sistema.json` |
 | **Padrão arquitetural** | Arquitetura Modular por Domínio (Modular Monolith) com Ports & Adapters na fronteira |
 
@@ -93,12 +93,25 @@ Initializr e menor curva de aprendizado para o time.
 
 | Grupo | Artefatos |
 |---|---|
-| **Core** | `spring-boot-starter-web`, `spring-boot-starter-validation`, `spring-boot-starter-actuator` |
-| **Persistência** | `spring-boot-starter-data-jpa`, `org.postgresql:postgresql`, `flyway-core:13.3.x`, `flyway-database-postgresql:13.3.x` |
-| **Segurança** | `spring-boot-starter-security`, `spring-boot-starter-oauth2-resource-server`, `org.bouncycastle:bcprov-jdk18on` (requerido pelo `Argon2PasswordEncoder`) |
-| **Produtividade** | `lombok`, `mapstruct:1.6.3`, `mapstruct-processor:1.6.3` |
+| **Core** | `spring-boot-starter-webmvc`, `spring-boot-starter-validation`, `spring-boot-starter-actuator` |
+| **Persistência** | `spring-boot-starter-data-jpa`, `spring-boot-starter-flyway`, `org.postgresql:postgresql`, `flyway-database-postgresql` |
+| **Segurança** | `spring-boot-starter-security`, `spring-boot-starter-security-oauth2-resource-server`, `org.bouncycastle:bcprov-jdk18on:1.85.2` (requerido pelo `Argon2PasswordEncoder`; versão explícita, não está no BOM) |
+| **Produtividade** | `lombok`, `mapstruct:1.6.3`, `mapstruct-processor:1.6.3` (em `annotationProcessorPaths`, não como dependência solta) |
 | **Documentação** | `springdoc-openapi-starter-webmvc-ui:3.1.x` |
-| **Integrações** | `software.amazon.awssdk:s3` (cliente S3 do MinIO), `spring-boot-starter-mail` |
+| **Integrações** | `software.amazon.awssdk:s3` (versão vinda do `awssdk:bom:2.54.5` importado em `dependencyManagement`), `spring-boot-starter-mail` |
+
+> [!IMPORTANT]
+> **Os nomes mudaram no Boot 4.1, e a documentação anterior estava desatualizada.**
+> `spring-boot-starter-web` foi depreciado em favor de `spring-boot-starter-webmvc`, e
+> `spring-boot-starter-oauth2-resource-server` em favor de
+> `spring-boot-starter-security-oauth2-resource-server`. Os antigos ainda resolvem, mas o
+> Initializr emite os novos e é o que o projeto usa.
+
+**Política de versão:** toda biblioteca gerenciada pelo BOM do Spring Boot 4.1.1 **herda a versão
+do BOM** — nenhum override é declarado no `pom.xml`. Versão explícita só onde o BOM não gerencia
+(MapStruct, BouncyCastle, springdoc-openapi) ou onde outro BOM é importado (AWS SDK). É por isso
+que o Flyway é **12.4.0** e não a faixa 13.3.x que o [ADR-0003](./adr/0003-spring-boot-4-java-21-maven.md)
+previa — ver a nota de revisão naquele ADR.
 
 #### Removido
 
@@ -142,9 +155,18 @@ Initializr e menor curva de aprendizado para o time.
 
 | Grupo | Artefatos |
 |---|---|
-| Unitário e integração | `spring-boot-starter-test`, `junit-jupiter`, `mockito-core`, `mockito-junit-jupiter`, `assertj-core` |
-| Containers | `testcontainers:2.0.x`, `testcontainers:junit-jupiter`, `testcontainers:postgresql` |
-| Segurança | `spring-security-test` |
+| Fatias do Boot 4.1 | `spring-boot-starter-webmvc-test`, `-data-jpa-test`, `-security-test`, `-security-oauth2-resource-server-test`, `-validation-test`, `-actuator-test`, `-flyway-test`, `-mail-test` |
+| Containers | `spring-boot-testcontainers`, `org.testcontainers:testcontainers-junit-jupiter:2.0.x`, `org.testcontainers:testcontainers-postgresql:2.0.x` |
+
+**Por que a lista mudou.** O Boot 4.1 **modularizou** o antigo `spring-boot-starter-test` por
+fatia. O monolítico ainda resolve, mas o Initializr emite os modulares e é o que o projeto usa;
+`spring-boot-starter-security-test` substitui o antigo
+`org.springframework.security:spring-security-test`.
+
+E o Testcontainers 2.0 **renomeou os módulos**: os coordenados corretos são
+`testcontainers-junit-jupiter` e `testcontainers-postgresql` — `org.testcontainers:junit-jupiter`
+e `org.testcontainers:postgresql`, como a documentação anterior dizia, **não existem** nessa
+linha. A versão (2.0.5 no Boot 4.1.1) é herdada do BOM.
 
 **Política:** teste de integração sobe um PostgreSQL 18 real via Testcontainers. É **proibido**
 validar regra de negócio contra banco em memória (H2) — o comportamento diverge do de produção
@@ -209,9 +231,18 @@ no meio de um componente.
 | Item | Valor |
 |---|---|
 | Engine | PostgreSQL 18 |
+| Nome do banco | `bicoemcasa` |
+| Usuário | `bicoemcasa` |
+| Porta | `5432` |
+| Extensões | **Nenhuma.** `gen_random_uuid()` é nativo do PostgreSQL 13+ |
 | Hospedagem | **Auto-hospedada** — container Docker em desenvolvimento, instância dedicada em produção |
-| Ferramenta de migration | Flyway 13.3.x |
+| Ferramenta de migration | **Flyway 12.4.x**, herdada do BOM do Spring Boot 4.1.1 |
 | Caminho das migrations | `backend/src/main/resources/db/migration` |
+
+**Sobre a versão do Flyway.** O [ADR-0003](./adr/0003-spring-boot-4-java-21-maven.md) previa a
+faixa 13.3.x. Em 2026-08-27 a decisão foi **herdar a versão do BOM** em vez de fixar override no
+`pom.xml`, e o BOM do Boot 4.1.1 gerencia o Flyway **12.4.0**. A nota de revisão está no próprio
+ADR-0003.
 
 **Política de migration:** toda alteração de schema nasce como migration versionada do Flyway.
 É **proibido** alterar schema manualmente em qualquer ambiente — a alteração some do histórico e o
@@ -284,9 +315,53 @@ migration não precise ser refeita.
 
 ---
 
-## 7. Git e Versionamento
+## 7. Infraestrutura Local
 
-### 7.1 Estratégia de Branches
+O [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md) decidiu PostgreSQL e MinIO
+auto-hospedados. Esta seção é **a implementação daquela decisão**: o `docker-compose.yml` na raiz
+do repositório, que é o que faz `git clone && docker compose up -d` funcionar sem mais nada.
+
+| Arquivo | Papel |
+|---|---|
+| `docker-compose.yml` | Definição dos serviços. **Sem chave `version:`** no topo — obsoleta no Compose v2 |
+| `.env.exemplo` | Documenta as chaves de ambiente esperadas. O `.env` real é ignorado pelo git; **nenhum segredo é versionado** (`RNF004`) |
+
+**Política de imagem:** toda imagem é fixada por **tag específica**, nunca `latest`. Build que
+muda sozinho não é reproduzível, e a hora de descobrir isso nunca é boa.
+
+### 7.1 Serviços
+
+| Serviço | Imagem | Portas | Papel |
+|---|---|---|---|
+| `postgres` | `postgres:18.6-alpine` | 5432 | Banco `bicoemcasa`, usuário `bicoemcasa`, volume `bec-postgres-dados`, healthcheck `pg_isready -U bicoemcasa -d bicoemcasa` |
+| `minio` | `minio/minio:RELEASE.2025-09-07T16-13-09Z` | 9000 (API S3), 9001 (console) | Armazenamento S3, volume `bec-minio-dados` em `/data` |
+| `minio-init` | `minio/mc:RELEASE.2025-08-13T08-35-41Z` | — | Roda **uma vez** e sai. Cria `portfolios`, `anexos` e `avatares` |
+
+**Volumes nomeados:** `bec-postgres-dados` e `bec-minio-dados`, declarados no bloco `volumes:` do
+topo. Esse bloco não é decorativo — **sem ele o `docker compose config` falha na validação**.
+
+### 7.2 Três armadilhas que estão no compose de propósito
+
+**O volume do Postgres não monta em `/var/lib/postgresql/data`.** A imagem do PostgreSQL 18
+mudou o `PGDATA` para `/var/lib/postgresql/18/docker` e passou a declarar o `VOLUME` em
+`/var/lib/postgresql`. Montar no caminho de sempre — o que valeu até o PostgreSQL 17 — cria um
+diretório que ninguém usa, e os dados **não sobrevivem a um `docker compose down`**. O erro é
+silencioso: tudo funciona até a primeira vez que alguém derruba os containers.
+
+**O `minio-init` espera com um laço, não com healthcheck.** A imagem `minio/minio` não traz
+`curl`. Um healthcheck baseado nele nunca fica verde, e um `depends_on: service_healthy`
+apontando para um healthcheck que nunca fica verde **trava para sempre**. Por isso o init usa
+`depends_on: [minio]` e um `until mc alias set local ...; do sleep 1; done` explícito.
+
+**Os buckets são criados com `mc mb --ignore-existing`.** Sem isso o **segundo**
+`docker compose up` morre com *bucket already exists* — o primeiro funciona e dá a falsa
+impressão de que está certo.
+
+---
+
+## 8. Git e Versionamento
+
+### 8.1 Estratégia de Branches
 
 | Branch | Papel |
 |---|---|
@@ -297,7 +372,7 @@ migration não precise ser refeita.
 | `hotfix/<ticket-id>-<descricao-curta>` | Correção urgente, originada de `main` e retroportada para `develop` |
 | `docs/<descricao-curta>` | Alterações exclusivas de documentação |
 
-### 7.2 Conventional Commits
+### 8.2 Conventional Commits
 
 **Formato:** `<type>(<scope>): <descrição curta>`
 
@@ -323,7 +398,7 @@ migration não precise ser refeita.
 
 ---
 
-## 8. CI/CD — GitHub Actions
+## 9. CI/CD — GitHub Actions
 
 ### `backend-ci.yml`
 
@@ -356,9 +431,9 @@ migration não precise ser refeita.
 
 ---
 
-## 9. Padrões de Código
+## 10. Padrões de Código
 
-### 9.1 Backend
+### 10.1 Backend
 
 | Item | Ferramenta |
 |---|---|
@@ -375,12 +450,23 @@ migration não precise ser refeita.
 - Entidade JPA **nunca** cruza a fronteira do controller: sempre DTO
 - Um módulo só acessa outro pela interface exposta em `contrato/`, nunca pelo repository alheio
 
-### 9.2 Frontend
+### 10.2 Frontend
 
 | Item | Ferramenta |
 |---|---|
 | Linter | ESLint com `eslint-config-next` e `@typescript-eslint/recommended` |
 | Formatador | Prettier com `prettier-plugin-tailwindcss` |
+
+> [!WARNING]
+> **Limitação conhecida (2026-08-27): `npm run lint` não roda.** O `typescript-eslint`, do qual
+> `eslint-config-next` depende, aborta com `typescript-eslint does not support TS 7.0` e o lint
+> sai com código 2. `typecheck`, `build` e teste não são afetados.
+> [typescript-eslint#10940](https://github.com/typescript-eslint/typescript-eslint/issues/10940).
+>
+> **Decisão:** manter o TypeScript 7 e conviver com o lint quebrado até o upstream alcançar, em
+> vez de descer de versão ou manter dois TypeScript no projeto. **Consequência:** a etapa de
+> ESLint do `frontend-ci.yml` precisa nascer desligada ou com `continue-on-error`, senão reprova
+> todo PR.
 
 **Regras:**
 
@@ -390,7 +476,7 @@ migration não precise ser refeita.
 - Proibido `any` — use `unknown` com narrowing por schema
 - Nenhum `fetch` fora de `src/api/`
 
-### 9.3 Comentários e Documentação
+### 10.3 Comentários e Documentação
 
 **Política:** código autoexplicativo substitui comentário redundante.
 **Idioma:** comentários, Javadoc e TSDoc em português.
@@ -403,20 +489,22 @@ migration não precise ser refeita.
 
 ---
 
-## 10. Estrutura de Diretórios
+## 11. Estrutura de Diretórios
 
-### 10.1 Raiz do Repositório
+### 11.1 Raiz do Repositório
 
 ```
 bico-em-casa/
 ├── backend/              # Aplicação Spring Boot (Maven)
 ├── frontend/             # Aplicação Next.js
 ├── docs/                 # Documentação viva (design, ADRs, planos, relatórios)
+├── docker-compose.yml    # Infraestrutura local: PostgreSQL 18 e MinIO (§7)
+├── .env.exemplo          # Chaves de ambiente do compose; o .env real é ignorado
 ├── .claude/              # Configuração do Claude Code
 └── .github/workflows/    # Pipelines de CI
 ```
 
-### 10.2 Backend
+### 11.2 Backend
 
 ```
 backend/
@@ -532,7 +620,7 @@ mesmo commit. Nunca deixe um na raiz e outro na pasta.
 A terceira regra é a que sustenta as outras duas: sem `@ManyToOne` cruzando fronteira, o
 acoplamento acidental simplesmente não tem por onde entrar.
 
-### 10.3 Frontend
+### 11.3 Frontend
 
 ```
 frontend/
