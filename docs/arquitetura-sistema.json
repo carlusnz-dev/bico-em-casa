@@ -124,7 +124,7 @@
   },
   "frontend": {
     "framework": "Next.js 16.3.x (App Router)",
-    "runtime": "Node.js 24 LTS",
+    "runtime": "Node.js >=20.9.0 (validado em v26.5.1)",
     "language": "TypeScript 7.0.x (strict mode)",
     "rationale": {
       "typescript_7": "Compilador nativo em Go, GA desde 08/07/2026. Typecheck e feedback de editor ordens de grandeza mais rapidos, com a mesma semantica de tipos da linha 5.x."
@@ -137,7 +137,7 @@
         "typescript@7.0.x"
       ],
       "state_and_data_fetching": [
-        "@tanstack/react-query@5.101.x",
+        "@tanstack/react-query@5.102.x",
         "zustand@5.0.x"
       ],
       "styling_and_ui": [

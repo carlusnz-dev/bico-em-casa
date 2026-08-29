@@ -179,7 +179,7 @@ justamente nos pontos que importam.
 | Item | Valor |
 |---|---|
 | Framework | Next.js 16.3.x (App Router) |
-| Runtime | Node.js 24 LTS |
+| Runtime | Node.js >=20.9.0 (validado em v26.5.1) |
 | Linguagem | TypeScript 7.0.x (strict mode) |
 
 **Por que TypeScript 7:** compilador nativo em Go, GA desde 08/07/2026. O typecheck e o feedback
@@ -190,7 +190,7 @@ no editor ficam ordens de grandeza mais rápidos, mantendo a mesma semântica de
 | Grupo | Pacotes |
 |---|---|
 | **Core** | `next@16.3.x`, `react@19.2.x`, `react-dom@19.2.x`, `typescript@7.0.x` |
-| **Estado e dados** | `@tanstack/react-query@5.101.x`, `zustand@5.0.x` |
+| **Estado e dados** | `@tanstack/react-query@5.102.x`, `zustand@5.0.x` |
 | **Estilo e UI** | `tailwindcss@4.3.x`, `lucide-react`, `clsx`, `tailwind-merge`, `radix-ui` |
 | **Formulários** | `react-hook-form`, `zod@4.4.x`, `@hookform/resolvers` |
 | **Integração** | Nenhuma. O acesso ao backend usa exclusivamente o `fetch` nativo encapsulado em `src/api/client.ts` |
