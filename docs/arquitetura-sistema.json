@@ -428,7 +428,7 @@
           "armazenamento/": "ArmazenamentoProperties e ClienteArmazenamentoS3 (upload e URL pre-assinada no MinIO)",
           "email/": "EmailProperties e EnviadorEmail (e-mail transacional de recuperacao de senha)"
         },
-        "comum/": {
+        "core/": {
           "descricao": "Nucleo compartilhado entre modulos. Depende de nada e e dependido por todos.",
           "excecao/": "Excecoes de dominio e @RestControllerAdvice global com RFC 9457",
           "paginacao/": "Tipos de paginacao e ordenacao padronizados da API",

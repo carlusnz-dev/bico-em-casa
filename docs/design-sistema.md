@@ -523,7 +523,7 @@ backend/
     │   │   ├── lib/             # adapters de serviços EXTERNOS
     │   │   │   ├── armazenamento/  # ClienteArmazenamentoS3 (upload e URL pré-assinada)
     │   │   │   └── email/          # EnviadorEmail (e-mail transacional)
-    │   │   ├── comum/           # núcleo compartilhado entre módulos
+    │   │   ├── core/            # núcleo compartilhado entre módulos
     │   │   │   ├── excecao/     # exceções de domínio + @RestControllerAdvice (RFC 9457)
     │   │   │   ├── paginacao/   # tipos de paginação e ordenação da API
     │   │   │   └── auditoria/   # @MappedSuperclass com created_at / updated_at
@@ -542,7 +542,7 @@ backend/
     └── test/java/                    # estrutura espelhada, incluindo modulos/
 ```
 
-#### `config/` vs `lib/` vs `comum/`
+#### `config/` vs `lib/` vs `core/`
 
 Três pastas transversais com responsabilidades que não se sobrepõem:
 
@@ -550,7 +550,7 @@ Três pastas transversais com responsabilidades que não se sobrepõem:
 |---|---|---|
 | `config/` | Configuração **da nossa aplicação**: security, CORS, OpenAPI, beans | Só configuração, sem lógica |
 | `lib/` | Adapters de serviços **externos** (armazenamento, e-mail, mapas) | **Nada de regra de negócio.** Só tradução entre o mundo externo e tipos internos |
-| `comum/` | Núcleo compartilhado entre módulos | Não depende de nenhum módulo; é dependido por todos |
+| `core/` | Núcleo compartilhado entre módulos | Não depende de nenhum módulo; é dependido por todos |
 
 O valor de `lib/` é o isolamento do fornecedor: se o MinIO virar S3 da AWS amanhã, **só essa
 pasta muda**. A saída do Supabase foi o primeiro teste dessa regra — e ela se pagou.
