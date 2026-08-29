@@ -400,29 +400,34 @@ impressão de que está certo.
 
 ## 9. CI/CD — GitHub Actions
 
-### `backend-ci.yml`
+> **Só `docs-parity.yml` existe hoje.** `backend-ci.yml` e `frontend-ci.yml` estão descritos
+> abaixo como especificação a implementar — nenhum dos dois está em `.github/workflows/`.
+> Nenhuma etapa de lint, teste ou build roda automaticamente em PR neste momento.
+
+### `backend-ci.yml` — PLANEJADO
 
 **Gatilhos:** `pull_request → develop`, `pull_request → main`
 
 1. Checkout do repositório
 2. Setup Java 21 (Temurin) com cache Maven
-3. Verificar formatação com Spotless
+3. Verificar formatação com Spotless (plugin ainda não está no `backend/pom.xml`)
 4. Executar testes unitários e de integração com Testcontainers
 5. Build do artefato JAR (`mvn -B package`)
-6. Upload de relatório de cobertura (JaCoCo)
+6. Upload de relatório de cobertura (JaCoCo — plugin ainda não está no `backend/pom.xml`)
 
-### `frontend-ci.yml`
+### `frontend-ci.yml` — PLANEJADO
 
 **Gatilhos:** `pull_request → develop`, `pull_request → main`
 
 1. Checkout do repositório
-2. Setup Node.js 24 com cache de dependências
-3. Executar ESLint e Prettier em modo check
+2. Setup Node.js na versão de §4 (Runtime), com cache de dependências
+3. Executar ESLint e Prettier em modo check — a etapa de ESLint precisa nascer desligada ou
+   com `continue-on-error`, pelo limite conhecido do `typescript-eslint` com TypeScript 7
 4. Executar typecheck (`tsc --noEmit`)
 5. Executar testes unitários com Vitest
 6. Build do Next.js (`next build`)
 
-### `docs-parity.yml`
+### `docs-parity.yml` — IMPLEMENTADO
 
 **Gatilhos:** `pull_request → develop`, `pull_request → main`
 
@@ -437,8 +442,8 @@ impressão de que está certo.
 
 | Item | Ferramenta |
 |---|---|
-| Formatador | Spotless com Google Java Style |
-| Linter | SonarLint / Checkstyle |
+| Formatador | Spotless com Google Java Style — **planejado**, o plugin ainda não está no `pom.xml` |
+| Linter | SonarLint / Checkstyle — **planejado**, nenhum dos dois está configurado |
 
 **Regras:**
 

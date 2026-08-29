@@ -323,6 +323,7 @@
     "workflows": [
       {
         "name": "backend-ci.yml",
+        "status": "PLANEJADO - o arquivo ainda nao existe em .github/workflows/. As etapas de Spotless e JaCoCo dependem de plugins que ainda nao estao no backend/pom.xml.",
         "triggers": [
           "pull_request -> develop",
           "pull_request -> main"
@@ -338,13 +339,14 @@
       },
       {
         "name": "frontend-ci.yml",
+        "status": "PLANEJADO - o arquivo ainda nao existe em .github/workflows/. A etapa de ESLint precisa nascer desligada ou com continue-on-error (ver code_standards_and_style.frontend.linter).",
         "triggers": [
           "pull_request -> develop",
           "pull_request -> main"
         ],
         "steps": [
           "Checkout do repositorio",
-          "Setup Node.js 24 com cache de dependencias",
+          "Setup Node.js na versao de frontend.runtime, com cache de dependencias",
           "Executar ESLint e Prettier em modo check",
           "Executar typecheck (tsc --noEmit)",
           "Executar testes unitarios com Vitest",
@@ -353,6 +355,7 @@
       },
       {
         "name": "docs-parity.yml",
+        "status": "IMPLEMENTADO - unico workflow que existe hoje.",
         "triggers": [
           "pull_request -> develop",
           "pull_request -> main"
@@ -366,8 +369,8 @@
   },
   "code_standards_and_style": {
     "backend": {
-      "formatter": "Spotless com Google Java Style",
-      "linter": "SonarLint / Checkstyle",
+      "formatter": "Spotless com Google Java Style. PLANEJADO: o plugin ainda nao esta no backend/pom.xml.",
+      "linter": "SonarLint / Checkstyle. PLANEJADO: nenhum dos dois esta configurado no projeto.",
       "rules": [
         "Principios SOLID e Clean Code rigorosos",
         "Tratamento global de excecoes via @RestControllerAdvice com RFC 9457 (ProblemDetail)",
