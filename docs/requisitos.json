@@ -425,7 +425,7 @@
   "RNF003": {
     "codigo": "RNF003",
     "tipo": "nao-funcional",
-    "descricao": "Todo tráfego entre frontend, backend e Supabase ocorre sobre HTTPS com TLS 1.2 ou superior.",
+    "descricao": "Todo tráfego entre frontend, backend, PostgreSQL e MinIO ocorre cifrado com TLS 1.2 ou superior (HTTPS nas chamadas HTTP).",
     "modulos": [
       "transversal"
     ],
@@ -471,7 +471,7 @@
     ],
     "entidades": [],
     "status": "mvp",
-    "origem": "design-sistema.md §10.2",
+    "origem": "design-sistema.md §11.2",
     "data_criada": "2026-08-22"
   },
   "RNF007": {
@@ -507,13 +507,13 @@
     ],
     "entidades": [],
     "status": "mvp",
-    "origem": "design-sistema.md §9.1",
+    "origem": "design-sistema.md §10.1",
     "data_criada": "2026-08-22"
   },
   "RNF010": {
     "codigo": "RNF010",
     "tipo": "nao-funcional",
-    "descricao": "Toda alteração de schema nasce como migration versionada do Flyway. Alterar schema pelo painel do Supabase é proibido.",
+    "descricao": "Toda alteração de schema nasce como migration versionada do Flyway. Alterar schema manualmente em qualquer ambiente é proibido.",
     "modulos": [
       "transversal"
     ],
@@ -543,7 +543,7 @@
     ],
     "entidades": [],
     "status": "mvp",
-    "origem": "design-sistema.md §7.2",
+    "origem": "design-sistema.md §8.2",
     "data_criada": "2026-08-22"
   },
   "RNF013": {
@@ -599,7 +599,7 @@
     ],
     "entidades": [],
     "status": "mvp",
-    "origem": "design-sistema.md §10.2",
+    "origem": "design-sistema.md §11.2",
     "data_criada": "2026-08-22"
   },
   "RNF017": {

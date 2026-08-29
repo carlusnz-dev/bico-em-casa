@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "project_metadata": {
     "name": "bico-em-casa",
-    "version": "2.0.0",
-    "updated_at": "2026-08-22",
+    "version": "2.1.0",
+    "updated_at": "2026-08-27",
     "description": "Plataforma de contratacao de profissionais autonomos para servicos rapidos. O cliente encontra o profissional, consulta o portfolio (opcional) e contrata sem burocracia.",
     "architecture_pattern": "Arquitetura Modular por Dominio (Modular Monolith) com Ports & Adapters na fronteira",
     "source_of_truth": "docs/arquitetura-sistema.json",
@@ -47,31 +47,31 @@
     },
     "dependencies": {
       "core": [
-        "org.springframework.boot:spring-boot-starter-web",
+        "org.springframework.boot:spring-boot-starter-webmvc",
         "org.springframework.boot:spring-boot-starter-validation",
         "org.springframework.boot:spring-boot-starter-actuator"
       ],
       "database_and_persistence": [
         "org.springframework.boot:spring-boot-starter-data-jpa",
+        "org.springframework.boot:spring-boot-starter-flyway",
         "org.postgresql:postgresql",
-        "org.flywaydb:flyway-core:13.3.x",
-        "org.flywaydb:flyway-database-postgresql:13.3.x"
+        "org.flywaydb:flyway-database-postgresql"
       ],
       "security": [
         "org.springframework.boot:spring-boot-starter-security",
-        "org.springframework.boot:spring-boot-starter-oauth2-resource-server",
-        "org.bouncycastle:bcprov-jdk18on (requerido pelo Argon2PasswordEncoder)"
+        "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server",
+        "org.bouncycastle:bcprov-jdk18on:1.85.2 (requerido pelo Argon2PasswordEncoder; versao explicita, nao esta no BOM)"
       ],
       "productivity_and_mapping": [
         "org.projectlombok:lombok",
         "org.mapstruct:mapstruct:1.6.3",
-        "org.mapstruct:mapstruct-processor:1.6.3"
+        "org.mapstruct:mapstruct-processor:1.6.3 (declarado em annotationProcessorPaths das execucoes default-compile e default-testCompile, nao como dependencia solta)"
       ],
       "documentation": [
         "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.x"
       ],
       "external_integrations": [
-        "software.amazon.awssdk:s3 (cliente S3 para o MinIO)",
+        "software.amazon.awssdk:s3 (cliente S3 para o MinIO; versao vem do software.amazon.awssdk:bom:2.54.5 importado em dependencyManagement)",
         "org.springframework.boot:spring-boot-starter-mail (e-mail de recuperacao de senha)"
       ],
       "removed": [
@@ -83,7 +83,8 @@
           "artifact": "Supabase (todo o BaaS)",
           "reason": "Removido pelo ADR-0006. Identidade, banco e armazenamento passam a ser auto-hospedados para permitir estudo aprofundado de banco de dados, customizacao e controle de custo e de seguranca."
         }
-      ]
+      ],
+      "version_policy": "Toda biblioteca gerenciada pelo BOM do Spring Boot 4.1.1 herda a versao do BOM: nenhuma propriedade de override e declarada no pom.xml. Versao explicita so onde o BOM nao gerencia (MapStruct, BouncyCastle, springdoc-openapi) ou onde outro BOM e importado (AWS SDK)."
     },
     "security_configuration": {
       "identity_provider": "Propria. Modulo autenticacao do proprio backend.",
@@ -101,27 +102,29 @@
       "secrets": "Nenhuma chave em codigo. Chave privada RSA de assinatura, credenciais do MinIO e credenciais de SMTP vivem em variavel de ambiente, somente no backend."
     },
     "testing_modules": {
-      "unit_and_integration": [
-        "org.springframework.boot:spring-boot-starter-test",
-        "org.junit.jupiter:junit-jupiter",
-        "org.mockito:mockito-core",
-        "org.mockito:mockito-junit-jupiter",
-        "org.assertj:assertj-core"
+      "spring_boot_test_slices": [
+        "org.springframework.boot:spring-boot-starter-webmvc-test",
+        "org.springframework.boot:spring-boot-starter-data-jpa-test",
+        "org.springframework.boot:spring-boot-starter-security-test",
+        "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server-test",
+        "org.springframework.boot:spring-boot-starter-validation-test",
+        "org.springframework.boot:spring-boot-starter-actuator-test",
+        "org.springframework.boot:spring-boot-starter-flyway-test",
+        "org.springframework.boot:spring-boot-starter-mail-test"
       ],
+      "slices_rationale": "O Spring Boot 4.1 modularizou o antigo spring-boot-starter-test por fatia. O starter monolitico ainda resolve, mas o Initializr emite os modulares e e o que o projeto usa. spring-boot-starter-security-test substitui o antigo org.springframework.security:spring-security-test.",
       "containers_and_db_mock": [
-        "org.testcontainers:testcontainers:2.0.x",
-        "org.testcontainers:junit-jupiter:2.0.x",
-        "org.testcontainers:postgresql:2.0.x"
+        "org.springframework.boot:spring-boot-testcontainers",
+        "org.testcontainers:testcontainers-junit-jupiter:2.0.x",
+        "org.testcontainers:testcontainers-postgresql:2.0.x"
       ],
-      "security_testing": [
-        "org.springframework.security:spring-security-test"
-      ],
+      "containers_rationale": "O Testcontainers 2.0 renomeou os modulos: os coordenados corretos sao testcontainers-junit-jupiter e testcontainers-postgresql, nao junit-jupiter e postgresql. A versao (2.0.5 no Boot 4.1.1) e herdada do BOM.",
       "policy": "Teste de integracao sobe PostgreSQL 18 real via Testcontainers. Proibido validar regra de negocio contra banco em memoria (H2)."
     }
   },
   "frontend": {
     "framework": "Next.js 16.3.x (App Router)",
-    "runtime": "Node.js 24 LTS",
+    "runtime": "Node.js >=20.9.0 (validado em v26.5.1)",
     "language": "TypeScript 7.0.x (strict mode)",
     "rationale": {
       "typescript_7": "Compilador nativo em Go, GA desde 08/07/2026. Typecheck e feedback de editor ordens de grandeza mais rapidos, com a mesma semantica de tipos da linha 5.x."
@@ -134,7 +137,7 @@
         "typescript@7.0.x"
       ],
       "state_and_data_fetching": [
-        "@tanstack/react-query@5.101.x",
+        "@tanstack/react-query@5.102.x",
         "zustand@5.0.x"
       ],
       "styling_and_ui": [
@@ -188,8 +191,12 @@
   },
   "database": {
     "engine": "PostgreSQL 18",
+    "name": "bicoemcasa",
+    "user": "bicoemcasa",
+    "port": 5432,
+    "extensions": "Nenhuma. gen_random_uuid() e nativo do PostgreSQL 13+.",
     "hosting": "Auto-hospedada. PostgreSQL em container Docker no desenvolvimento, instancia dedicada em producao.",
-    "migration_tool": "Flyway 13.3.x",
+    "migration_tool": "Flyway 12.4.x, herdada do BOM do Spring Boot 4.1.1",
     "migration_path": "backend/src/main/resources/db/migration",
     "migration_policy": "Toda alteracao de schema nasce como migration versionada do Flyway. Alterar schema manualmente em qualquer ambiente e proibido.",
     "schemas": {
@@ -204,7 +211,8 @@
       "indexes": "idx_{tabela}_{coluna}",
       "unique_constraints": "uq_{tabela}_{coluna}",
       "check_constraints": "ck_{tabela}_{regra}"
-    }
+    },
+    "migration_tool_rationale": "O ADR-0003 previa a faixa 13.3.x. Em 2026-08-27 o desenvolvedor decidiu herdar a versao do BOM do Boot em vez de fixar override no pom.xml; o BOM do 4.1.1 gerencia o Flyway 12.4.0. Ver a nota de revisao no ADR-0003."
   },
   "external_services": {
     "minio": {
@@ -228,6 +236,51 @@
     "_pendente_decisao": {
       "geocodificacao": "RF013 exige distancia em quilometros, o que depende de geocodificar endereco em latitude e longitude. O fornecedor ainda nao foi escolhido e precisa de ADR proprio antes da implementacao."
     }
+  },
+  "local_infrastructure": {
+    "descricao": "Infraestrutura de desenvolvimento local, definida em docker-compose.yml na raiz do repositorio. E a implementacao da decisao do ADR-0006 (PostgreSQL e MinIO auto-hospedados).",
+    "files": {
+      "docker-compose.yml": "Definicao dos servicos. Sem chave version no topo, obsoleta no Compose v2.",
+      ".env.exemplo": "Documenta as chaves de ambiente esperadas. O .env real e ignorado pelo git; nenhum segredo e versionado (RNF004)."
+    },
+    "image_policy": "Toda imagem fixada por tag especifica. Nunca latest.",
+    "services": {
+      "postgres": {
+        "image": "postgres:18.6-alpine",
+        "ports": {
+          "5432": "PostgreSQL"
+        },
+        "database": "bicoemcasa",
+        "user": "bicoemcasa",
+        "volume": "bec-postgres-dados montado em /var/lib/postgresql",
+        "volume_rationale": "A imagem do PostgreSQL 18 mudou o PGDATA para /var/lib/postgresql/18/docker e declara o VOLUME em /var/lib/postgresql. Montar em /var/lib/postgresql/data, como se fazia ate o PostgreSQL 17, cria um diretorio inutil e os dados nao sobrevivem a um docker compose down.",
+        "healthcheck": "pg_isready -U bicoemcasa -d bicoemcasa"
+      },
+      "minio": {
+        "image": "minio/minio:RELEASE.2025-09-07T16-13-09Z",
+        "ports": {
+          "9000": "API S3",
+          "9001": "Console web"
+        },
+        "volume": "bec-minio-dados montado em /data"
+      },
+      "minio-init": {
+        "image": "minio/mc:RELEASE.2025-08-13T08-35-41Z",
+        "role": "Executa uma vez e sai. Cria os buckets portfolios, anexos e avatares.",
+        "idempotency": "mc mb --ignore-existing. Sem isso o SEGUNDO docker compose up falha com bucket already exists.",
+        "wait_strategy": "Laco explicito until mc alias set local ...; do sleep 1; done, com depends_on: [minio]. Nao se usa healthcheck na imagem minio/minio: ela nao traz curl, entao o healthcheck nunca fica verde e travaria o depends_on para sempre."
+      }
+    },
+    "named_volumes": [
+      "bec-postgres-dados",
+      "bec-minio-dados"
+    ],
+    "volumes_rationale": "O bloco volumes: no topo do compose e obrigatorio: sem ele o docker compose config falha na validacao.",
+    "buckets": [
+      "portfolios",
+      "anexos",
+      "avatares"
+    ]
   },
   "git_and_version_control": {
     "branching_strategy": {
@@ -270,6 +323,7 @@
     "workflows": [
       {
         "name": "backend-ci.yml",
+        "status": "PLANEJADO - o arquivo ainda nao existe em .github/workflows/. As etapas de Spotless e JaCoCo dependem de plugins que ainda nao estao no backend/pom.xml.",
         "triggers": [
           "pull_request -> develop",
           "pull_request -> main"
@@ -285,13 +339,14 @@
       },
       {
         "name": "frontend-ci.yml",
+        "status": "PLANEJADO - o arquivo ainda nao existe em .github/workflows/. A etapa de ESLint precisa nascer desligada ou com continue-on-error (ver code_standards_and_style.frontend.linter).",
         "triggers": [
           "pull_request -> develop",
           "pull_request -> main"
         ],
         "steps": [
           "Checkout do repositorio",
-          "Setup Node.js 24 com cache de dependencias",
+          "Setup Node.js na versao de frontend.runtime, com cache de dependencias",
           "Executar ESLint e Prettier em modo check",
           "Executar typecheck (tsc --noEmit)",
           "Executar testes unitarios com Vitest",
@@ -300,6 +355,7 @@
       },
       {
         "name": "docs-parity.yml",
+        "status": "IMPLEMENTADO - unico workflow que existe hoje.",
         "triggers": [
           "pull_request -> develop",
           "pull_request -> main"
@@ -313,8 +369,8 @@
   },
   "code_standards_and_style": {
     "backend": {
-      "formatter": "Spotless com Google Java Style",
-      "linter": "SonarLint / Checkstyle",
+      "formatter": "Spotless com Google Java Style. PLANEJADO: o plugin ainda nao esta no backend/pom.xml.",
+      "linter": "SonarLint / Checkstyle. PLANEJADO: nenhum dos dois esta configurado no projeto.",
       "rules": [
         "Principios SOLID e Clean Code rigorosos",
         "Tratamento global de excecoes via @RestControllerAdvice com RFC 9457 (ProblemDetail)",
@@ -326,7 +382,7 @@
       ]
     },
     "frontend": {
-      "linter": "ESLint com eslint-config-next e @typescript-eslint/recommended",
+      "linter": "ESLint com eslint-config-next e @typescript-eslint/recommended. LIMITACAO CONHECIDA (2026-08-27): o typescript-eslint aborta com 'typescript-eslint does not support TS 7.0' e npm run lint sai com codigo 2. typecheck, build e teste nao sao afetados. Decisao do desenvolvedor: manter o TypeScript 7 e conviver com o lint quebrado ate o upstream alcancar (typescript-eslint#10940), em vez de descer de versao ou manter dois TypeScript no projeto. A etapa de ESLint do frontend-ci.yml precisa nascer desligada ou com continue-on-error.",
       "formatter": "Prettier com prettier-plugin-tailwindcss",
       "rules": [
         "Server Components por padrao; 'use client' apenas para interatividade e hooks",
@@ -354,6 +410,8 @@
     "repository_root": {
       "backend/": "Aplicacao Spring Boot (Maven)",
       "frontend/": "Aplicacao Next.js",
+      "docker-compose.yml": "Infraestrutura local: PostgreSQL 18 e MinIO (ver local_infrastructure)",
+      ".env.exemplo": "Chaves de ambiente esperadas pelo compose. O .env real e ignorado pelo git",
       "docs/": "Documentacao viva do projeto (design, ADRs, planos, relatorios)",
       ".claude/": "Configuracao do Claude Code: settings, agentes, comandos e skills",
       ".github/workflows/": "Pipelines de CI"

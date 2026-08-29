@@ -105,20 +105,20 @@ projeto assumiu junto as garantias que o fornecedor dava de graça.
 |---|---|---|---|
 | **RNF001** | A identidade é do próprio backend. A senha é armazenada com hash Argon2id e a senha em claro nunca é persistida, logada nem devolvida pela API. | autenticacao | ADR-0006 |
 | **RNF002** | A autorização é decidida pelo papel lido da base de dados, nunca por claim do JWT. | autenticacao, usuarios | ADR-0006; CLAUDE.md, seção Nunca faça |
-| **RNF003** | Todo tráfego entre frontend, backend e Supabase ocorre sobre HTTPS com TLS 1.2 ou superior. | transversal | Revisão de requisitos 2026-08-22 |
+| **RNF003** | Todo tráfego entre frontend, backend, PostgreSQL e MinIO ocorre cifrado com TLS 1.2 ou superior (HTTPS nas chamadas HTTP). | transversal | Revisão de requisitos 2026-08-22 |
 | **RNF004** | Nenhum segredo é versionado. Chave privada RSA de assinatura, credenciais do MinIO e do SMTP vivem em variável de ambiente, somente no backend. | transversal | ADR-0006 |
 | **RNF005** | A busca de profissionais e serviços responde em até 2 segundos no percentil 95 com 10 mil registros na base. | servicos, profissionais | Revisão de requisitos 2026-08-22 |
-| **RNF006** | Toda listagem da API é paginada, com máximo de 50 itens por página, usando os tipos de `comum/paginacao`. | transversal | design-sistema.md §10.2 |
+| **RNF006** | Toda listagem da API é paginada, com máximo de 50 itens por página, usando os tipos de `comum/paginacao`. | transversal | design-sistema.md §11.2 |
 | **RNF007** | A interface é responsiva e utilizável de 372px de largura até desktop, sem rolagem horizontal. | transversal | Revisão de requisitos 2026-08-22 |
 | **RNF008** | Os fluxos de cadastro, busca e contratação atendem ao WCAG 2.1 nível AA, incluindo navegação por teclado e contraste mínimo. | transversal | Revisão de requisitos 2026-08-22 |
-| **RNF009** | Todo erro da API é devolvido como ProblemDetail no formato RFC 9457, sem expor stack trace nem detalhe interno. | transversal | design-sistema.md §9.1 |
-| **RNF010** | Toda alteração de schema nasce como migration versionada do Flyway. Alterar schema pelo painel do Supabase é proibido. | transversal | design-sistema.md §5 |
+| **RNF009** | Todo erro da API é devolvido como ProblemDetail no formato RFC 9457, sem expor stack trace nem detalhe interno. | transversal | design-sistema.md §10.1 |
+| **RNF010** | Toda alteração de schema nasce como migration versionada do Flyway. Alterar schema manualmente em qualquer ambiente é proibido. | transversal | design-sistema.md §5 |
 | **RNF011** | Teste de regra de negócio roda contra PostgreSQL real via Testcontainers. H2 é proibido. | transversal | design-sistema.md §3.3 |
-| **RNF012** | Código, comentários, documentação e mensagens de commit são escritos em português, com commits em Conventional Commits. | transversal | design-sistema.md §7.2 |
+| **RNF012** | Código, comentários, documentação e mensagens de commit são escritos em português, com commits em Conventional Commits. | transversal | design-sistema.md §8.2 |
 | **RNF013** | A aplicação funciona nas duas versões mais recentes de Chrome, Firefox, Safari e Edge. | transversal | Revisão de requisitos 2026-08-22 |
 | **RNF014** | CPF, telefone e endereço completo só são visíveis ao próprio titular e ao administrador. O cliente vê do profissional apenas dados públicos. | usuarios, profissionais | LGPD, Lei 13.709/2018 |
 | **RNF015** | O usuário pode solicitar a exclusão da conta. Os dados pessoais são anonimizados preservando o histórico de contratações e as avaliações. | usuarios | LGPD, Lei 13.709/2018 |
-| **RNF016** | Toda tabela de domínio registra `criado_em` e `atualizado_em` pela MappedSuperclass de `comum/auditoria`. | transversal | design-sistema.md §10.2 |
+| **RNF016** | Toda tabela de domínio registra `criado_em` e `atualizado_em` pela MappedSuperclass de `comum/auditoria`. | transversal | design-sistema.md §11.2 |
 | **RNF017** | Imagens de portfólio e anexos ficam no MinIO, acessados por URL pré-assinada de expiração curta, limitados a 5 MB por arquivo nos formatos JPEG, PNG e WebP. | profissionais, contratacoes | ADR-0006 |
 | **RNF018** | O cálculo de distância do RF013 usa coordenadas persistidas na base. A geocodificação de endereço é feita por adapter isolado em `lib/`, nunca chamada de dentro de um módulo. | profissionais, contratacoes | Decorrência da decisão de manter RF013 no MVP; fornecedor de geocodificação ainda pendente de ADR |
 | **RNF019** | O access token expira em 15 minutos e o refresh token em 30 dias, sendo rotacionado a cada uso; o reuso de um token já rotacionado revoga a família inteira. | autenticacao | ADR-0006 |

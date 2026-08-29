@@ -1,10 +1,41 @@
-node_modules
-.vscode
+# Dependencias
+node_modules/
+
+# Build — Java / Maven
+target/
+*.class
+!.mvn/wrapper/maven-wrapper.jar
+
+# Build — Next.js
+.next/
+out/
+next-env.d.ts
+
+# Testes e cobertura
+coverage/
+
+# Ambiente e segredos
 .env
+.env*.local
+
+# Editores e IDEs
+.vscode/
+.idea/
+*.iml
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Ferramentas
+.mcp.json
 
 # Artefatos de aula em formato binario pesado — ficam fora do versionamento.
 # O conteudo relevante ja esta transcrito em docs/requisitos.md e docs/design-sistema.md.
 docs/*.pdf
 *.docx
 !docs/estilo/reference-doc.docx
-.mcp.json

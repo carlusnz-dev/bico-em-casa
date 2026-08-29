@@ -1,0 +1,4 @@
+# Artefato incremental do tsc, gerado por "npm run typecheck" / "tsc --noEmit".
+# node_modules/, .next/, next-env.d.ts e coverage/ já são ignorados pelo
+# .gitignore da raiz do repositório (os padrões dele valem em qualquer nível).
+tsconfig.tsbuildinfo

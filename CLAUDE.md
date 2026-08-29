@@ -6,7 +6,9 @@ profissional, vê o portfólio (opcional) e contrata sem burocracia.
 **Stack:** Java 21 + Spring Boot 4.1 (Maven) · Next.js 16.3 + TypeScript 7 · PostgreSQL 18 e
 identidade própria (JWT RSA + Argon2id), storage no MinIO. Ver [ADR-0006](docs/adr/0006-remover-supabase-infraestrutura-propria.md).
 
-O projeto ainda não tem código de aplicação — a fundação é documentação e arquitetura.
+**Estado em 2026-08-27:** a fundação técnica existe e está verificada — `backend/` compila,
+`frontend/` builda e `docker-compose.yml` sobe PostgreSQL 18 e MinIO. **Código de aplicação não
+existe, e não é a LLM que vai escrever** — ver a regra nº 3.
 
 ---
 
@@ -59,6 +61,33 @@ perguntas, honestamente, e escreve as respostas na descrição do PR ou no card:
 Um "não" em qualquer pergunta **bloqueia o PR**. A ação não é aprovar mesmo assim: é voltar e
 resolver o item.
 
+## Regra nº 3 — o código de aplicação é da equipe, não da LLM
+
+Este é um **trabalho de faculdade**. O objetivo dele não é o software existir: é os membros da
+equipe aprenderem Spring, Next.js, TypeScript e banco de dados de verdade. Código gerado por LLM
+e aceito sem ser escrito não ensina ninguém, e é o resultado que o projeto está tentando evitar.
+
+**A LLM funda e configura; a equipe escreve a aplicação.**
+
+| A LLM faz | A equipe escreve |
+|---|---|
+| `pom.xml`, `package.json`, `tsconfig.json`, `application.yml` | Controllers, services, entidades, repositories, DTOs |
+| `docker-compose.yml`, workflows de CI, `.gitignore` | `src/api/` inteira: `client.ts`, `erros.ts`, contratos Zod |
+| Documentação, ADR, README, relatórios de sessão | Componentes, hooks, telas |
+| Classe de entrada e teste de fumaça da fundação | **Migrations Flyway** — é onde se aprende banco, e o [ADR-0006](docs/adr/0006-remover-supabase-infraestrutura-propria.md) saiu do Supabase justamente por isso |
+| Revisar, apontar erro, comparar alternativa, explicar | Os testes do código que escreveram |
+
+Na dúvida, a fronteira é esta: **se o arquivo tem regra de negócio ou ensina o framework, é da
+equipe.** Se é encanamento para a equipe não perder a tarde com defasagem de peer dependency,
+é da LLM.
+
+O que a LLM **continua** fazendo sobre o código da equipe, e deve fazer bem: revisar linha a
+linha, apontar bug e violação de convenção, explicar por que uma abordagem custa mais que a
+outra, e responder pergunta. Ensinar é ajudar; entregar pronto é atrapalhar.
+
+**Se alguém pedir para a LLM escrever código de aplicação, ela pergunta antes de escrever.**
+Pode ser que a pessoa queira mesmo — mas essa é uma decisão consciente, não um deslize.
+
 ---
 
 ## Antes de escrever código
@@ -79,7 +108,7 @@ do módulo. Ao surgir o segundo, cria-se a pasta e movem-se **ambos** no mesmo c
 | Pasta | Papel |
 |---|---|
 | `config/` | Configuração da aplicação (security, CORS, OpenAPI, beans) |
-| `lib/` | Adapters de serviços externos (`minio/`, `email/`, `geocodificacao/`). **Sem regra de negócio** |
+| `lib/` | Adapters de serviços externos (`armazenamento/`, `email/`). **Sem regra de negócio** |
 | `comum/` | Núcleo compartilhado (`excecao/`, `paginacao/`, `auditoria/`) |
 | `modulos/` | Um por domínio: `autenticacao`, `usuarios`, `profissionais`, `servicos`, `contratacoes`, `avaliacoes` |
 
@@ -95,7 +124,8 @@ implementação fica em `service/` com sufixo `Impl`. **Sem prefixo `I`.**
 ## Nunca faça
 
 - Retornar entidade JPA pelo controller — sempre DTO
-- Injetar repository de outro módulo, ou relacionar entidades JPA cruzando módulos (use o UUID)
+- Injetar repository de outro módulo, ou relacionar entidades JPA cruzando módulos — referencie
+  pelo `id` (`Long` ou `UUID`, conforme [ADR-0007](docs/adr/0007-chave-primaria-mista.md))
 - Autorizar por claim do JWT — o papel é lido de `usuario`
 - Usar H2 em teste de regra de negócio — o projeto exige Testcontainers com PostgreSQL
 - Chamar `fetch` fora de `src/api/`
