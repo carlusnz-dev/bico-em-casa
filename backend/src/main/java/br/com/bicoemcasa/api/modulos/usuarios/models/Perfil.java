@@ -21,8 +21,8 @@ import java.util.UUID;
                 )
         },
         indexes = {
-                @Index(name = "idx_perfis_usuario_id", columnList = "usuario_id"),
-                @Index(name = "idx_perfis_tipo", columnList = "tipo")
+                @Index(name = "idx_perfil_usuario_id", columnList = "usuario_id"),
+                @Index(name = "idx_perfil_tipo", columnList = "tipo")
         }
 )
 @Getter
