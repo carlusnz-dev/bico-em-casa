@@ -13,10 +13,10 @@ import java.util.List;
 @Table(
         name = "endereco",
         indexes = {
-                @Index(name = "idx_endereco_cidade_uf", columnList = {"cidade", "uf"}),
+                @Index(name = "idx_endereco_cidade_uf", columnList = "cidade, uf"),
                 @Index(
                         name = "idx_endereco_coordenadas",
-                        columnList = {"latitude", "longitude"}
+                        columnList = "latitude, longitude"
                 )
         }
 )
