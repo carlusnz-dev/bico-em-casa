@@ -263,7 +263,8 @@ inclusive, é versionada pelo Flyway e pertence à aplicação.
 |---|---|---|
 | Tabelas | `snake_case` **singular**, sem prefixo ([ADR-0008](./adr/0008-nomenclatura-de-tabelas.md)) | `usuario`, `contratacao`, `servico_tag` |
 | Colunas | `snake_case` **em português** | `criado_em`, `usuario_id` |
-| Chave primária — cadastro | `id BIGINT GENERATED ALWAYS AS IDENTITY` | `usuario`, `perfil`, `endereco`, `portfolio` |
+| Chave primária — cadastro | `id BIGINT GENERATED ALWAYS AS IDENTITY` | `usuario`, `endereco`, `portfolio` |
+| Chave primária — cadastro, exceção ([ADR-0009](./adr/0009-perfil-id-uuid.md)) | `id UUID DEFAULT gen_random_uuid()` | `perfil` — e toda FK que aponta para `perfil.id` |
 | Chave primária — transacional | `id UUID DEFAULT gen_random_uuid()` | as demais 14 tabelas |
 | Referência polimórfica | `varchar(64)` **sem** FK — o alvo pode ser `bigint` ou `uuid` | `log_acao.alvo_id`, `notificacao.alvo_id`, `denuncia.alvo_id` |
 | Chave estrangeira | `fk_{tabela_origem}_{tabela_destino}` | `fk_contratacao_profissionais` |

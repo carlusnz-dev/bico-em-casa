@@ -205,7 +205,7 @@
     "naming_conventions": {
       "tables": "snake_case SINGULAR, sem prefixo (ex: usuario, contratacao, servico_tag). Definido pelo ADR-0008.",
       "columns": "snake_case em portugues (ex: criado_em, usuario_id)",
-      "primary_keys": "Mista, definida pelo ADR-0007. Tabelas de cadastro (usuario, perfil, endereco, portfolio) usam id BIGINT GENERATED ALWAYS AS IDENTITY. Tabelas transacionais usam id UUID DEFAULT gen_random_uuid().",
+      "primary_keys": "Mista, definida pelo ADR-0007. Tabelas de cadastro (usuario, endereco, portfolio) usam id BIGINT GENERATED ALWAYS AS IDENTITY. Excecao registrada no ADR-0009: perfil usa id UUID DEFAULT gen_random_uuid() apesar de ser tabela de cadastro, por preferencia de consistencia de tipo dentro do modulo usuarios. Toda coluna que referencia perfil.id tambem e UUID (portfolio.perfil_id, disponibilidade.perfil_id, servico.perfil_id, contratacao.cliente_perfil_id, contratacao.profissional_perfil_id, contratacao.cancelado_por_perfil_id, contratacao_historico.alterado_por_perfil_id, notificacao.destinatario_perfil_id, avaliacao.autor_perfil_id, avaliacao.avaliado_perfil_id, denuncia.autor_perfil_id, denuncia.denunciado_perfil_id, denuncia.analisado_por_perfil_id). Tabelas transacionais usam id UUID DEFAULT gen_random_uuid().",
       "polymorphic_references": "Colunas de alvo polimorfico (log_acao.alvo_id, notificacao.alvo_id, denuncia.alvo_id) sao varchar(64) sem foreign key, porque o alvo pode ser bigint ou uuid. A integridade delas e responsabilidade do service, nao do banco.",
       "foreign_keys": "fk_{tabela_origem}_{tabela_destino}",
       "indexes": "idx_{tabela}_{coluna}",
