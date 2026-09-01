@@ -1,6 +1,6 @@
 package br.com.bicoemcasa.api.modulos.usuarios.repository;
 
-import br.com.bicoemcasa.api.modulos.usuarios.dominio.Usuario;
+import br.com.bicoemcasa.api.modulos.usuarios.models.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
