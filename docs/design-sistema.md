@@ -248,6 +248,17 @@ ADR-0003.
 É **proibido** alterar schema manualmente em qualquer ambiente — a alteração some do histórico e o
 próximo `flyway migrate` diverge.
 
+**Versionamento de migration ([ADR-0010](./adr/0010-versionamento-migration-por-timestamp.md)).**
+Toda migration nova usa versão por **timestamp de criação**:
+`V<yyyyMMddHHmmss>__descricao_em_snake_case.sql` (ex:
+`V20260901143000__criar_tabela_endereco_perfil.sql`) — não mais o padrão sequencial `V1`, `V2`,
+`V3`. Motivo: o time trabalha em branches paralelas a partir da mesma base, e o Flyway ordena
+migrations pelo número no nome do arquivo, não pela ordem de merge no Git; versionamento
+sequencial exige coordenação manual entre branches para não colidir. `V1__criar-tabela-usuarios.sql`
+e `V2__criar-tabelas-endereco-perfil.sql` continuam sequenciais como exceção histórica — já foram
+aplicadas em ambientes locais do time, e renomeá-las forçaria `flyway repair`/reset em todo
+ambiente que já rodou essas migrations.
+
 ### 5.1 Schemas
 
 | Schema | Papel |

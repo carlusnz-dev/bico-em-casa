@@ -199,6 +199,7 @@
     "migration_tool": "Flyway 12.4.x, herdada do BOM do Spring Boot 4.1.1",
     "migration_path": "backend/src/main/resources/db/migration",
     "migration_policy": "Toda alteracao de schema nasce como migration versionada do Flyway. Alterar schema manualmente em qualquer ambiente e proibido.",
+    "migration_versioning": "A partir do ADR-0010, toda migration nova usa versao por timestamp de criacao: V<yyyyMMddHHmmss>__descricao_em_snake_case.sql (ex: V20260901143000__criar_tabela_endereco_perfil.sql). Motivo: integrantes trabalham em branches paralelas a partir da mesma base, e o Flyway ordena por numero de versao no nome do arquivo, nao pela ordem de merge no Git; versionamento sequencial (V1, V2, V3) exige coordenacao manual entre branches para nao colidir ou sair fora de ordem. V1__criar-tabela-usuarios.sql e V2__criar-tabelas-endereco-perfil.sql permanecem sequenciais como excecao historica, pois ja foram aplicadas em ambientes locais do time e renomear forcaria flyway repair/reset em todo ambiente que ja rodou essas migrations.",
     "schemas": {
       "public": "Tabelas de dominio da aplicacao, integralmente gerenciadas pelo Flyway"
     },
@@ -486,7 +487,7 @@
         }
       },
       "src/main/resources": {
-        "db/migration/": "Migrations Flyway versionadas (V1__criar_usuarios.sql, V2__criar_profissionais.sql)",
+        "db/migration/": "Migrations Flyway versionadas. A partir do ADR-0010, versao por timestamp: V20260901143000__criar_tabela_endereco_perfil.sql. V1 e V2 permanecem sequenciais (excecao historica, ja aplicadas)",
         "application.yml": "Configuracao base",
         "application-dev.yml": "Profile de desenvolvimento",
         "application-prod.yml": "Profile de producao"
