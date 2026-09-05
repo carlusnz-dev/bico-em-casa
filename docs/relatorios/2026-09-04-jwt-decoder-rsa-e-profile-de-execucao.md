@@ -143,11 +143,12 @@ documentação — **resultado ainda não recebido no momento em que este relat�
 - [ ] **`UsuarioController` sem autorização por recurso** — qualquer usuário autenticado busca
       cadastro de qualquer outro por id; corrigir antes de expor a rota
 - [ ] **`UsuarioServiceImpl.criar()` não persiste o usuário** — falta `repository.save(...)`
-- [ ] **Resultado da revisão de arquitetura (`arquiteto-sistema`, Sonnet) sobre a documentação
-      de `54539c3` ainda não chegou** no momento em que este relatório foi escrito — conferir
-      quando a notificação retornar
-- [ ] **PR de `feat/oauth2-jwt-decoder` para `develop` ainda não aberto** — planejado para depois
-      deste relatório
+- [x] **Revisão de arquitetura (`arquiteto-sistema`, Sonnet) sobre `54539c3`** — voltou "conforme
+      com ressalvas": MD sem a palavra "literal" que o JSON tinha, afirmação não confirmada sobre
+      `application-prod.yml` (arquivo nunca lido, é `deny` de propósito), e contradição aparente
+      entre o campo `secrets` e o novo `rsa_key_dev_convention`. Corrigido no commit `40e91c4`.
+      Confirmado: não precisa de ADR — é convenção operacional já prevista pelo ADR-0006
+- [x] **PR de `feat/oauth2-jwt-decoder` para `develop` aberto** — [#6](https://github.com/carlusnz-dev/bico-em-casa/pull/6)
 - [ ] `NimbusJwtEncoder` (emissão de token) e o restante do módulo `autenticacao` — não
       começados; a chave privada gerada nesta sessão só será usada ali
 - [ ] Pendências de convenção da migration V2 (relatório de 01/09) seguem abertas, não tocadas
