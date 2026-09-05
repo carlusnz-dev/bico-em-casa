@@ -2,12 +2,15 @@ package br.com.bicoemcasa.api.modulos.usuarios.services;
 
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.UsuarioService;
+import br.com.bicoemcasa.api.modulos.usuarios.dto.CredenciaisUsuario;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.UsuarioRequest;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.UsuarioResponse;
 import br.com.bicoemcasa.api.modulos.usuarios.models.Usuario;
 import br.com.bicoemcasa.api.modulos.usuarios.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
@@ -26,6 +29,20 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado: " + id));
 
         return new UsuarioResponse(usuario.getId(), usuario.getNome(), usuario.getEmail());
+    }
+
+    @Override
+    public UsuarioResponse buscarPorEmail(String email) {
+        Usuario usuario = repository.findByEmail(email)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado: " + email));
+
+        return new UsuarioResponse(usuario.getId(), usuario.getNome(), usuario.getEmail());
+    }
+
+    @Override
+    public Optional<CredenciaisUsuario> buscarCredenciaisPorEmail(String email) {
+        return repository.findByEmail(email)
+                .map(usuario -> new CredenciaisUsuario(usuario.getId(), usuario.getHashSenha()));
     }
 
     @Override
