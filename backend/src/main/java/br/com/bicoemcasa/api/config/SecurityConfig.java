@@ -12,6 +12,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -27,8 +28,10 @@ import java.security.interfaces.RSAPublicKey;
 public class SecurityConfig {
 
     private final CorsProperties corsProperties;
-    public SecurityConfig(CorsProperties corsProperties) {
+    private final AuthenticationEntryPoint entryPoint;
+    public SecurityConfig(CorsProperties corsProperties, AuthenticationEntryPoint entryPoint) {
         this.corsProperties = corsProperties;
+        this.entryPoint = entryPoint;
     }
 
     @Bean
@@ -40,7 +43,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/api/v1/autenticacao/**",
+                                "/api/autenticacao/**",
+                                "/api/usuario",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
@@ -48,6 +52,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint(entryPoint))
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(Customizer.withDefaults())
                 )
