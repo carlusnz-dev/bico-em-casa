@@ -44,6 +44,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuarioNovo.setEmail(request.email());
         usuarioNovo.setCpf(request.cpf());
         usuarioNovo.setHashSenha(hashSenha);
+        repository.save(usuarioNovo);
 
         return new UsuarioResponse(usuarioNovo.getId(), usuarioNovo.getNome(), usuarioNovo.getEmail());
     }
