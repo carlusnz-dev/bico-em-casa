@@ -138,6 +138,13 @@ previa — ver a nota de revisão naquele ADR.
 | Recuperação de senha | Token opaco de uso único, expiração curta, **armazenado com hash** em `token_recuperacao` e invalidado no primeiro uso |
 | Segredos | Nenhuma chave em código. Chave privada RSA, credenciais do MinIO e do SMTP vivem em variável de ambiente, **somente no backend** |
 
+> [!NOTE]
+> **Convenção da chave RSA em dev.** Cada desenvolvedor gera o próprio par de chaves local com
+> `openssl` (`genpkey` RSA 2048 + `rsa -pubout`) e guarda em `~/.bicoemcasa/keys/{private,public}.pem`,
+> fora do repositório. `application-dev.yml` referencia esse caminho via `${user.home}`, então
+> nenhum valor de máquina específica fica versionado. Em produção, `application-prod.yml` usa
+> variável de ambiente para o caminho (ou o conteúdo) da chave, sem literal.
+
 > [!IMPORTANT]
 > **Por que o refresh token é rotacionado.** Sem rotação, um refresh token vazado vale 30 dias
 > para o atacante e a vítima não percebe nada. Com rotação, o token usado é invalidado e um novo
