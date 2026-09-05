@@ -7,12 +7,20 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.converter.RsaKeyConverters;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.io.ByteArrayInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.interfaces.RSAPublicKey;
 
 @Configuration
 @EnableWebSecurity
@@ -44,6 +52,15 @@ public class SecurityConfig {
                         oauth2.jwt(Customizer.withDefaults())
                 )
                 .build();
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder(RsaKeyProperties rsaKeyProperties) throws Exception {
+        byte[] bytes = Files.readAllBytes(Path.of(rsaKeyProperties.getPublicKeyPath()));
+        RSAPublicKey publicKey = RsaKeyConverters.x509()
+                .convert(new ByteArrayInputStream(bytes));
+
+        return NimbusJwtDecoder.withPublicKey(publicKey).build();
     }
 
     @Bean
