@@ -99,8 +99,8 @@
       "csrf": "Desabilitado (API stateless sem cookie de sessao).",
       "password_encoder": "Argon2id via Argon2PasswordEncoder do Spring Security. O hash vive em usuario.hash_senha; a senha em claro nunca e persistida, logada nem devolvida.",
       "password_reset": "Token opaco de uso unico com expiracao curta, persistido com hash em token_recuperacao e invalidado no primeiro uso.",
-      "secrets": "Nenhuma chave em codigo. Chave privada RSA de assinatura, credenciais do MinIO e credenciais de SMTP vivem em variavel de ambiente, somente no backend.",
-      "rsa_key_dev_convention": "Em dev, cada desenvolvedor gera o proprio par de chaves local com openssl (genpkey RSA 2048 + rsa -pubout) e guarda em ~/.bicoemcasa/keys/{private,public}.pem, fora do repositorio. application-dev.yml referencia esse caminho via ${user.home}, entao nenhum valor literal de maquina especifica fica versionado. Em producao, application-prod.yml usa variavel de ambiente para o caminho ou o conteudo da chave, sem literal."
+      "secrets": "Nenhuma chave em codigo. Chave privada RSA de assinatura, credenciais do MinIO e credenciais de SMTP vivem em variavel de ambiente, somente no backend, em producao (ver rsa_key_dev_convention para a excecao local de dev).",
+      "rsa_key_dev_convention": "Em dev, cada desenvolvedor gera o proprio par de chaves local com openssl (genpkey RSA 2048 + rsa -pubout) e guarda em ~/.bicoemcasa/keys/{private,public}.pem, fora do repositorio. application-dev.yml referencia esse caminho via ${user.home}, entao nenhum valor literal de maquina especifica fica versionado. A convencao para producao e application-prod.yml usar variavel de ambiente para o caminho ou o conteudo da chave, sem literal - ainda nao confirmado no arquivo real, que esta fora do alcance de leitura da LLM por regra do projeto."
     },
     "testing_modules": {
       "spring_boot_test_slices": [
