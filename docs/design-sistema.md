@@ -136,7 +136,16 @@ previa — ver a nota de revisão naquele ADR.
 | CSRF | Desabilitado (API stateless, sem cookie de sessão) |
 | Encoder de senha | **Argon2id** via `Argon2PasswordEncoder`. O hash vive em `usuario.hash_senha`; a senha em claro **nunca** é persistida, logada nem devolvida |
 | Recuperação de senha | Token opaco de uso único, expiração curta, **armazenado com hash** em `token_recuperacao` e invalidado no primeiro uso |
-| Segredos | Nenhuma chave em código. Chave privada RSA, credenciais do MinIO e do SMTP vivem em variável de ambiente, **somente no backend** |
+| Segredos | Nenhuma chave em código. Chave privada RSA, credenciais do MinIO e do SMTP vivem em variável de ambiente, **somente no backend**, em produção (ver nota abaixo para a exceção local de dev) |
+
+> [!NOTE]
+> **Convenção da chave RSA em dev.** Cada desenvolvedor gera o próprio par de chaves local com
+> `openssl` (`genpkey` RSA 2048 + `rsa -pubout`) e guarda em `~/.bicoemcasa/keys/{private,public}.pem`,
+> fora do repositório. `application-dev.yml` referencia esse caminho via `${user.home}`, então
+> nenhum valor **literal** de máquina específica fica versionado. A convenção para produção é
+> `application-prod.yml` usar variável de ambiente para o caminho ou o conteúdo da chave, sem
+> literal — ainda não confirmado no arquivo real, que está fora do alcance de leitura da LLM por
+> regra do projeto (`deny` em `.claude/settings.json`).
 
 > [!IMPORTANT]
 > **Por que o refresh token é rotacionado.** Sem rotação, um refresh token vazado vale 30 dias
