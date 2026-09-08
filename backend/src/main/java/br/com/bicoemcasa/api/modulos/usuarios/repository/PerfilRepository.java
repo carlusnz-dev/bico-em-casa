@@ -12,5 +12,7 @@ import java.util.UUID;
 public interface PerfilRepository extends JpaRepository<Perfil, UUID> {
     Optional<Perfil> findByUsuarioIdAndTipo(Long usuarioId, PerfilTipo tipo);
 
+    Optional<Perfil> findByNomeExibicao(String nomeExibicao);
+
     boolean existsByNomeUsuario(String nomeUsuario);
 }

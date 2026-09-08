@@ -1,6 +1,7 @@
 package br.com.bicoemcasa.api.modulos.usuarios.controller;
 
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.UsuarioService;
+import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilRequest;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.UsuarioRequest;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.UsuarioResponse;
 import jakarta.validation.Valid;

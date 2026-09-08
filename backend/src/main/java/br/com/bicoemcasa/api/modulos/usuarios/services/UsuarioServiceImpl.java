@@ -1,14 +1,14 @@
 package br.com.bicoemcasa.api.modulos.usuarios.services;
 
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
+import br.com.bicoemcasa.api.modulos.usuarios.contrato.PerfilService;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.UsuarioService;
-import br.com.bicoemcasa.api.modulos.usuarios.dto.CredenciaisUsuario;
-import br.com.bicoemcasa.api.modulos.usuarios.dto.UsuarioRequest;
-import br.com.bicoemcasa.api.modulos.usuarios.dto.UsuarioResponse;
+import br.com.bicoemcasa.api.modulos.usuarios.dto.*;
 import br.com.bicoemcasa.api.modulos.usuarios.models.Usuario;
 import br.com.bicoemcasa.api.modulos.usuarios.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -16,10 +16,15 @@ import java.util.Optional;
 public class UsuarioServiceImpl implements UsuarioService {
     private final UsuarioRepository repository;
     private final PasswordEncoder encoder;
+    private final PerfilService perfilService;
 
-    public UsuarioServiceImpl(UsuarioRepository repository, PasswordEncoder encoder) {
+    public UsuarioServiceImpl(
+            UsuarioRepository repository,
+            PasswordEncoder encoder,
+            PerfilService perfilService) {
         this.repository = repository;
         this.encoder = encoder;
+        this.perfilService = perfilService;
     }
 
     // GET
@@ -40,12 +45,22 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    public UsuarioExiste usuarioExiste(Long id) {
+        boolean usuarioExiste = repository.existsById(id);
+        boolean statusDoUsuario = repository.findAtivoById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado: " + id));
+
+        return new UsuarioExiste(usuarioExiste, statusDoUsuario);
+    }
+
+    @Override
     public Optional<CredenciaisUsuario> buscarCredenciaisPorEmail(String email) {
         return repository.findByEmail(email)
                 .map(usuario -> new CredenciaisUsuario(usuario.getId(), usuario.getHashSenha()));
     }
 
     @Override
+    @Transactional
     public UsuarioResponse criar(UsuarioRequest request) {
         // verificação da senha
         if (request.senha().length() < 8) {
@@ -56,12 +71,12 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         // Setters
         Usuario usuarioNovo = new Usuario();
-
         usuarioNovo.setNome(request.nome());
         usuarioNovo.setEmail(request.email());
         usuarioNovo.setCpf(request.cpf());
         usuarioNovo.setHashSenha(hashSenha);
-        repository.save(usuarioNovo);
+        repository.save(usuarioNovo); // salva o usuário no banco
+        perfilService.criar(usuarioNovo.getId(), request.perfil()); // cria o perfil do usuário criado
 
         return new UsuarioResponse(usuarioNovo.getId(), usuarioNovo.getNome(), usuarioNovo.getEmail());
     }
