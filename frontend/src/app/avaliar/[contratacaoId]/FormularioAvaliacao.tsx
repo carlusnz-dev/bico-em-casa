@@ -4,33 +4,33 @@ import {criarAvaliacao} from "../../../api/avaliacoes";
 import {useState} from 'react';
 
 export default function FormularioAvaliacao({ contratacaoId }) {
-    const [rating, setRating] = useState(0);
-    const [hoverRating, setHoverRating] = useState(0);
+    const [nota, setNota] = useState(0);
+    const [btnNota, setbtnNota] = useState(0);
     const [comentario, setComentario] = useState('');
     const [enviado, setEnviado] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (rating === 0) {
+        if (nota === 0) {
             alert('Por favor, selecione pelo menos 1 estrela.');
             return;
         }
 
         await criarAvaliacao(contratacaoId, {
-            nota: rating,
+            nota: nota,
             comentario: comentario,
         });
 
         // enviar dados
-        console.log({ contratacaoId, rating, comentario });
+        console.log({ contratacaoId, nota, comentario });
         setEnviado(true);
     };
 
     if (enviado) {
         return (
             <div>
-                <h3>Obrigado pela sua avaliação!</h3>
+                <h3>Avaliação enviada com sucesso!!</h3>
             </div>
         );
     }
@@ -45,9 +45,9 @@ export default function FormularioAvaliacao({ contratacaoId }) {
                     <button
                         key={star}
                         type="button"
-                        onClick={() => setRating(star)}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
+                        onClick={() => setNota(star)}
+                        onMouseEnter={() => setbtnNota(star)}
+                        onMouseLeave={() => setbtnNota(0)}
                         style={{
                             background: 'none',
                             border: 'none',
@@ -55,7 +55,7 @@ export default function FormularioAvaliacao({ contratacaoId }) {
                             fontSize: '24px'
                         }}
                     >
-                        {(hoverRating || rating) >= star ? '★' : '☆'}
+                        {(btnNota || nota) >= star ? '★' : '☆'}
                     </button>
                 ))}
             </div>
@@ -71,12 +71,12 @@ export default function FormularioAvaliacao({ contratacaoId }) {
                     rows={4}
                     value={comentario}
                     onChange={(e) => setComentario(e.target.value)}
-                    placeholder="Deixe sua opinião..."
+                    placeholder="Deixe sua opinião"
                 />
             </div>
 
             <br />
-
+            {/*botão de envviar*/}
             <button type="submit">Enviar avaliação</button>
         </form>
     );

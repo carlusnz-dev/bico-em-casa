@@ -1,6 +1,6 @@
 import FormularioAvaliacao from './FormularioAvaliacao';
 
-export default async function AvaliarPag({ params }) {
+export default async function AvaliarPag({params}) {
     const dados = await params;
 
     return (
@@ -9,8 +9,7 @@ export default async function AvaliarPag({ params }) {
 
             <p>
                 Deixe sua avaliação sobre o serviço do profissional!
-                <br />
-                Contratação: {dados.contratacaoId}
+
             </p>
 
             <br />
