@@ -12,3 +12,15 @@ export async function criarAvaliacao(contratacaoId, dados) {
         }
     )
 }
+
+export async function buscarAvaliacao(avaliadoId) {
+    return apiFetch(
+        `/avaliacoes/avaliado/${avaliadoId}`,
+        {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }
+    );
+}
