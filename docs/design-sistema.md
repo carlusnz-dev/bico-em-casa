@@ -651,7 +651,7 @@ acoplamento acidental simplesmente não tem por onde entrar.
 ```
 frontend/
 └── src/
-    ├── middleware.ts             # refresh da sessão contra a API própria e proteção de rotas
+    ├── middleware.ts             # não implementado nesta fase — sessão e proteção de rota são client-side
     ├── app/                      # App Router — só roteamento, layout e composição
     │   ├── (publico)/            # landing, busca de profissionais, páginas abertas
     │   ├── (auth)/               # login, cadastro, recuperação de senha
@@ -676,6 +676,14 @@ frontend/
 
 **A mesma regra de pasta vale aqui:** cada recurso é `<recurso>.ts` enquanto for um arquivo, e
 vira a pasta `<recurso>/` ao surgir o segundo.
+
+**Por que `middleware.ts` não faz nada hoje:** a sessão foi decidida 100% client-side em
+2026-09-10 (ver [relatório da sessão](./relatorios/2026-09-10-revisao-autenticacao-e-planejamento-tela-login.md)).
+O cookie do refresh token é host-only e emitido pela API — ele nunca chega ao middleware do
+front, que roda sobre requisições ao próprio Next, não ao backend. Refresh e proteção de rota
+ficam a cargo de um guard client-side dentro de `hooks/useSessao` e dos layouts da área
+autenticada. Isso é um adiamento, não uma decisão definitiva: se o projeto migrar para SSR de
+área autenticada, o assunto volta à mesa e provavelmente vira ADR.
 
 **Divisão de responsabilidade:** `app/` compõe, `components/` apresenta, `hooks/` reage,
 `api/` conversa com o mundo. Um hook em `hooks/` que faz `fetch` está no lugar errado — ele

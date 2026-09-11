@@ -505,7 +505,7 @@
           "(app)/": "Area autenticada: painel do cliente e do profissional",
           "layout.tsx": "Root layout com providers globais (React Query, tema, sessao)",
           "page.tsx": "Landing page publica",
-          "middleware.ts": "Refresh da sessao contra a API propria e protecao de rotas (na raiz de src/)"
+          "middleware.ts": "Nao implementado nesta fase (na raiz de src/). Sessao 100% client-side - decisao de 2026-09-10 (ver docs/relatorios/2026-09-10-revisao-autenticacao-e-planejamento-tela-login.md): o cookie do refresh token e host-only, emitido pela API, e nunca alcanca o middleware do front. Protecao de rota e refresh ficam a cargo de guard client-side em hooks/useSessao e nos layouts da area autenticada."
         },
         "components/": {
           "descricao": "Componentes de interface. Recebem dados por props e nao buscam dados por conta propria.",
