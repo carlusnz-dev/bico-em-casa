@@ -1,6 +1,8 @@
 package br.com.bicoemcasa.api.core;
 
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
+import br.com.bicoemcasa.api.core.excecao.SenhaNaoBateException;
+import br.com.bicoemcasa.api.core.excecao.TokenInvalidoException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -51,6 +53,38 @@ public class ExcecoesGlobalHandler {
 
         problemDetail.setProperty("erros", erros);
         problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(SenhaNaoBateException.class)
+    public ProblemDetail credenciaisInvalidas(
+            SenhaNaoBateException ex,
+            HttpServletRequest request
+    ) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED,
+                "E-mail ou senha estão incorretas"
+        );
+        problemDetail.setTitle("Credenciais inválidas");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(TokenInvalidoException.class)
+    public ProblemDetail tokenInvalido(
+            TokenInvalidoException ex,
+            HttpServletRequest request
+    ) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+
+        problemDetail.setTitle("Token inválido");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
         return problemDetail;
     }
 }

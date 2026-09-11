@@ -1,4 +1,4 @@
-package br.com.bicoemcasa.api.modulos.usuarios.dominio;
+package br.com.bicoemcasa.api.modulos.usuarios.models;
 
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -8,10 +8,22 @@ import lombok.Setter;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "usuario")
+// Configuração da tabela de como vai funcionar no banco
+@Table(
+        name = "usuario",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_usuarios_email_cpf",
+                        columnNames = {"email", "cpf"}
+                )
+        },
+        indexes = {
+                @Index(name = "idx_usuarios_id", columnList = "id"),
+                @Index(name = "idx_usuarios_email", columnList = "email"),
+                @Index(name = "idx_usuarios_ativo", columnList = "ativo")
+        })
 @Getter
 @Setter
-@Builder
 public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +32,7 @@ public class Usuario {
     @Column(nullable = false)
     private String nome;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
     @Column(name = "email_verificacao")
@@ -29,7 +41,7 @@ public class Usuario {
     @Column(name = "hash_senha", nullable = false)
     private String hashSenha;
 
-    @Column(nullable = false, length = 11, unique = true)
+    @Column(nullable = false, length = 11)
     private String cpf;
 
     @Column(nullable = false)

@@ -28,7 +28,7 @@ Durante o processo, foram discutidos conceitos fundamentais do ecossistema Java/
 - **Criação e commit da Migration Flyway V1**:
   - Arquivo `backend/src/main/resources/db/migration/V1__criar_tabela_usuarios.sql` definindo a estrutura da tabela `usuario` com auto-incremento ANSI SQL (`GENERATED ALWAYS AS IDENTITY`), constraints de unicidade (`uq_usuarios_email`, `uq_usuarios_cpf`) e índices secundários.
 - **Modelagem da Entidade JPA de Usuários**:
-  - Criação da classe `Usuario.java` em `br.com.bicoemcasa.api.modulos.usuarios.dominio`, mapeando os campos de auditoria (`criadoEm`, `atualizadoEm`) com ganchos `@PrePersist` e `@PreUpdate`, além de atributos temporais com `OffsetDateTime`.
+  - Criação da classe `Usuario.java` em `br.com.bicoemcasa.api.modulos.usuarios.models`, mapeando os campos de auditoria (`criadoEm`, `atualizadoEm`) com ganchos `@PrePersist` e `@PreUpdate`, além de atributos temporais com `OffsetDateTime`.
 - **Criação da Camada de Repositório de Usuários**:
   - Criação da interface `UsuarioRepository.java` em `br.com.bicoemcasa.api.modulos.usuarios.repository` estendendo `JpaRepository<Usuario, Long>` e utilizando consultas derivadas (`findByEmail`, `existsByEmail`, `existsByCpf`).
 - **Esclarecimento Didático de Conceitos**:
@@ -53,7 +53,7 @@ Durante o processo, foram discutidos conceitos fundamentais do ecossistema Java/
 | Arquivo | Alteração |
 |---|---|
 | `backend/src/main/resources/db/migration/V1__criar_tabela_usuarios.sql` | Criado — Migration Flyway da tabela `usuario` |
-| `backend/src/main/java/br/com/bicoemcasa/api/modulos/usuarios/dominio/Usuario.java` | Criado — Entidade JPA representando a tabela `usuario` |
+| `backend/src/main/java/br/com/bicoemcasa/api/modulos/usuarios/models/Usuario.java` | Criado — Entidade JPA representando a tabela `usuario` |
 | `backend/src/main/java/br/com/bicoemcasa/api/modulos/usuarios/repository/UsuarioRepository.java` | Criado — Repositório Spring Data JPA do módulo de usuários |
 
 ---
