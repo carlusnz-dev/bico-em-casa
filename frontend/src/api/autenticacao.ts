@@ -1,0 +1,25 @@
+import { request } from './cliente';
+import {
+  LoginRequest,
+  LoginResponse,
+  loginResponseSchema,
+  LogoutResponse,
+  logoutResponseSchema,
+} from './contratos/autenticacao';
+
+export async function entrar(loginRequest: LoginRequest): Promise<LoginResponse> {
+  const resposta = await request(`/autenticacao/entrar`, {
+    method: 'POST',
+    body: JSON.stringify(loginRequest),
+  });
+
+  return loginResponseSchema.parse(resposta);
+}
+
+export async function sair(): Promise<LogoutResponse> {
+  const resposta = await request(`/autenticacao/sair`, {
+    method: 'POST',
+  });
+
+  return logoutResponseSchema.parse(resposta);
+}
