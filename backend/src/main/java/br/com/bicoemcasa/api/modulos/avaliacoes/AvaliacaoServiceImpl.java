@@ -87,6 +87,16 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
     }
 
     @Override
+    public List<AvaliacaoResponse> buscarPorAutor(Long autorId){
+
+        List<Avaliacao> avaliacoesAutor = repository.findByAutorId(autorId);
+
+        return avaliacoesAutor.stream()
+                .map(avaliacao -> toResponse(avaliacao))
+                .toList();
+    }
+
+    @Override
     public AvaliacaoResponse alterar(UUID id, AvaliacaoRequest
                                      request){
 

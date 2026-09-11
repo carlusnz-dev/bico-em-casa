@@ -14,5 +14,5 @@ public interface AvaliacaoService {
     void deletar(UUID id);
     AvaliacaoResponse buscarPorId(UUID Id);
     List<AvaliacaoResponse> buscarPorAvaliado(Long avaliadoId);
-
+    List<AvaliacaoResponse> buscarPorAutor(Long autorId);
 }

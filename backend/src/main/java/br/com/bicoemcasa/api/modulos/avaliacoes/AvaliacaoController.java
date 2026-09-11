@@ -28,6 +28,10 @@ public class AvaliacaoController {
         return avaliacaoService.buscarPorAvaliado(avaliadoId);
     }
 
+    @GetMapping("/autor/{autorId}")
+    public List<AvaliacaoResponse> buscarPorAutor(@PathVariable Long autorId) {
+        return avaliacaoService.buscarPorAutor(autorId);
+    }
 
     @PostMapping("/{contratacaoId}")
     public AvaliacaoResponse criar(@PathVariable UUID contratacaoId,

@@ -13,7 +13,7 @@ public interface AvaliacaoRepository extends JpaRepository <Avaliacao , UUID> {
 
     Optional<Avaliacao> findByContratacaoId(UUID contratacaoId);
     List<Avaliacao> findByAvaliadoId (Long avaliadoId);
-
+    List<Avaliacao> findByAutorId(Long autorId);
     boolean existsByContratacaoId(UUID contratacaoId);
 
 
