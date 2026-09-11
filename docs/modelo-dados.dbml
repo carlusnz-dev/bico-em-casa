@@ -104,7 +104,7 @@ Table token_recuperacao {
 // ---------------------------------------------------------------------------
 
 Table perfil {
-  id bigint [pk, increment]
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Excecao ao ADR-0007 — ver ADR-0009']
   usuario_id bigint [not null]
   tipo tipo_perfil [not null, default: 'CLIENTE']
   nome_usuario varchar(50) [not null, unique]
@@ -169,7 +169,7 @@ Table log_acao {
 
 Table portfolio {
   id bigint [pk, increment]
-  perfil_id bigint [not null, unique]
+  perfil_id uuid [not null, unique]
   titulo varchar(120) [not null]
   descricao varchar(1000)
   slug_url varchar(120) [not null, unique]
@@ -198,7 +198,7 @@ Table portfolio_foto {
 
 Table disponibilidade {
   id uuid [pk, default: `gen_random_uuid()`]
-  perfil_id bigint [not null]
+  perfil_id uuid [not null]
   dia_semana smallint [not null, note: 'ck_disponibilidade_dia_semana: BETWEEN 0 AND 6']
   hora_inicio time [not null]
   hora_fim time [not null, note: 'ck_disponibilidade_intervalo: hora_fim > hora_inicio']
@@ -229,7 +229,7 @@ Table tag {
 
 Table servico {
   id uuid [pk, default: `gen_random_uuid()`]
-  perfil_id bigint [not null]
+  perfil_id uuid [not null]
   titulo varchar(120) [not null]
   descricao varchar(1000)
   preco_previo numeric(10,2) [not null, note: 'ck_servico_preco_nao_negativo: >= 0']
@@ -261,8 +261,8 @@ Table servico_tag {
 
 Table contratacao {
   id uuid [pk, default: `gen_random_uuid()`]
-  cliente_perfil_id bigint [not null]
-  profissional_perfil_id bigint [not null]
+  cliente_perfil_id uuid [not null]
+  profissional_perfil_id uuid [not null]
   servico_id uuid
   endereco_id bigint [not null]
   titulo varchar(120) [not null]
@@ -272,7 +272,7 @@ Table contratacao {
   valor_final numeric(10,2) [note: 'Congelado na aceitacao']
   distancia_km numeric(6,2)
   motivo_cancelamento varchar(500)
-  cancelado_por_perfil_id bigint [note: 'ck_contratacao_cancelamento_coerente: status <> CANCELADA OR NOT NULL']
+  cancelado_por_perfil_id uuid [note: 'ck_contratacao_cancelamento_coerente: status <> CANCELADA OR NOT NULL']
   concluida_em timestamptz
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
@@ -290,7 +290,7 @@ Table contratacao_historico {
   contratacao_id uuid [not null]
   status_anterior status_contratacao
   status_novo status_contratacao [not null]
-  alterado_por_perfil_id bigint
+  alterado_por_perfil_id uuid
   observacao varchar(500)
   criado_em timestamptz [not null, default: `now()`]
 
@@ -315,7 +315,7 @@ Table contratacao_anexo {
 
 Table notificacao {
   id uuid [pk, default: `gen_random_uuid()`]
-  destinatario_perfil_id bigint [not null]
+  destinatario_perfil_id uuid [not null]
   tipo varchar(60) [not null]
   titulo varchar(150) [not null]
   mensagem varchar(500)
@@ -336,8 +336,8 @@ Table notificacao {
 Table avaliacao {
   id uuid [pk, default: `gen_random_uuid()`]
   contratacao_id uuid [not null, unique]
-  autor_perfil_id bigint [not null]
-  avaliado_perfil_id bigint [not null]
+  autor_perfil_id uuid [not null]
+  avaliado_perfil_id uuid [not null]
   nota smallint [not null, note: 'ck_avaliacao_nota_valida: BETWEEN 1 AND 5']
   comentario varchar(1000)
   criado_em timestamptz [not null, default: `now()`]
@@ -352,8 +352,8 @@ Table avaliacao {
 
 Table denuncia {
   id uuid [pk, default: `gen_random_uuid()`]
-  autor_perfil_id bigint [not null]
-  denunciado_perfil_id bigint
+  autor_perfil_id uuid [not null]
+  denunciado_perfil_id uuid
   contratacao_id uuid
   alvo_tipo tipo_alvo_denuncia [not null]
   alvo_id varchar(64) [not null, note: 'Polimorfico, sem FK']
@@ -361,7 +361,7 @@ Table denuncia {
   descricao varchar(1000)
   fotos jsonb
   status status_denuncia [not null, default: 'PENDENTE']
-  analisado_por_perfil_id bigint
+  analisado_por_perfil_id uuid
   analisado_em timestamptz
   parecer varchar(1000)
   criado_em timestamptz [not null, default: `now()`]

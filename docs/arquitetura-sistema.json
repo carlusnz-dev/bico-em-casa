@@ -200,13 +200,14 @@
     "migration_tool": "Flyway 12.4.x, herdada do BOM do Spring Boot 4.1.1",
     "migration_path": "backend/src/main/resources/db/migration",
     "migration_policy": "Toda alteracao de schema nasce como migration versionada do Flyway. Alterar schema manualmente em qualquer ambiente e proibido.",
+    "migration_versioning": "A partir do ADR-0010, toda migration nova usa versao por timestamp de criacao: V<yyyyMMddHHmmss>__descricao_em_snake_case.sql (ex: V20260901143000__criar_tabela_endereco_perfil.sql). Motivo: integrantes trabalham em branches paralelas a partir da mesma base, e o Flyway ordena por numero de versao no nome do arquivo, nao pela ordem de merge no Git; versionamento sequencial (V1, V2, V3) exige coordenacao manual entre branches para nao colidir ou sair fora de ordem. V1__criar-tabela-usuarios.sql e V2__criar-tabelas-endereco-perfil.sql permanecem sequenciais como excecao historica, pois ja foram aplicadas em ambientes locais do time e renomear forcaria flyway repair/reset em todo ambiente que ja rodou essas migrations.",
     "schemas": {
       "public": "Tabelas de dominio da aplicacao, integralmente gerenciadas pelo Flyway"
     },
     "naming_conventions": {
       "tables": "snake_case SINGULAR, sem prefixo (ex: usuario, contratacao, servico_tag). Definido pelo ADR-0008.",
       "columns": "snake_case em portugues (ex: criado_em, usuario_id)",
-      "primary_keys": "Mista, definida pelo ADR-0007. Tabelas de cadastro (usuario, perfil, endereco, portfolio) usam id BIGINT GENERATED ALWAYS AS IDENTITY. Tabelas transacionais usam id UUID DEFAULT gen_random_uuid().",
+      "primary_keys": "Mista, definida pelo ADR-0007. Tabelas de cadastro (usuario, endereco, portfolio) usam id BIGINT GENERATED ALWAYS AS IDENTITY. Excecao registrada no ADR-0009: perfil usa id UUID DEFAULT gen_random_uuid() apesar de ser tabela de cadastro, por preferencia de consistencia de tipo dentro do modulo usuarios. Toda coluna que referencia perfil.id tambem e UUID (portfolio.perfil_id, disponibilidade.perfil_id, servico.perfil_id, contratacao.cliente_perfil_id, contratacao.profissional_perfil_id, contratacao.cancelado_por_perfil_id, contratacao_historico.alterado_por_perfil_id, notificacao.destinatario_perfil_id, avaliacao.autor_perfil_id, avaliacao.avaliado_perfil_id, denuncia.autor_perfil_id, denuncia.denunciado_perfil_id, denuncia.analisado_por_perfil_id). Tabelas transacionais usam id UUID DEFAULT gen_random_uuid().",
       "polymorphic_references": "Colunas de alvo polimorfico (log_acao.alvo_id, notificacao.alvo_id, denuncia.alvo_id) sao varchar(64) sem foreign key, porque o alvo pode ser bigint ou uuid. A integridade delas e responsabilidade do service, nao do banco.",
       "foreign_keys": "fk_{tabela_origem}_{tabela_destino}",
       "indexes": "idx_{tabela}_{coluna}",
@@ -487,7 +488,7 @@
         }
       },
       "src/main/resources": {
-        "db/migration/": "Migrations Flyway versionadas (V1__criar_usuarios.sql, V2__criar_profissionais.sql)",
+        "db/migration/": "Migrations Flyway versionadas. A partir do ADR-0010, versao por timestamp: V20260901143000__criar_tabela_endereco_perfil.sql. V1 e V2 permanecem sequenciais (excecao historica, ja aplicadas)",
         "application.yml": "Configuracao base",
         "application-dev.yml": "Profile de desenvolvimento",
         "application-prod.yml": "Profile de producao"
@@ -504,7 +505,7 @@
           "(app)/": "Area autenticada: painel do cliente e do profissional",
           "layout.tsx": "Root layout com providers globais (React Query, tema, sessao)",
           "page.tsx": "Landing page publica",
-          "middleware.ts": "Refresh da sessao contra a API propria e protecao de rotas (na raiz de src/)"
+          "middleware.ts": "Nao implementado nesta fase (na raiz de src/). Sessao 100% client-side - decisao de 2026-09-10 (ver docs/relatorios/2026-09-10-revisao-autenticacao-e-planejamento-tela-login.md): o cookie do refresh token e host-only, emitido pela API, e nunca alcanca o middleware do front. Protecao de rota e refresh ficam a cargo de guard client-side em hooks/useSessao e nos layouts da area autenticada."
         },
         "components/": {
           "descricao": "Componentes de interface. Recebem dados por props e nao buscam dados por conta propria.",

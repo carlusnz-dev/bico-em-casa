@@ -257,6 +257,17 @@ ADR-0003.
 É **proibido** alterar schema manualmente em qualquer ambiente — a alteração some do histórico e o
 próximo `flyway migrate` diverge.
 
+**Versionamento de migration ([ADR-0010](./adr/0010-versionamento-migration-por-timestamp.md)).**
+Toda migration nova usa versão por **timestamp de criação**:
+`V<yyyyMMddHHmmss>__descricao_em_snake_case.sql` (ex:
+`V20260901143000__criar_tabela_endereco_perfil.sql`) — não mais o padrão sequencial `V1`, `V2`,
+`V3`. Motivo: o time trabalha em branches paralelas a partir da mesma base, e o Flyway ordena
+migrations pelo número no nome do arquivo, não pela ordem de merge no Git; versionamento
+sequencial exige coordenação manual entre branches para não colidir. `V1__criar-tabela-usuarios.sql`
+e `V2__criar-tabelas-endereco-perfil.sql` continuam sequenciais como exceção histórica — já foram
+aplicadas em ambientes locais do time, e renomeá-las forçaria `flyway repair`/reset em todo
+ambiente que já rodou essas migrations.
+
 ### 5.1 Schemas
 
 | Schema | Papel |
@@ -272,7 +283,8 @@ inclusive, é versionada pelo Flyway e pertence à aplicação.
 |---|---|---|
 | Tabelas | `snake_case` **singular**, sem prefixo ([ADR-0008](./adr/0008-nomenclatura-de-tabelas.md)) | `usuario`, `contratacao`, `servico_tag` |
 | Colunas | `snake_case` **em português** | `criado_em`, `usuario_id` |
-| Chave primária — cadastro | `id BIGINT GENERATED ALWAYS AS IDENTITY` | `usuario`, `perfil`, `endereco`, `portfolio` |
+| Chave primária — cadastro | `id BIGINT GENERATED ALWAYS AS IDENTITY` | `usuario`, `endereco`, `portfolio` |
+| Chave primária — cadastro, exceção ([ADR-0009](./adr/0009-perfil-id-uuid.md)) | `id UUID DEFAULT gen_random_uuid()` | `perfil` — e toda FK que aponta para `perfil.id` |
 | Chave primária — transacional | `id UUID DEFAULT gen_random_uuid()` | as demais 14 tabelas |
 | Referência polimórfica | `varchar(64)` **sem** FK — o alvo pode ser `bigint` ou `uuid` | `log_acao.alvo_id`, `notificacao.alvo_id`, `denuncia.alvo_id` |
 | Chave estrangeira | `fk_{tabela_origem}_{tabela_destino}` | `fk_contratacao_profissionais` |
@@ -639,7 +651,7 @@ acoplamento acidental simplesmente não tem por onde entrar.
 ```
 frontend/
 └── src/
-    ├── middleware.ts             # refresh da sessão contra a API própria e proteção de rotas
+    ├── middleware.ts             # não implementado nesta fase — sessão e proteção de rota são client-side
     ├── app/                      # App Router — só roteamento, layout e composição
     │   ├── (publico)/            # landing, busca de profissionais, páginas abertas
     │   ├── (auth)/               # login, cadastro, recuperação de senha
@@ -664,6 +676,14 @@ frontend/
 
 **A mesma regra de pasta vale aqui:** cada recurso é `<recurso>.ts` enquanto for um arquivo, e
 vira a pasta `<recurso>/` ao surgir o segundo.
+
+**Por que `middleware.ts` não faz nada hoje:** a sessão foi decidida 100% client-side em
+2026-09-10 (ver [relatório da sessão](./relatorios/2026-09-10-revisao-autenticacao-e-planejamento-tela-login.md)).
+O cookie do refresh token é host-only e emitido pela API — ele nunca chega ao middleware do
+front, que roda sobre requisições ao próprio Next, não ao backend. Refresh e proteção de rota
+ficam a cargo de um guard client-side dentro de `hooks/useSessao` e dos layouts da área
+autenticada. Isso é um adiamento, não uma decisão definitiva: se o projeto migrar para SSR de
+área autenticada, o assunto volta à mesa e provavelmente vira ADR.
 
 **Divisão de responsabilidade:** `app/` compõe, `components/` apresenta, `hooks/` reage,
 `api/` conversa com o mundo. Um hook em `hooks/` que faz `fetch` está no lugar errado — ele

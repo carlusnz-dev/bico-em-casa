@@ -16,6 +16,8 @@ alguém, seis meses depois, refazer uma discussão já encerrada.
 | [0006](./0006-remover-supabase-infraestrutura-propria.md) | Remover o Supabase e assumir infraestrutura própria | Infra · Backend · Banco | Aceito | 2026-08-22 |
 | [0007](./0007-chave-primaria-mista.md) | Chave primária mista: `bigint` no cadastro, `uuid` no transacional | Banco | Aceito | 2026-08-22 |
 | [0008](./0008-nomenclatura-de-tabelas.md) | Nomenclatura de tabelas: `snake_case` singular, sem prefixo | Banco | Aceito | 2026-08-22 |
+| [0009](./0009-perfil-id-uuid.md) | `perfil.id` como `uuid`, exceção ao critério de cadastro do ADR-0007 | Banco | Aceito | 2026-09-01 |
+| [0010](./0010-versionamento-migration-por-timestamp.md) | Versionamento de migration Flyway por timestamp em vez de sequencial | Processo · Banco | Aceito | 2026-09-01 |
 
 ## Como criar um ADR
 
