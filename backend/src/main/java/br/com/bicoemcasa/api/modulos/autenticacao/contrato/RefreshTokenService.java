@@ -9,6 +9,8 @@ import java.util.UUID;
 public interface RefreshTokenService {
     RefreshTokenResponse criar(RefreshTokenRequest request);
     RefreshTokenResponse buscarPorId(UUID id);
+    RefreshTokenResponse buscarPorHashToken(String hashToken);
     List<RefreshTokenResponse> buscarPorUsuarioId(Long usuarioId);
     List<RefreshTokenResponse> buscarPorFamiliaId(UUID familiaId);
+    void revogarPorHashToken(String hashToken);
 }

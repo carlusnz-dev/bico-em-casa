@@ -5,6 +5,7 @@ import br.com.bicoemcasa.api.modulos.autenticacao.contrato.AutenticacaoService;
 import br.com.bicoemcasa.api.modulos.autenticacao.contrato.RefreshTokenService;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.LoginRequest;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.LoginResponse;
+import br.com.bicoemcasa.api.modulos.autenticacao.dto.LogoutResponse;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.RefreshTokenRequest;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.UsuarioService;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.CredenciaisUsuario;
@@ -90,12 +91,18 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
 
         String acessToken = jwtEncoder.encode(JwtEncoderParameters.from(claimsSet)).getTokenValue();
 
-        return new LoginResponse(acessToken, tokenBruto);
+        return new LoginResponse(true, acessToken, tokenBruto);
     }
 
     @Override
-    public LoginResponse sair() {
-        // TODO: sair() precisa de um parâmetro (token ou usuarioId) para saber qual refresh token revogar
-        throw new UnsupportedOperationException("Logout ainda não implementado");
+    public LogoutResponse sair(String hashTokenBruto) {
+        String hash = hashToken(hashTokenBruto);
+        Long usuarioId = refreshTokenService.buscarPorHashToken(hash).usuarioId();
+        refreshTokenService.revogarPorHashToken(hash);
+
+        return new LogoutResponse(
+                usuarioId,
+                OffsetDateTime.now()
+        );
     }
 }
