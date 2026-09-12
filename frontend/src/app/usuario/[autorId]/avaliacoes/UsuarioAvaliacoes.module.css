@@ -1,0 +1,235 @@
+/* ==========================================
+   Estilos da Página e Layout Principal
+   ========================================== */
+
+:global(main) {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 0 16px;
+}
+
+/* Título H1: "Minhas avaliações" */
+:global(main > h1) {
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    font-weight: bold;
+    color: #595959; /* Primário (Cinza-escuro) */
+    text-align: center;
+    margin-bottom: 24px;
+    position: relative;
+    padding-bottom: 12px;
+}
+
+/* Régua Laranja abaixo do H1 */
+:global(main > h1)::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background-color: #FBAB53; /* Laranja (Destaque) */
+    margin: 10px auto 0 auto;
+    border-radius: 2px;
+}
+
+/* ==========================================
+   Lista de Avaliações
+   ========================================== */
+
+:global(main > div) {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Card Individual da Avaliação */
+:global(main > div > div) {
+    font-family: Arial, sans-serif;
+    background-color: #FFFFFF;
+    border: 1px solid #9B9B9B; /* Bordas (Cinza-médio) */
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+:global(main > div > div:hover) {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* Label "Avaliação" */
+:global(main > div > div > p:first-child) {
+    font-size: 14px;
+    font-weight: bold;
+    color: #595959;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #F2F2F2;
+}
+
+/* Container do Modo de Visualização (Nota, Estrelas, Comentário e Botões) */
+:global(main > div > div > div) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+/* Texto "Nota:" */
+:global(main > div > div > div > p:first-of-type) {
+    font-size: 14px;
+    font-weight: bold;
+    color: #595959;
+    margin: 0;
+}
+
+/* Estrelas de Leitura (★ / ☆) */
+:global(main > div > div > div > span) {
+    font-size: 20px;
+    color: #FBAB53;
+    line-height: 1;
+}
+
+/* Texto do Comentário */
+:global(main > div > div > div > p:last-of-type) {
+    width: 100%;
+    font-size: 11pt;
+    color: #000000;
+    line-height: 1.5;
+    margin: 8px 0 16px 0;
+    background-color: #F2F2F2; /* Cinza-claro */
+    padding: 10px 12px;
+    border-radius: 4px;
+    border-left: 3px solid #9B9B9B;
+}
+
+/* ==========================================
+   Modo de Edição Inline
+   ========================================== */
+
+/* Botões de Estrelas na Edição */
+:global(main > div > div button[type="button"][style*="background: none"]) {
+    color: #FBAB53 !important;
+    font-size: 28px !important;
+    padding: 0 2px;
+    transition: transform 0.1s ease;
+}
+
+:global(main > div > div button[type="button"][style*="background: none"]:hover) {
+    transform: scale(1.2);
+}
+
+/* Rótulo da Edição de Comentário */
+:global(main > div > div label[for="comentario"]) {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    color: #595959;
+    margin: 12px 0 6px 0;
+}
+
+/* Textarea de Edição */
+:global(main > div > div textarea#comentario) {
+    font-family: Arial, sans-serif;
+    font-size: 11pt;
+    color: #000000;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #9B9B9B;
+    border-radius: 4px;
+    background-color: #FFFFFF;
+    resize: vertical;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+}
+
+:global(main > div > div textarea#comentario:focus) {
+    outline: none;
+    border-color: #FBAB53;
+    box-shadow: 0 0 0 2px rgba(251, 171, 83, 0.25);
+}
+
+/* ==========================================
+   Botões de Ação
+   ========================================== */
+
+/* Estilo Base para os Botões no Card */
+:global(main > div > div button) {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    border: none;
+}
+
+/* Botão "Alterar Avaliação" (Visualização Normal) */
+:global(main > div > div > div > button:first-of-type) {
+    background-color: #F2F2F2;
+    color: #595959;
+    border: 1px solid #9B9B9B;
+}
+
+:global(main > div > div > div > button:first-of-type:hover) {
+    background-color: #FBAB53;
+    color: #FFFFFF;
+    border-color: #FBAB53;
+}
+
+/* Botão "Deletar Avaliação" (Visualização Normal) */
+:global(main > div > div > div > button:last-of-type) {
+    background-color: transparent;
+    color: #d9534f;
+    border: 1px solid #d9534f;
+    margin-left: auto;
+}
+
+:global(main > div > div > div > button:last-of-type:hover) {
+    background-color: #d9534f;
+    color: #FFFFFF;
+}
+
+/* Botão "Salvar alteração" (Modo Edição) */
+:global(main > div > div > button[type="button"]:not([style*="background: none"])) {
+    background-color: #595959;
+    color: #FFFFFF;
+    margin-right: 8px;
+}
+
+:global(main > div > div > button[type="button"]:not([style*="background: none"]):hover) {
+    background-color: #FBAB53;
+}
+
+/* Botão "Cancelar" (Modo Edição) */
+:global(main > div > div > button:not([type])):not([style*="background: none"]) {
+    background-color: #F2F2F2;
+    color: #595959;
+    border: 1px solid #9B9B9B;
+}
+
+:global(main > div > div > button:not([type])):not([style*="background: none"]):hover {
+    background-color: #e0e0e0;
+}
+
+/* ==========================================
+   Estado Vazio (Sem avaliações)
+   ========================================== */
+
+:global(main > div:has(> h3)) {
+    background-color: #F2F2F2;
+    border: 1px dashed #9B9B9B;
+    border-radius: 8px;
+    padding: 32px 20px;
+    text-align: center;
+}
+
+:global(main > div > h3) {
+    font-size: 16px;
+    font-weight: bold;
+    color: #595959;
+    margin: 0;
+}

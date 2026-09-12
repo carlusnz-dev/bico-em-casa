@@ -1,7 +1,12 @@
-export async function apiFetch(url, options) {
+export async function apiFetch(url: string, options: RequestInit) {
     const resposta = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${url}`,options);
     console.log('URL: ', url)
     if (resposta.ok) {
-        return resposta.json();
+        const texto = await resposta.text();
+
+        if (!texto) {
+            return null;
+        }
+        return JSON.parse(texto);
     }
 }

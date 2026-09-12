@@ -1,15 +1,17 @@
 'use client';
 
 import {criarAvaliacao} from "../../../api/avaliacoes";
-import {useState} from 'react';
+import {useState, type FormEvent} from 'react';
+import './FormularioAvaliacao.module.css';
 
-export default function FormularioAvaliacao({ contratacaoId }) {
+export default function FormularioAvaliacao({ contratacaoId }: { contratacaoId: string }) {
     const [nota, setNota] = useState(0);
     const [btnNota, setbtnNota] = useState(0);
     const [comentario, setComentario] = useState('');
     const [enviado, setEnviado] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const handleCriar = async (e: React.FormEvent<HTMLFormElement>) => {
+        // não deixa que a pagina seja recarregada
         e.preventDefault();
 
         if (nota === 0) {
@@ -36,17 +38,17 @@ export default function FormularioAvaliacao({ contratacaoId }) {
     }
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleCriar}>
             <h3>Como você avalia o serviço do profissional?</h3>
 
             {/*estrelas*/}
             <div>
-                {[1, 2, 3, 4, 5].map((star) => (
+                {[1, 2, 3, 4, 5].map((estrela) => (
                     <button
-                        key={star}
+                        key={estrela}
                         type="button"
-                        onClick={() => setNota(star)}
-                        onMouseEnter={() => setbtnNota(star)}
+                        onClick={() => setNota(estrela)}
+                        onMouseEnter={() => setbtnNota(estrela)}
                         onMouseLeave={() => setbtnNota(0)}
                         style={{
                             background: 'none',
@@ -55,7 +57,7 @@ export default function FormularioAvaliacao({ contratacaoId }) {
                             fontSize: '24px'
                         }}
                     >
-                        {(btnNota || nota) >= star ? '★' : '☆'}
+                        {(btnNota || nota) >= estrela ? '★' : '☆'}
                     </button>
                 ))}
             </div>
