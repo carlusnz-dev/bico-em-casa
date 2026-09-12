@@ -1,19 +1,22 @@
 package br.com.bicoemcasa.api.modulos.autenticacao.services;
 
+import br.com.bicoemcasa.api.core.excecao.CadastroNaoPermitidoException;
 import br.com.bicoemcasa.api.core.excecao.SenhaNaoBateException;
 import br.com.bicoemcasa.api.modulos.autenticacao.contrato.AutenticacaoService;
 import br.com.bicoemcasa.api.modulos.autenticacao.contrato.RefreshTokenService;
-import br.com.bicoemcasa.api.modulos.autenticacao.dto.LoginRequest;
-import br.com.bicoemcasa.api.modulos.autenticacao.dto.LoginResponse;
-import br.com.bicoemcasa.api.modulos.autenticacao.dto.LogoutResponse;
-import br.com.bicoemcasa.api.modulos.autenticacao.dto.RefreshTokenRequest;
+import br.com.bicoemcasa.api.modulos.autenticacao.dto.*;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.UsuarioService;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.CredenciaisUsuario;
+import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilRequest;
+import br.com.bicoemcasa.api.modulos.usuarios.dto.UsuarioRequest;
+import br.com.bicoemcasa.api.modulos.usuarios.dto.UsuarioResponse;
+import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -102,6 +105,39 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
 
         return new LogoutResponse(
                 usuarioId,
+                OffsetDateTime.now()
+        );
+    }
+
+    @Override
+    @Transactional
+    public CadastroResponse criar(CadastroRequest request) {
+        if (request.cadastroTipo() == PerfilTipo.ADMIN) {
+            throw new CadastroNaoPermitidoException("Cadastro público não pode criar conta do tipo ADMIN");
+        }
+
+        PerfilRequest perfilRequest = new PerfilRequest(
+                request.cadastroTipo(),
+                request.nomeCompleto(),
+                request.nomeExibicao(),
+                request.telefone(),
+                request.bio()
+        );
+
+        UsuarioRequest usuarioRequest = new UsuarioRequest(
+                perfilRequest.nomeUsuario(),
+                request.email(),
+                request.cpf(),
+                request.senha(),
+                perfilRequest
+        );
+
+        UsuarioResponse usuarioNovo = usuarioService.criar(usuarioRequest);
+
+        return new CadastroResponse(
+                usuarioNovo.perfilId(),
+                perfilRequest.nomeExibicao(),
+                perfilRequest.tipo().toString(),
                 OffsetDateTime.now()
         );
     }

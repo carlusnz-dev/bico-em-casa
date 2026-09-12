@@ -8,6 +8,7 @@ public interface UsuarioService {
     UsuarioResponse criar(UsuarioRequest request);
     UsuarioResponse buscarPorId(Long id);
     UsuarioResponse buscarPorEmail(String email);
+    UsuarioResponse alterarStatusPorEmail(String email);
     Optional<CredenciaisUsuario> buscarCredenciaisPorEmail(String email);
     UsuarioExiste usuarioExiste(Long id);
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
@@ -32,16 +33,18 @@ public class UsuarioServiceImpl implements UsuarioService {
     public UsuarioResponse buscarPorId(Long id) {
         Usuario usuario = repository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado: " + id));
+        UUID perfilId = perfilService.buscarPorUsuarioId(usuario.getId()).id();
 
-        return new UsuarioResponse(usuario.getId(), usuario.getNome(), usuario.getEmail());
+        return new UsuarioResponse(usuario.getId(), perfilId, usuario.getNome(), usuario.getEmail());
     }
 
     @Override
     public UsuarioResponse buscarPorEmail(String email) {
         Usuario usuario = repository.findByEmail(email)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado: " + email));
+        UUID perfilId = perfilService.buscarPorUsuarioId(usuario.getId()).id();
 
-        return new UsuarioResponse(usuario.getId(), usuario.getNome(), usuario.getEmail());
+        return new UsuarioResponse(usuario.getId(), perfilId, usuario.getNome(), usuario.getEmail());
     }
 
     @Override
@@ -76,8 +79,25 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuarioNovo.setCpf(request.cpf());
         usuarioNovo.setHashSenha(hashSenha);
         repository.save(usuarioNovo); // salva o usuário no banco
-        perfilService.criar(usuarioNovo.getId(), request.perfil()); // cria o perfil do usuário criado
+        PerfilResponse perfilNovo = perfilService.criar(usuarioNovo.getId(), request.perfil()); // cria o perfil do usuário criado
 
-        return new UsuarioResponse(usuarioNovo.getId(), usuarioNovo.getNome(), usuarioNovo.getEmail());
+        return new UsuarioResponse(usuarioNovo.getId(), perfilNovo.id(), usuarioNovo.getNome(), usuarioNovo.getEmail());
+    }
+
+    @Override
+    public UsuarioResponse alterarStatusPorEmail(String email) {
+        Usuario usuario = repository.findByEmail(email)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado"));
+
+        usuario.setAtivo(false);
+        repository.save(usuario);
+        UUID perfilId = perfilService.buscarPorUsuarioId(usuario.getId()).id();
+
+        return new UsuarioResponse(
+                usuario.getId(),
+                perfilId,
+                usuario.getNome(),
+                usuario.getEmail()
+        );
     }
 }

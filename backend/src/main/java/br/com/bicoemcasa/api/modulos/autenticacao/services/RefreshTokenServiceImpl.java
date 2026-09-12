@@ -2,7 +2,7 @@ package br.com.bicoemcasa.api.modulos.autenticacao.services;
 
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.core.excecao.TokenInvalidoException;
-import br.com.bicoemcasa.api.modulos.autenticacao.RefreshToken;
+import br.com.bicoemcasa.api.modulos.autenticacao.model.RefreshToken;
 import br.com.bicoemcasa.api.modulos.autenticacao.RefreshTokenRepository;
 import br.com.bicoemcasa.api.modulos.autenticacao.contrato.RefreshTokenService;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.RefreshTokenRequest;

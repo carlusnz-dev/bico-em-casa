@@ -1,6 +1,8 @@
 package br.com.bicoemcasa.api.modulos.autenticacao;
 
 import br.com.bicoemcasa.api.modulos.autenticacao.contrato.AutenticacaoService;
+import br.com.bicoemcasa.api.modulos.autenticacao.dto.CadastroRequest;
+import br.com.bicoemcasa.api.modulos.autenticacao.dto.CadastroResponse;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.LoginRequest;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.LoginResponse;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.LogoutResponse;
@@ -23,6 +25,12 @@ public class AutenticacaoController {
 
     public AutenticacaoController(AutenticacaoService service) {
         this.service = service;
+    }
+
+    @PostMapping("/cadastrar")
+    public ResponseEntity<CadastroResponse> cadastrar(@Valid @RequestBody CadastroRequest request) {
+        CadastroResponse cadastroResponse = service.criar(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(cadastroResponse);
     }
 
     @PostMapping("/entrar")
