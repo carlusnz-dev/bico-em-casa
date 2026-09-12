@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão** | 4.0.0 |
-| **Data** | 2026-08-22 |
+| **Versão** | 4.1.0 |
+| **Data** | 2026-09-01 |
 | **Engine** | PostgreSQL 18 |
 | **Fonte** | [`modelo-dados.dbml`](./modelo-dados.dbml) — cole em [dbdiagram.io](https://dbdiagram.io) |
 | **Convenções** | [`design-sistema.md`](./design-sistema.md) §5.2 |
@@ -22,6 +22,13 @@
 > `slug_url`, `denuncia.contratacao_id`, `refresh_token.substituido_por` e `denuncia.fotos`.
 > O arquivo de rascunho foi removido do versionamento: agora ele **é** a fonte da verdade, e
 > manter uma segunda cópia divergente só criaria dúvida sobre qual das duas vale.
+
+> [!NOTE]
+> A **4.1.0** registra a exceção do [ADR-0009](./adr/0009-perfil-id-uuid.md): `perfil.id` passa
+> de `bigint` para `uuid`, por preferência de consistência de tipo dentro do módulo `usuarios` —
+> não por decisão relacionada a `JOIN` ou a exposição em URL, que o ADR-0007 já resolvia com
+> `nome_usuario`. As 13 colunas de outras tabelas que referenciam `perfil.id` por FK
+> acompanham a mudança.
 
 ---
 
@@ -111,19 +118,22 @@ este serviço", mas não cobre "quais serviços têm esta tag" — que é justam
 
 ### 3.1 Chave primária mista — `bigint` e `uuid` na mesma base
 
-Registrado no [ADR-0007](./adr/0007-chave-primaria-mista.md).
+Registrado no [ADR-0007](./adr/0007-chave-primaria-mista.md), com uma exceção pontual no
+[ADR-0009](./adr/0009-perfil-id-uuid.md).
 
 | Tipo | Tabelas | Critério |
 |---|---|---|
-| `bigint` identity | `usuario`, `perfil`, `endereco`, `portfolio` | Cadastro: cresce devagar, é o alvo da maioria dos `JOIN` |
+| `bigint` identity | `usuario`, `endereco`, `portfolio` | Cadastro: cresce devagar, é o alvo da maioria dos `JOIN` |
+| `uuid` — exceção ao critério de cadastro ([ADR-0009](./adr/0009-perfil-id-uuid.md)) | `perfil` | Preferência de consistência de tipo dentro do módulo `usuarios`, não custo de `JOIN` |
 | `uuid` | as outras 14 | Transacional: nasce por evento, cresce rápido, aparece em URL |
 
 **Por que a mistura se sustenta.** `bigint` ocupa 8 bytes e é sequencial, então cada nível da
 B-tree cabe mais denso e a inserção sempre acontece na ponta direita da árvore. `uuid` ocupa 16
 bytes e é aleatório: cada `INSERT` cai numa página diferente, o que espalha a escrita. Em
-`perfil`, que quase toda consulta faz `JOIN`, os 8 bytes valem. Em `contratacao`, que
-aparece em URL e nasce a cada solicitação, o `uuid` vale mais — id sequencial em URL pública
-permite varrer a base contando de 1 em 1.
+`contratacao`, que aparece em URL e nasce a cada solicitação, o `uuid` vale mais — id sequencial
+em URL pública permite varrer a base contando de 1 em 1. `perfil` é referenciado por FK em 7
+tabelas — pelo critério original do ADR-0007, era candidato natural a `bigint` — mas o
+ADR-0009 abre mão dessa densidade de índice em nome de um só tipo de PK no módulo `usuarios`.
 
 **O preço, que é real e você paga em dois lugares:**
 

@@ -54,7 +54,7 @@ troca de versão de framework não deveria sujar o diff dos requisitos.
 
 1. [`design-sistema.md`](./design-sistema.md) §1 — visão geral e o desenho das três peças
 2. [`adr/README.md`](./adr/README.md) — o índice de decisões, para entender o *porquê* de cada escolha
-3. [`design-sistema.md`](./design-sistema.md) §10 — estrutura de diretórios, com as regras que mais pegam quem chega
+3. [`design-sistema.md`](./design-sistema.md) §11 — estrutura de diretórios, com as regras que mais pegam quem chega
 
 **Vai escrever código?** As três regras que mais geram retrabalho quando ignoradas:
 

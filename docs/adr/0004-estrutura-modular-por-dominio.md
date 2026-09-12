@@ -114,4 +114,4 @@ Esta decisão altera `docs/arquitetura-sistema.json`?
 ## Referências
 
 - Simon Brown, *Modular Monoliths*
-- [`design-sistema.md` §10.2](../design-sistema.md) — estrutura detalhada com exemplos
+- [`design-sistema.md` §11.2](../design-sistema.md) — estrutura detalhada com exemplos

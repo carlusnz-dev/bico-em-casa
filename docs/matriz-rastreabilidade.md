@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | **Gerado a partir de** | [`requisitos.json`](./requisitos.json) |
-| **Última sincronização** | 2026-08-22 |
+| **Última sincronização** | 2026-08-27 |
 | **Comando de manutenção** | `/revisar-matriz` |
 
 ---
@@ -66,17 +66,17 @@ existirem — o nome da tabela já é o definitivo, o DDL ainda não foi escrito
 | **RNF003** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
 | **RNF004** | transversal | — | mvp | ADR-0006 |
 | **RNF005** | servicos, profissionais | servico, perfil | mvp | Revisão de requisitos 2026-08-22 |
-| **RNF006** | transversal | — | mvp | design-sistema.md §10.2 |
+| **RNF006** | transversal | — | mvp | design-sistema.md §11.2 |
 | **RNF007** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
 | **RNF008** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
-| **RNF009** | transversal | — | mvp | design-sistema.md §9.1 |
+| **RNF009** | transversal | — | mvp | design-sistema.md §10.1 |
 | **RNF010** | transversal | — | mvp | design-sistema.md §5 |
 | **RNF011** | transversal | — | mvp | design-sistema.md §3.3 |
-| **RNF012** | transversal | — | mvp | design-sistema.md §7.2 |
+| **RNF012** | transversal | — | mvp | design-sistema.md §8.2 |
 | **RNF013** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
 | **RNF014** | usuarios, profissionais | usuario, endereco | mvp | LGPD, Lei 13.709/2018 |
 | **RNF015** | usuarios | usuario, contratacao, avaliacao | mvp | LGPD, Lei 13.709/2018 |
-| **RNF016** | transversal | — | mvp | design-sistema.md §10.2 |
+| **RNF016** | transversal | — | mvp | design-sistema.md §11.2 |
 | **RNF017** | profissionais, contratacoes | portfolio_foto, contratacao_anexo | mvp | ADR-0006 |
 | **RNF018** | profissionais, contratacoes | endereco | mvp | Decorrência da decisão de manter RF013 no MVP; fornecedor de geocodificação ainda pendente de ADR |
 | **RNF019** | autenticacao | refresh_token | mvp | ADR-0006 |
@@ -119,7 +119,8 @@ o resultado). Duas consequências práticas:
 - É o primeiro candidato natural a virar **módulo composto** (`controller/`, `service/`,
   `contrato/` materializados), conforme a regra de "pasta só quando há mais de um arquivo"
 - É o módulo onde a fronteira mais será testada. `contratacoes` referencia cliente e profissional,
-  mas **por UUID**, nunca por `@ManyToOne` cruzando módulo
+  mas **pelo `id`** (`Long` ou `UUID`, conforme [ADR-0007](./adr/0007-chave-primaria-mista.md)),
+  nunca por `@ManyToOne` cruzando módulo
 
 **`avaliacoes` tem 3 requisitos** — é o módulo mais simples, e deve permanecer como módulo simples
 (arquivos na raiz, sem subpastas) até que um quarto requisito prove o contrário.
@@ -131,9 +132,13 @@ algum domínio. RNF transversal é garantido em `config/`, `comum/` e no CI, nã
 
 ## 4. Rastro para código
 
-Vazio por enquanto — **não existe código de aplicação no repositório**. Esta seção passa a ser
-preenchida quando as migrations e os módulos forem escritos, ligando cada requisito ao arquivo
-que o implementa e ao teste que o prova.
+Vazio por enquanto — **não existe código de aplicação no repositório**. Desde 2026-08-27 existe
+a *fundação* (`backend/` compila, `frontend/` builda, o compose sobe PostgreSQL e MinIO), mas
+fundação não implementa requisito: não há migration, entidade, endpoint nem tela.
+
+Esta seção passa a ser preenchida quando as migrations e os módulos forem escritos, ligando cada
+requisito ao arquivo que o implementa e ao teste que o prova. Esse código é **escrito pela
+equipe**, não pela LLM (`CLAUDE.md`, regra nº 3).
 
 | Código | Migration | Implementação | Teste |
 |---|---|---|---|
@@ -145,5 +150,5 @@ que o implementa e ao teste que o prova.
 
 - [`requisitos.md`](./requisitos.md) — os requisitos em formato legível, com o histórico da revisão
 - [`requisitos.json`](./requisitos.json) — fonte da verdade
-- [`design-sistema.md`](./design-sistema.md) §10.2 — estrutura dos módulos
+- [`design-sistema.md`](./design-sistema.md) §11.2 — estrutura dos módulos
 - [`adr/0004-estrutura-modular-por-dominio.md`](./adr/0004-estrutura-modular-por-dominio.md)
