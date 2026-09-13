@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import br.com.bicoemcasa.api.core.excecao.RegraNegocioException;
 
 import java.net.URI;
 import java.time.Instant;
@@ -24,10 +25,24 @@ public class ExcecoesGlobalHandler {
             EntidadeNaoEncontradaException ex,
             HttpServletRequest request) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.NOT_FOUND,
                 ex.getMessage()
         );
         problemDetail.setTitle("Entidade não encontrada");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+    @ExceptionHandler(RegraNegocioException.class)
+    public ProblemDetail tratarRegraNegocio(
+            RegraNegocioException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Regra de negócio violada");
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         problemDetail.setProperty("timestamp", Instant.now());
 
