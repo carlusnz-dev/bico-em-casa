@@ -5,6 +5,7 @@ import br.com.bicoemcasa.api.modulos.usuarios.contrato.PerfilService;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilRequest;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilResponse;
 import br.com.bicoemcasa.api.modulos.usuarios.models.Perfil;
+import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
 import br.com.bicoemcasa.api.modulos.usuarios.repository.PerfilRepository;
 import br.com.bicoemcasa.api.modulos.usuarios.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,16 @@ public class PerfilServiceImpl implements PerfilService {
     @Override
     public PerfilResponse buscarPorUsuarioId(Long usuarioId) {
         Perfil perfil = repository.findByUsuarioId(usuarioId)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));
+
+        return new PerfilResponse(perfil.getId(), perfil.getUsuario().getId(),
+                perfil.getTipo(), perfil.getNomeUsuario(), perfil.getNomeExibicao(),
+                perfil.getFotoUrl());
+    }
+
+    @Override
+    public PerfilResponse buscarPorUsuarioIdETipo(Long usuarioId, PerfilTipo tipo) {
+        Perfil perfil = repository.findByUsuarioIdAndTipo(usuarioId, tipo)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));
 
         return new PerfilResponse(perfil.getId(), perfil.getUsuario().getId(),

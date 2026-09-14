@@ -182,6 +182,15 @@ linha. A versão (2.0.5 no Boot 4.1.1) é herdada do BOM.
 validar regra de negócio contra banco em memória (H2) — o comportamento diverge do de produção
 justamente nos pontos que importam.
 
+### 3.4 Paginação
+
+| Item | Definição |
+|---|---|
+| Tipo de resposta | `PaginaResponse<T>` — `record` próprio em `core/paginacao/`, com `conteudo`, `pagina`, `tamanho`, `totalElementos` e `totalPaginas` |
+| Motivo | O contrato público da API **não expõe** `org.springframework.data.domain.Page<T>` diretamente, para não acoplar o formato de resposta à biblioteca de persistência. Ver [ADR-0012](./adr/0012-paginacao-com-tipo-de-resposta-proprio.md) |
+| Uso | O service monta `PaginaResponse.de(page)` ou `PaginaResponse.de(page, mapeador)` a partir do `Page<T>` do repository, antes de devolver ao controller |
+| Primeiro uso | `GET /api/servico` — listagem pública e paginada de serviços ativos (RF009) |
+
 ---
 
 ## 4. Frontend

@@ -44,7 +44,10 @@ export const NAVEGACAO_POR_STATUS: Record<StatusSessao, ApresentacaoDaSessao> = 
     saudacao: () => 'Encontre um profissional para o seu bico',
   },
   autenticado: {
-    acoes: [{ rotulo: 'Sair', acao: 'logout' }],
+    acoes: [
+      { rotulo: 'Meus serviços', href: '/servicos/meus' },
+      { rotulo: 'Sair', acao: 'logout' },
+    ],
     mostrarEsqueleto: false,
     saudacao: (usuario) =>
       usuario ? `Olá, ${usuario.nome.split(' ')[0]}` : 'Olá',

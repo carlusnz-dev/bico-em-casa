@@ -8,6 +8,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -59,6 +60,9 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/actuator/health"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/servico/meus").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/servico", "/api/servico/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tag").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handling -> handling
