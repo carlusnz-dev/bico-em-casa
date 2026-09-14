@@ -103,6 +103,11 @@
       "secrets": "Nenhuma chave em codigo. Chave privada RSA de assinatura, credenciais do MinIO e credenciais de SMTP vivem em variavel de ambiente, somente no backend, em producao (ver rsa_key_dev_convention para a excecao local de dev).",
       "rsa_key_dev_convention": "Em dev, cada desenvolvedor gera o proprio par de chaves local com openssl (genpkey RSA 2048 + rsa -pubout) e guarda em ~/.bicoemcasa/keys/{private,public}.pem, fora do repositorio. application-dev.yml referencia esse caminho via ${user.home}, entao nenhum valor literal de maquina especifica fica versionado. A convencao para producao e application-prod.yml usar variavel de ambiente para o caminho ou o conteudo da chave, sem literal - ainda nao confirmado no arquivo real, que esta fora do alcance de leitura da LLM por regra do projeto."
     },
+    "pagination": {
+      "type": "PaginaResponse<T>, record proprio em core/paginacao/, com conteudo, pagina, tamanho, totalElementos e totalPaginas.",
+      "rationale": "Ver ADR-0012. O contrato publico da API nao expoe org.springframework.data.domain.Page<T> diretamente, para nao acoplar o formato de resposta a biblioteca de persistencia.",
+      "usage": "Servico monta PaginaResponse.de(page) ou PaginaResponse.de(page, mapeador) a partir do Page<T> retornado pelo repository, antes de devolver ao controller. Primeiro uso: GET /api/servico, listagem publica e paginada de servicos ativos (RF009)."
+    },
     "testing_modules": {
       "spring_boot_test_slices": [
         "org.springframework.boot:spring-boot-starter-webmvc-test",
