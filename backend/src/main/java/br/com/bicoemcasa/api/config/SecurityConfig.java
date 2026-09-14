@@ -65,6 +65,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/tag").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/perfil/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/perfil/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/portfolio/meu").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/portfolio", "/api/portfolio/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handling -> handling

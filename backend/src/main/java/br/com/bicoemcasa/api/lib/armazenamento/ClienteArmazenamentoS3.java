@@ -51,6 +51,10 @@ public class ClienteArmazenamentoS3 {
         return presigner.presignPutObject(presignRequest).url();
     }
 
+    public String construirUrlPublica(String bucket, String chave) {
+        return "%s/%s/%s".formatted(properties.getEndpoint(), bucket, chave);
+    }
+
     public URL gerarUrlDownload(String bucket, String chave) {
         GetObjectRequest objectRequest = GetObjectRequest.builder()
                 .bucket(bucket)

@@ -1,40 +1,58 @@
 package br.com.bicoemcasa.api.modulos.profissionais;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.Column;
-import java.time.LocalDateTime;
-
-import lombok.NonNull;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
+@Entity
+@Table(name = "portfolio")
 @Getter
 @Setter
-@NoArgsConstructor
-@Entity
-@Table(name = "potfolio")
 public class Portfolio {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "profissional_id")
-    private Long profissionalId;
+    @Column(name = "perfil_id", nullable = false, unique = true)
+    private UUID perfilId;
 
+    @Column(nullable = false, length = 120)
     private String titulo;
+
+    @Column(length = 1000)
     private String descricao;
 
-    @CreationTimestamp  //PREENCHIDO QND PORTIFOLIO É CRIADO
-    private LocalDateTime criadoEm;
+    @Column(name = "slug_url", nullable = false, unique = true, length = 120)
+    private String slugUrl;
 
-    @UpdateTimestamp   //PREENCHIDO QND PORTIFOLIO É ALTERADO
-    private LocalDateTime atualizadoEm;
+    @Column(name = "foto_capa_url", length = 500)
+    private String fotoCapaUrl;
+
+    @Column(name = "criado_em")
+    private OffsetDateTime criadoEm;
+
+    @Column(name = "atualizado_em")
+    private OffsetDateTime atualizadoEm;
+
+    @PrePersist
+    protected void criar() {
+        this.criadoEm = OffsetDateTime.now();
+        this.atualizadoEm = OffsetDateTime.now();
+    }
+
+    @PreUpdate
+    protected void atualizar() {
+        this.atualizadoEm = OffsetDateTime.now();
+    }
 }
