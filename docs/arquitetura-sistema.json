@@ -231,7 +231,7 @@
         "anexos": "Fotos anexadas as solicitacoes de orcamento (RF015)",
         "avatares": "Fotos de perfil"
       },
-      "access_pattern": "O backend gera URL pre-assinada com expiracao curta. O navegador faz upload e download direto no MinIO, sem que os bytes trafeguem pela API.",
+      "access_pattern": "O backend gera URL pre-assinada com expiracao de 5 minutos (armazenamento.url-expiracao-minutos). O navegador faz upload e download direto no MinIO, sem que os bytes trafeguem pela API. Padrao de confirmacao: endpoint dedicado por recurso (ex.: POST /api/portfolio/{id}/foto-capa/confirmar) avisa o backend que o upload terminou, para persistir a URL final - nao um PUT generico de atualizacao.",
       "client_library": "software.amazon.awssdk:s3",
       "adapter_location": "backend: br.com.bicoemcasa.api.lib.armazenamento"
     },
