@@ -1,29 +1,37 @@
-package br.com.bicoemcasa.api.modulos.avaliacoes;
+package br.com.bicoemcasa.api.modulos.avaliacoes.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name= "avaliacao")
+@Table(name = "avaliacao")
 @Getter
 @Setter
-
 public class Avaliacao {
+
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "contratacao_id", unique = true, nullable = false)
     private UUID contratacaoId;
 
-    @Column(name = "autor_id", nullable = false)
-    private Long autorId;
+    @Column(name = "autor_perfil_id", nullable = false)
+    private UUID autorPerfilId;
 
-    @Column(name = "avaliado_id", nullable = false)
-    private Long avaliadoId;
+    @Column(name = "avaliado_perfil_id", nullable = false)
+    private UUID avaliadoPerfilId;
 
     @Column(nullable = false)
     private Integer nota;
@@ -31,12 +39,11 @@ public class Avaliacao {
     @Column(length = 1000)
     private String comentario;
 
-    @Column(name = "criado_em", nullable = false)
+    @Column(name = "criado_em")
     private OffsetDateTime criadoEm;
 
-    @Column(name = "atualizado_em", nullable = false)
+    @Column(name = "atualizado_em")
     private OffsetDateTime atualizadoEm;
-
 
     @PrePersist
     protected void criar() {
@@ -48,5 +55,4 @@ public class Avaliacao {
     protected void atualizar() {
         this.atualizadoEm = OffsetDateTime.now();
     }
-
 }

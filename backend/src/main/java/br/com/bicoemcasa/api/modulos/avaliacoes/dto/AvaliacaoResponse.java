@@ -6,8 +6,8 @@ import java.util.UUID;
 public record AvaliacaoResponse(
         UUID id,
         UUID contratacaoId,
-        Long autorId,
-        Long avaliadoId,
+        UUID autorPerfilId,
+        UUID avaliadoPerfilId,
         Integer nota,
         String comentario,
         OffsetDateTime criadoEm,
