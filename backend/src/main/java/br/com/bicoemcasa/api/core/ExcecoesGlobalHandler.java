@@ -27,7 +27,7 @@ public class ExcecoesGlobalHandler {
             EntidadeNaoEncontradaException ex,
             HttpServletRequest request) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.NOT_FOUND,
                 ex.getMessage()
         );
         problemDetail.setTitle("Entidade não encontrada");
