@@ -1,5 +1,7 @@
 package br.com.bicoemcasa.api.core;
 
+import br.com.bicoemcasa.api.core.excecao.AvaliacaoJaExisteException;
+import br.com.bicoemcasa.api.core.excecao.AvaliacaoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.CadastroNaoPermitidoException;
 import br.com.bicoemcasa.api.core.excecao.ContratacaoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
@@ -27,7 +29,7 @@ public class ExcecoesGlobalHandler {
             EntidadeNaoEncontradaException ex,
             HttpServletRequest request) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.NOT_FOUND,
                 ex.getMessage()
         );
         problemDetail.setTitle("Entidade não encontrada");
@@ -109,6 +111,36 @@ public class ExcecoesGlobalHandler {
     @ExceptionHandler(ContratacaoNaoPertenceAoPerfilException.class)
     public ProblemDetail contratacaoNaoPertenceAoPerfil(
             ContratacaoNaoPertenceAoPerfilException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Ação não permitida");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(AvaliacaoJaExisteException.class)
+    public ProblemDetail avaliacaoJaExiste(
+            AvaliacaoJaExisteException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Avaliação já existe");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(AvaliacaoNaoPertenceAoPerfilException.class)
+    public ProblemDetail avaliacaoNaoPertenceAoPerfil(
+            AvaliacaoNaoPertenceAoPerfilException ex,
             HttpServletRequest request) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.FORBIDDEN,

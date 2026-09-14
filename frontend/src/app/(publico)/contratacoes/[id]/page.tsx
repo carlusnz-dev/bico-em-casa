@@ -133,12 +133,20 @@ export default function DetalheContratacaoPage() {
       <Card className="flex flex-col gap-2">
         <h2 className="text-sm font-medium text-texto">Profissional contratado</h2>
         {profissional ? (
-          <div className="flex items-center gap-3">
-            <AvatarIniciais nome={profissional.nomeExibicao} />
-            <div className="flex flex-col">
-              <span className="font-medium">{profissional.nomeExibicao}</span>
-              {profissional.bio && <span className="text-sm text-texto-suave">{profissional.bio}</span>}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <AvatarIniciais nome={profissional.nomeExibicao} />
+              <div className="flex flex-col">
+                <span className="font-medium">{profissional.nomeExibicao}</span>
+                {profissional.bio && <span className="text-sm text-texto-suave">{profissional.bio}</span>}
+              </div>
             </div>
+            <Link
+              href={`/perfil/${profissional.id}/avaliacoes`}
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Ver avaliações
+            </Link>
           </div>
         ) : (
           <p className="text-sm text-texto-suave">Não foi possível carregar os dados do profissional.</p>
@@ -154,6 +162,9 @@ export default function DetalheContratacaoPage() {
       <div className="flex gap-2">
         <Link href={`/contratacoes/${contratacao.id}/editar`} className={classesDoBotao('secundario')}>
           Editar
+        </Link>
+        <Link href={`/contratacoes/${contratacao.id}/avaliar`} className={classesDoBotao('secundario')}>
+          Avaliar
         </Link>
         <Botao variante="fantasma" carregando={carregandoAcao} onClick={alternarStatus}>
           {contratacao.status === 'ATIVA' ? 'Arquivar' : 'Desarquivar'}
