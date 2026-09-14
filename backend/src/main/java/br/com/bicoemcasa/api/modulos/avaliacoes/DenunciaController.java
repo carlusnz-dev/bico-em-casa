@@ -42,7 +42,7 @@ public class DenunciaController {
 
     @PostMapping
     public ResponseEntity<DenunciaResponse> criar(
-            @RequestHeader(HEADER_PERFIL) Long perfilId,
+            @RequestHeader(HEADER_PERFIL) UUID perfilId,
             @Valid @RequestBody DenunciaRequest request) 
         {
         DenunciaResponse criada = denunciaService.criar(perfilId, request);
@@ -56,14 +56,14 @@ public class DenunciaController {
     @GetMapping ("/{id}")
     public DenunciaResponse buscarPorId(
         @PathVariable UUID id , 
-        @RequestHeader(HEADER_PERFIL) Long perfilId){
+        @RequestHeader(HEADER_PERFIL) UUID perfilId){
             return denunciaService.buscarPorId(id, perfilId);
         }
 
     @PutMapping ("/{id}")
     public  DenunciaResponse atualizar(
         @PathVariable UUID id,
-        @RequestHeader(HEADER_PERFIL) Long perfilId,
+        @RequestHeader(HEADER_PERFIL) UUID perfilId,
         @Valid @RequestBody DenunciaAtualizacaoRequest request
     ){
         return denunciaService.atualizar(id, perfilId, request);
@@ -73,20 +73,20 @@ public class DenunciaController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void excluir(
             @PathVariable UUID id,
-            @RequestHeader(HEADER_PERFIL) Long perfilId) {
+            @RequestHeader(HEADER_PERFIL) UUID perfilId) {
         denunciaService.excluir(id, perfilId);
     } 
         
     @GetMapping("/minhas")
     public PagedModel<DenunciaResponse> listarMinhas(
-            @RequestHeader(HEADER_PERFIL) Long perfilId,
+            @RequestHeader(HEADER_PERFIL) UUID perfilId,
             @PageableDefault(size = 20, sort = "criadoEm", direction = Sort.Direction.DESC) Pageable pageable) {
         return new PagedModel<>(denunciaService.listarDoAutor(perfilId, pageable));
     }
 
     @GetMapping
     public PagedModel<DenunciaResponse> listarParaAdmin(
-            @RequestHeader(HEADER_PERFIL) Long perfilId,
+            @RequestHeader(HEADER_PERFIL) UUID perfilId,
             @RequestParam(required = false) StatusDenuncia status,
             @PageableDefault(size = 20, sort = "criadoEm", direction = Sort.Direction.DESC) Pageable pageable) {
         return new PagedModel<>(denunciaService.listarParaAdmin(perfilId, status, pageable));
@@ -95,7 +95,7 @@ public class DenunciaController {
     @PostMapping("/{id}/analise")
     public DenunciaResponse analisar(
             @PathVariable UUID id,
-            @RequestHeader(HEADER_PERFIL) Long perfilId,
+            @RequestHeader(HEADER_PERFIL) UUID perfilId,
             @Valid @RequestBody DenunciaAnaliseRequest request) {
         return denunciaService.analisar(id, perfilId, request);
     }

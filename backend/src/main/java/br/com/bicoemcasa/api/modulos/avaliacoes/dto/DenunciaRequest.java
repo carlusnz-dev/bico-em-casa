@@ -27,7 +27,7 @@ public record DenunciaRequest(
     @Size(max = 1000 , message = "A descriçao deve ter no mximo 1000 caracteres ")
     String descricao , 
 
-    Long denunciadoPerfilId , 
+    UUID  denunciadoPerfilId , 
 
     UUID contratacaoId
 ){ 

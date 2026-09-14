@@ -12,19 +12,19 @@ import java.util.UUID;
 
 
 public interface DenunciaService {
-    DenunciaResponse criar(Long autorPerfilId , DenunciaRequest request); 
+    DenunciaResponse criar(UUID  autorPerfilId , DenunciaRequest request); 
 
-    DenunciaResponse buscarPorId(UUID id , Long perfilId); 
+    DenunciaResponse buscarPorId(UUID id , UUID  perfilId); 
 
-    Page<DenunciaResponse> listarDoAutor(Long autorPerfilId, Pageable pageable);
+    Page<DenunciaResponse> listarDoAutor(UUID  autorPerfilId, Pageable pageable);
 
-    Page<DenunciaResponse> listarParaAdmin(Long adminPerfilId,StatusDenuncia status ,Pageable pageable);
+    Page<DenunciaResponse> listarParaAdmin(UUID  adminPerfilId,StatusDenuncia status ,Pageable pageable);
 
-    DenunciaResponse atualizar(UUID id , Long autorPerfilId , DenunciaAtualizacaoRequest request); 
+    DenunciaResponse atualizar(UUID id , UUID  autorPerfilId , DenunciaAtualizacaoRequest request); 
 
-    void excluir(UUID id , Long autorPerfilId);
+    void excluir(UUID id , UUID  autorPerfilId);
 
-    DenunciaResponse analisar(UUID id , Long adminPerfilId , DenunciaAnaliseRequest request) ;
+    DenunciaResponse analisar(UUID id , UUID  adminPerfilId , DenunciaAnaliseRequest request) ;
 
 
 

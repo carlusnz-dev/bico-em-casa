@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface DenunciaRepository extends JpaRepository<Denuncia,UUID>{
 
-    Page<Denuncia>  findByAutorPerfilId(Long autorPerfilId , Pageable pageable);
+    Page<Denuncia>  findByAutorPerfilId(UUID  autorPerfilId , Pageable pageable);
 
     Page<Denuncia>  findByStatus(StatusDenuncia status , Pageable pageable);
 

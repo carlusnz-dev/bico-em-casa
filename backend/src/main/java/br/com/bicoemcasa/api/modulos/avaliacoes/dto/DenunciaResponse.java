@@ -9,15 +9,15 @@ import java.util.UUID;
 
 public record DenunciaResponse(
     UUID id,
-    Long autorPerfilId,
-    Long denunciadoPerfilId,
+    UUID  autorPerfilId,
+    UUID  denunciadoPerfilId,
     UUID contratacaoId,
     TipoAlvoDenuncia alvoTipo,
     String alvoId,
     String motivo,
     String descricao,
     StatusDenuncia status,
-    Long analisadoPorPerfilId,
+    UUID  analisadoPorPerfilId,
     OffsetDateTime analisadoEm,
     String parecer,
     OffsetDateTime criadoEm,

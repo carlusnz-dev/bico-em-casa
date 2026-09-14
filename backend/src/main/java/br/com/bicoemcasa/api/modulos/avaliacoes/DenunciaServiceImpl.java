@@ -29,7 +29,7 @@ public class DenunciaServiceImpl implements DenunciaService {
 
     @Override 
     @Transactional
-    public DenunciaResponse criar(Long autorPerfilId, DenunciaRequest request){
+    public DenunciaResponse criar(UUID  autorPerfilId, DenunciaRequest request){
         String alvoId = normalizarAlvoId(request.alvoTipo(),request.alvoId());
 
         Denuncia denuncia = Denuncia.builder()
@@ -47,24 +47,24 @@ public class DenunciaServiceImpl implements DenunciaService {
 
     @Override  
     @Transactional(readOnly = true)
-    public DenunciaResponse buscarPorId(UUID id , Long perfilId){
+    public DenunciaResponse buscarPorId(UUID id , UUID  perfilId){
         return  DenunciaResponse.de(buscarDoAutor(id,perfilId));
     }
     @Override  
     @Transactional(readOnly = true)
-    public Page<DenunciaResponse> listarDoAutor(Long autorPerfilId, Pageable pageable){
+    public Page<DenunciaResponse> listarDoAutor(UUID  autorPerfilId, Pageable pageable){
         return  denunciaRepository.findByAutorPerfilId(autorPerfilId, pageable).map(DenunciaResponse::de);
     }
     @Override  
     @Transactional(readOnly = true)
-    public Page<DenunciaResponse> listarParaAdmin(Long adminPerfilId,StatusDenuncia status ,Pageable pageable){
+    public Page<DenunciaResponse> listarParaAdmin(UUID  adminPerfilId,StatusDenuncia status ,Pageable pageable){
         Page<Denuncia> pagina = status == null ? denunciaRepository.findAll(pageable): denunciaRepository.findByStatus(status, pageable);
         return  pagina.map(DenunciaResponse::de);
     }
     @Override  
     @Transactional
 
-    public  DenunciaResponse atualizar(UUID id , Long autorPerfilId , DenunciaAtualizacaoRequest request){
+    public  DenunciaResponse atualizar(UUID id , UUID  autorPerfilId , DenunciaAtualizacaoRequest request){
         Denuncia denuncia = buscarDoAutor(id, autorPerfilId); 
         exigirPendente(denuncia);
 
@@ -75,7 +75,7 @@ public class DenunciaServiceImpl implements DenunciaService {
     }
     @Override 
     @Transactional 
-    public  void excluir(UUID id , Long autorPerfilId ){
+    public  void excluir(UUID id , UUID  autorPerfilId ){
         Denuncia denuncia = buscarDoAutor(id, autorPerfilId);
         exigirPendente(denuncia);
 
@@ -83,7 +83,7 @@ public class DenunciaServiceImpl implements DenunciaService {
     }
     @Override  
     @Transactional 
-    public  DenunciaResponse analisar(UUID id , Long adminPerfilId , DenunciaAnaliseRequest request){
+    public  DenunciaResponse analisar(UUID id , UUID  adminPerfilId , DenunciaAnaliseRequest request){
         Denuncia denuncia = buscarExistente(id);
         exigirPendente(denuncia);
 
@@ -100,10 +100,10 @@ public class DenunciaServiceImpl implements DenunciaService {
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Denúncia não encontrada"));
     }
 
-     private Denuncia buscarDoAutor(UUID id, Long perfilId) {
+     private Denuncia buscarDoAutor(UUID id, UUID  perfilId) {
         Denuncia denuncia = buscarExistente(id);
         if (!denuncia.getAutorPerfilId().equals(perfilId)) {
-            throw new EntidadeNaoEncontradaException("Acesso negado");
+            throw new EntidadeNaoEncontradaException("Denúncia não encontrada");
         }
         return denuncia;
     }
@@ -111,19 +111,11 @@ public class DenunciaServiceImpl implements DenunciaService {
     private String normalizarAlvoId(TipoAlvoDenuncia alvoTipo , String alvoId){ 
         String mensagem = "O id do alvo nao e valido para o tipo " + alvoTipo ;
         try{
-            if (alvoTipo == TipoAlvoDenuncia.PERFIL) {
-                Long perfilId  = Long.parseLong(alvoId.trim()); 
-                if(perfilId <=0 )
-                {
-                    throw new RegraNegocioException(mensagem);
-                }
-                return  String.valueOf(perfilId);
-            }
             return  UUID.fromString(alvoId.trim()).toString();
         }catch(IllegalArgumentException e ){
             throw new RegraNegocioException(mensagem);
         }
-    }
+    }                                                                                
 
     private void exigirPendente(Denuncia denuncia) {
         if (denuncia.getStatus() != StatusDenuncia.PENDENTE) {

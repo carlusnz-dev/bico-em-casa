@@ -29,10 +29,10 @@ public class Denuncia {
     private UUID id ; 
 
     @Column(name = "autor_perfil_id" , nullable = false)
-    private  Long autorPerfilId;
+    private  UUID  autorPerfilId;
 
     @Column(name = "denunciado_perfil_id")
-    private  Long denunciadoPerfilId;
+    private  UUID  denunciadoPerfilId;
 
     @Column(name = "contratacao_id")
     private UUID contratacaoId;
@@ -60,7 +60,7 @@ public class Denuncia {
     private StatusDenuncia status;
 
     @Column(name="analisado_por_perfil_id" )
-    private Long analisadoPorPerfilId;
+    private UUID  analisadoPorPerfilId;
 
     @Column(name="analisado_em" )
     private OffsetDateTime analisadoEm;
