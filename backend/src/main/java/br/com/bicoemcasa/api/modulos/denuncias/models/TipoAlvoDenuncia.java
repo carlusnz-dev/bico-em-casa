@@ -1,4 +1,4 @@
-package br.com.bicoemcasa.api.modulos.avaliacoes.models;
+package br.com.bicoemcasa.api.modulos.denuncias.models;
 
 public enum TipoAlvoDenuncia {
     SERVICO,

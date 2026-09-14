@@ -4,6 +4,8 @@ import br.com.bicoemcasa.api.core.excecao.AvaliacaoJaExisteException;
 import br.com.bicoemcasa.api.core.excecao.AvaliacaoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.CadastroNaoPermitidoException;
 import br.com.bicoemcasa.api.core.excecao.ContratacaoNaoPertenceAoPerfilException;
+import br.com.bicoemcasa.api.core.excecao.DenunciaNaoPendenteException;
+import br.com.bicoemcasa.api.core.excecao.DenunciaNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.core.excecao.SenhaNaoBateException;
 import br.com.bicoemcasa.api.core.excecao.ServicoNaoPertenceAoPerfilException;
@@ -15,7 +17,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import br.com.bicoemcasa.api.core.excecao.RegraNegocioException;
 
 import java.net.URI;
 import java.time.Instant;
@@ -39,21 +40,6 @@ public class ExcecoesGlobalHandler {
 
         return problemDetail;
     }
-    @ExceptionHandler(RegraNegocioException.class)
-    public ProblemDetail tratarRegraNegocio(
-            RegraNegocioException ex,
-            HttpServletRequest request) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.CONFLICT,
-                ex.getMessage()
-        );
-        problemDetail.setTitle("Regra de negócio violada");
-        problemDetail.setInstance(URI.create(request.getRequestURI()));
-        problemDetail.setProperty("timestamp", Instant.now());
-
-        return problemDetail;
-    }
-
     // erro de validação do formulário / DTO
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail tratarValidacaoDados(
@@ -162,6 +148,36 @@ public class ExcecoesGlobalHandler {
                 ex.getMessage()
         );
         problemDetail.setTitle("Ação não permitida");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(DenunciaNaoPertenceAoPerfilException.class)
+    public ProblemDetail denunciaNaoPertenceAoPerfil(
+            DenunciaNaoPertenceAoPerfilException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Ação não permitida");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(DenunciaNaoPendenteException.class)
+    public ProblemDetail denunciaNaoPendente(
+            DenunciaNaoPendenteException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Denúncia não está pendente");
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         problemDetail.setProperty("timestamp", Instant.now());
 
