@@ -128,8 +128,9 @@ previa — ver a nota de revisão naquele ADR.
 | Estratégia | Stateless. O backend **emite e valida** JWT próprio, assinado com par de chaves RSA |
 | Emissão do token | `NimbusJwtEncoder` do Spring Security, já disponível via `spring-security-oauth2-jose`. **Não requer biblioteca de JWT adicional** |
 | Validação do token | `NimbusJwtDecoder` com a chave pública RSA local. O backend segue sendo **OAuth2 Resource Server**, agora contra emissor próprio |
-| Access token | 15 minutos |
+| Access token | **60 minutos** no código (`AutenticacaoServiceImpl.VALIDADE_ACCESS_TOKEN_MINUTOS`). O alvo original era 15 minutos — divergência aberta, aguardando decisão da equipe |
 | Refresh token | 30 dias. Persistido em `refresh_token`, **rotacionado a cada uso** e revogável individualmente ou por usuário |
+| Renovação | `POST /api/autenticacao/renovar` troca o refresh token do cookie por um par novo: valida o antigo, cria o sucessor na mesma `familia_id`, preenche `substituido_por` e revoga o anterior. Reusar um token já rotacionado devolve `400`. Ver [ADR-0011](./adr/0011-rotacao-de-refresh-token.md) |
 | Correlação de identidade | O claim `sub` é o `id` (`BIGINT`, ver [ADR-0007](./adr/0007-chave-primaria-mista.md)) de `usuario`. **Nenhum papel viaja dentro do token** |
 | Autorização | Por papel (`CLIENTE`, `PROFISSIONAL`, `ADMIN`), resolvido no backend a partir de `perfil` — **nunca** confiando em claim editável pelo cliente |
 | CORS | Restrito por ambiente via `CorsConfigurationSource`; origens definidas por profile |
@@ -202,13 +203,13 @@ no editor ficam ordens de grandeza mais rápidos, mantendo a mesma semântica de
 | **Estado e dados** | `@tanstack/react-query@5.102.x`, `zustand@5.0.x` |
 | **Estilo e UI** | `tailwindcss@4.3.x`, `lucide-react`, `clsx`, `tailwind-merge`, `radix-ui` |
 | **Formulários** | `react-hook-form`, `zod@4.4.x`, `@hookform/resolvers` |
-| **Integração** | Nenhuma. O acesso ao backend usa exclusivamente o `fetch` nativo encapsulado em `src/api/client.ts` |
+| **Integração** | Nenhuma. O acesso ao backend usa exclusivamente o `fetch` nativo encapsulado em `src/api/cliente.ts` |
 
 #### Removido
 
 | Pacote | Motivo |
 |---|---|
-| `axios` | O `fetch` nativo do Next 16 participa do cache e da revalidação do App Router; o axios contorna esse mecanismo. O cliente HTTP próprio vive em `src/api/client.ts`. |
+| `axios` | O `fetch` nativo do Next 16 participa do cache e da revalidação do App Router; o axios contorna esse mecanismo. O cliente HTTP próprio vive em `src/api/cliente.ts`. |
 | `@supabase/supabase-js`, `@supabase/ssr` | Consequência do [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md). A sessão passa a ser gerida pelo backend próprio: o access token fica em memória e o refresh token em cookie `httpOnly` emitido pela API. |
 
 ### 4.2 Política de Fronteira
@@ -654,20 +655,28 @@ frontend/
     ├── middleware.ts             # não implementado nesta fase — sessão e proteção de rota são client-side
     ├── app/                      # App Router — só roteamento, layout e composição
     │   ├── (publico)/            # landing, busca de profissionais, páginas abertas
+    │   │   ├── layout.tsx        # Cabecalho + Rodape
+    │   │   └── page.tsx          # home
     │   ├── (auth)/               # login, cadastro, recuperação de senha
+    │   │   ├── layout.tsx
+    │   │   ├── login/page.tsx
+    │   │   └── cadastro/page.tsx
     │   ├── (app)/                # área autenticada: painel do cliente e do profissional
     │   ├── layout.tsx            # root layout com providers (React Query, tema, sessão)
-    │   └── page.tsx              # landing page pública
+    │   ├── provedores.tsx        # QueryClientProvider + SessaoProvider
+    │   └── not-found.tsx         # 404 da aplicação
     ├── components/               # recebem dados por props; não buscam dados
-    │   ├── ui/                   # atômicos reutilizáveis (Botao, Input, Modal, Card)
-    │   ├── layout/               # estruturais (Cabecalho, Rodape, BarraLateral)
+    │   ├── ui/                   # atômicos reutilizáveis: Botao, Input, Label, Card
+    │   ├── layout/               # estruturais: Cabecalho, Rodape
     │   └── forms/                # React Hook Form + schemas Zod de src/api/contratos
     ├── hooks/                    # comportamento e reatividade de UI, sem falar com o backend
     │                             # ex.: useDebounce, useMediaQuery, useDisclosure, useSessao
     └── api/                      # A FRONTEIRA — única camada que conhece o backend
-        ├── client.ts             # wrapper do fetch: base URL, token, status, normalização de erro
-        ├── erros.ts              # tipo de erro único, traduzido do ProblemDetail (RFC 9457)
+        ├── cliente.ts            # wrapper do fetch: base URL, token, status, normalização de erro
+        ├── erros.ts              # ErroApi, traduzido do ProblemDetail (RFC 9457)
         ├── contratos/            # schemas Zod por recurso + tipos inferidos por z.infer
+        ├── autenticacao.ts       # cadastrar, entrar, renovar, sair
+        ├── usuario.ts
         ├── profissionais.ts
         ├── servicos.ts
         ├── contratacoes.ts
@@ -684,6 +693,16 @@ front, que roda sobre requisições ao próprio Next, não ao backend. Refresh e
 ficam a cargo de um guard client-side dentro de `hooks/useSessao` e dos layouts da área
 autenticada. Isso é um adiamento, não uma decisão definitiva: se o projeto migrar para SSR de
 área autenticada, o assunto volta à mesa e provavelmente vira ADR.
+
+**Por que o cliente HTTP se chama `cliente.ts`:** a convenção do projeto é escrever tudo em
+português, e `client.ts` era resquício da fundação. A documentação foi corrigida para o código, não
+o contrário.
+
+**O que `useSessao` controla.** O access token vive só em memória; o refresh vive no cookie
+`httpOnly`. No mount o hook chama `renovar()` para reidratar a sessão, agenda a próxima renovação
+30 s antes do `exp` do JWT e expõe `status` (`carregando` / `autenticado` / `anonimo`). Junto dele
+mora `NAVEGACAO_POR_STATUS`, um objeto que descreve **o que cada status renderiza** — é ele que o
+`Cabecalho` e a home consomem, em vez de espalhar `if (status === ...)` pelos componentes.
 
 **Divisão de responsabilidade:** `app/` compõe, `components/` apresenta, `hooks/` reage,
 `api/` conversa com o mundo. Um hook em `hooks/` que faz `fetch` está no lugar errado — ele

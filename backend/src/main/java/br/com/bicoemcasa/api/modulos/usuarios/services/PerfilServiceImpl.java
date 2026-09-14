@@ -32,6 +32,16 @@ public class PerfilServiceImpl implements PerfilService {
     }
 
     @Override
+    public PerfilResponse buscarPorUsuarioId(Long usuarioId) {
+        Perfil perfil = repository.findByUsuarioId(usuarioId)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));
+
+        return new PerfilResponse(perfil.getId(), perfil.getUsuario().getId(),
+                perfil.getTipo(), perfil.getNomeUsuario(), perfil.getNomeExibicao(),
+                perfil.getFotoUrl());
+    }
+
+    @Override
     public PerfilResponse buscarPorSlug(String slugUrl) {
         Perfil perfil = repository.findByNomeExibicao(slugUrl)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));

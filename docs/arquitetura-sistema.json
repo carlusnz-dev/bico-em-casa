@@ -91,8 +91,9 @@
       "strategy": "Stateless. O backend emite e valida JWT proprio assinado com par de chaves RSA. Access token de curta duracao acompanhado de refresh token persistido, rotacionado e revogavel.",
       "token_issuing": "NimbusJwtEncoder do Spring Security, ja disponivel via spring-security-oauth2-jose. Nao requer biblioteca de JWT adicional.",
       "token_validation": "NimbusJwtDecoder configurado com a chave publica RSA local. O backend segue atuando como OAuth2 Resource Server, agora contra emissor proprio.",
-      "access_token_ttl": "15 minutos",
+      "access_token_ttl": "60 minutos, conforme AutenticacaoServiceImpl.VALIDADE_ACCESS_TOKEN_MINUTOS. O alvo original do projeto era 15 minutos; a divergencia entre codigo e alvo esta aberta e depende de decisao da equipe.",
       "refresh_token_ttl": "30 dias. Persistido em refresh_token, rotacionado a cada uso e revogavel individualmente ou por usuario.",
+      "token_renewal": "POST /api/autenticacao/renovar troca o refresh token do cookie por um par novo: valida o antigo, cria o sucessor na mesma familia_id, preenche substituido_por e revoga o anterior. Reusar um refresh token ja rotacionado retorna 400 (TokenInvalidoException). Ver ADR-0011.",
       "claim_mapping": "O claim sub do JWT e o id (BIGINT, ver ADR-0007) de usuario. Nenhum papel viaja dentro do token.",
       "authorization": "Autorizacao por papel (CLIENTE, PROFISSIONAL, ADMIN) resolvida no backend a partir de perfil, nunca confiando em claim editavel pelo cliente.",
       "cors": "Restrito por ambiente via CorsConfigurationSource; origens definidas por profile.",
@@ -154,12 +155,12 @@
         "@hookform/resolvers"
       ],
       "backend_integration": [
-        "Nenhuma. O acesso ao backend usa exclusivamente o fetch nativo encapsulado em src/api/client.ts."
+        "Nenhuma. O acesso ao backend usa exclusivamente o fetch nativo encapsulado em src/api/cliente.ts."
       ],
       "removed": [
         {
           "artifact": "axios",
-          "reason": "O fetch nativo do Next 16 participa do cache e da revalidacao do App Router; axios contorna esse mecanismo. O cliente HTTP proprio vive em src/api/client.ts."
+          "reason": "O fetch nativo do Next 16 participa do cache e da revalidacao do App Router; axios contorna esse mecanismo. O cliente HTTP proprio vive em src/api/cliente.ts."
         },
         {
           "artifact": "@supabase/supabase-js, @supabase/ssr",
@@ -504,13 +505,14 @@
           "(auth)/": "Login, cadastro e recuperacao de senha",
           "(app)/": "Area autenticada: painel do cliente e do profissional",
           "layout.tsx": "Root layout com providers globais (React Query, tema, sessao)",
-          "page.tsx": "Landing page publica",
+          "(publico)/": "Rotas abertas. Hoje: page.tsx (home) e layout.tsx com Cabecalho e Rodape",
+          "not-found.tsx": "404 da aplicacao, na raiz de app/",
           "middleware.ts": "Nao implementado nesta fase (na raiz de src/). Sessao 100% client-side - decisao de 2026-09-10 (ver docs/relatorios/2026-09-10-revisao-autenticacao-e-planejamento-tela-login.md): o cookie do refresh token e host-only, emitido pela API, e nunca alcanca o middleware do front. Protecao de rota e refresh ficam a cargo de guard client-side em hooks/useSessao e nos layouts da area autenticada."
         },
         "components/": {
           "descricao": "Componentes de interface. Recebem dados por props e nao buscam dados por conta propria.",
-          "ui/": "Componentes atomicos reutilizaveis (Botao, Input, Modal, Card)",
-          "layout/": "Composicoes estruturais (Cabecalho, Rodape, BarraLateral)",
+          "ui/": "Componentes atomicos reutilizaveis. Hoje: Botao, Input, Label, Card. Sem helper cn(): as classes sao compostas por clsx direto, para nao criar utils/ sem ADR.",
+          "layout/": "Composicoes estruturais. Hoje: Cabecalho (consome NAVEGACAO_POR_STATUS do useSessao) e Rodape.",
           "forms/": "Formularios integrados a React Hook Form e aos schemas Zod de src/api/contratos"
         },
         "hooks/": {
@@ -520,12 +522,15 @@
             "useMediaQuery",
             "useDisclosure",
             "useSessao"
-          ]
+          ],
+          "useSessao": "Guarda o access token em memoria, hidrata o usuario por buscarUsuarioPorId, agenda a renovacao 30s antes do exp e expoe status (carregando | autenticado | anonimo). Exporta NAVEGACAO_POR_STATUS, o objeto que descreve o que cada status renderiza, para os componentes nao espalharem condicional de sessao."
         },
         "api/": {
           "descricao": "A FRONTEIRA. Unica camada que conhece o backend. Tudo que sai daqui ja esta tipado e validado.",
-          "client.ts": "Wrapper do fetch nativo: base URL, injecao do access token proprio, refresh transparente, tratamento de status e normalizacao de erro",
-          "erros.ts": "Tipo de erro unico da aplicacao, traduzido a partir do ProblemDetail (RFC 9457) do backend",
+          "cliente.ts": "Wrapper do fetch nativo: base URL, injecao do access token por parametro, credentials include para o cookie de refresh, tratamento de status e normalizacao de erro. O nome segue a convencao de portugues do projeto.",
+          "autenticacao.ts": "cadastrar, entrar, renovar e sair, cada um validando a resposta pelo schema Zod correspondente",
+          "usuario.ts": "buscarUsuarioPorId, usado pelo useSessao para hidratar o usuario da sessao",
+          "erros.ts": "ErroApi, tipo de erro unico da aplicacao, traduzido a partir do ProblemDetail (RFC 9457) do backend. Cobre tambem resposta de erro sem corpo JSON e falha de rede (status 0).",
           "contratos/": "Schemas Zod por recurso e tipos inferidos por z.infer. E o contrato do backend expresso em TypeScript",
           "<recurso>/": "Um arquivo ou pasta por recurso (profissionais, servicos, contratacoes, avaliacoes) com as funcoes de fetch e os hooks TanStack Query correspondentes",
           "regra_de_pasta_vs_arquivo": "Mesma regra do backend: <recurso>.ts enquanto for um arquivo; vira pasta <recurso>/ ao surgir o segundo."

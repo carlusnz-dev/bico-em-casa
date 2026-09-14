@@ -10,6 +10,8 @@ import java.util.UUID;
 
 @Repository
 public interface PerfilRepository extends JpaRepository<Perfil, UUID> {
+    Optional<Perfil> findByUsuarioId(Long usuarioId);
+
     Optional<Perfil> findByUsuarioIdAndTipo(Long usuarioId, PerfilTipo tipo);
 
     Optional<Perfil> findByNomeExibicao(String nomeExibicao);

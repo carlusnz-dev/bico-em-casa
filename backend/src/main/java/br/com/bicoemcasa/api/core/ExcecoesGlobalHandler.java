@@ -1,5 +1,6 @@
 package br.com.bicoemcasa.api.core;
 
+import br.com.bicoemcasa.api.core.excecao.CadastroNaoPermitidoException;
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.core.excecao.SenhaNaoBateException;
 import br.com.bicoemcasa.api.core.excecao.TokenInvalidoException;
@@ -68,6 +69,22 @@ public class ExcecoesGlobalHandler {
         problemDetail.setTitle("Credenciais inválidas");
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(CadastroNaoPermitidoException.class)
+    public ProblemDetail cadastroNaoPermitido(
+            CadastroNaoPermitidoException ex,
+            HttpServletRequest request
+    ) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Cadastro não permitido");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
         return problemDetail;
     }
 

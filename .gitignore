@@ -34,6 +34,9 @@ npm-debug.log*
 # Ferramentas
 .mcp.json
 
+# Worktrees de trabalho isolado (LLM/dev)
+.worktrees/
+
 # Artefatos de aula em formato binario pesado — ficam fora do versionamento.
 # O conteudo relevante ja esta transcrito em docs/requisitos.md e docs/design-sistema.md.
 docs/*.pdf

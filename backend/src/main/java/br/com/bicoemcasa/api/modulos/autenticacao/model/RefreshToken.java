@@ -1,4 +1,4 @@
-package br.com.bicoemcasa.api.modulos.autenticacao;
+package br.com.bicoemcasa.api.modulos.autenticacao.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;

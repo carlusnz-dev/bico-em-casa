@@ -1,5 +1,6 @@
 package br.com.bicoemcasa.api.modulos.autenticacao;
 
+import br.com.bicoemcasa.api.modulos.autenticacao.model.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
