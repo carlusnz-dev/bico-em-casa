@@ -27,9 +27,7 @@ public class PerfilServiceImpl implements PerfilService {
         Perfil perfil = repository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));
 
-        return new PerfilResponse(perfil.getId(), perfil.getUsuario().getId(),
-                perfil.getTipo(), perfil.getNomeUsuario(), perfil.getNomeExibicao(),
-                perfil.getFotoUrl());
+        return paraResponse(perfil);
     }
 
     @Override
@@ -37,9 +35,7 @@ public class PerfilServiceImpl implements PerfilService {
         Perfil perfil = repository.findByUsuarioId(usuarioId)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));
 
-        return new PerfilResponse(perfil.getId(), perfil.getUsuario().getId(),
-                perfil.getTipo(), perfil.getNomeUsuario(), perfil.getNomeExibicao(),
-                perfil.getFotoUrl());
+        return paraResponse(perfil);
     }
 
     @Override
@@ -47,9 +43,7 @@ public class PerfilServiceImpl implements PerfilService {
         Perfil perfil = repository.findByUsuarioIdAndTipo(usuarioId, tipo)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));
 
-        return new PerfilResponse(perfil.getId(), perfil.getUsuario().getId(),
-                perfil.getTipo(), perfil.getNomeUsuario(), perfil.getNomeExibicao(),
-                perfil.getFotoUrl());
+        return paraResponse(perfil);
     }
 
     @Override
@@ -57,9 +51,7 @@ public class PerfilServiceImpl implements PerfilService {
         Perfil perfil = repository.findByNomeExibicao(slugUrl)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não encontrado"));
 
-        return new PerfilResponse(perfil.getId(), perfil.getUsuario().getId(),
-                perfil.getTipo(), perfil.getNomeUsuario(), perfil.getNomeExibicao(),
-                perfil.getFotoUrl());
+        return paraResponse(perfil);
     }
 
     @Override
@@ -74,8 +66,12 @@ public class PerfilServiceImpl implements PerfilService {
 
         repository.save(perfilNovo);
 
-        return new PerfilResponse(perfilNovo.getId(), usuarioId, perfilNovo.getTipo(),
-                perfilNovo.getNomeUsuario(), perfilNovo.getNomeExibicao(),
-                perfilNovo.getFotoUrl());
+        return paraResponse(perfilNovo);
+    }
+
+    private PerfilResponse paraResponse(Perfil perfil) {
+        return new PerfilResponse(perfil.getId(), perfil.getUsuario().getId(),
+                perfil.getTipo(), perfil.getNomeUsuario(), perfil.getNomeExibicao(),
+                perfil.getFotoUrl(), perfil.getBio(), perfil.getCriadoEm());
     }
 }
