@@ -5,6 +5,8 @@ import {
   loginResponseSchema,
   LogoutResponse,
   logoutResponseSchema,
+  RenovarResponse,
+  renovarResponseSchema,
 } from './contratos/autenticacao';
 
 export async function entrar(loginRequest: LoginRequest): Promise<LoginResponse> {
@@ -22,4 +24,12 @@ export async function sair(): Promise<LogoutResponse> {
   });
 
   return logoutResponseSchema.parse(resposta);
+}
+
+export async function renovar(): Promise<RenovarResponse> {
+  const resposta = await request(`/autenticacao/renovar`, {
+    method: 'POST',
+  });
+
+  return renovarResponseSchema.parse(resposta);
 }
