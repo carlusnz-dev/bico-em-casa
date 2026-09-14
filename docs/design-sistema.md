@@ -324,9 +324,15 @@ dois serviços externos, ambos auto-hospedáveis e ambos isolados atrás de adap
 | `anexos` | Fotos anexadas às solicitações de orçamento (`RF015`) |
 | `avatares` | Fotos de perfil |
 
-**Padrão de acesso:** o backend gera **URL pré-assinada** com expiração curta. O navegador faz
-upload e download direto no MinIO, sem que os bytes trafeguem pela API. Isso mantém a aplicação
-fora do caminho de arquivos grandes — que é o que derruba uma API primeiro sob carga.
+**Padrão de acesso:** o backend gera **URL pré-assinada** com expiração de **5 minutos**
+(`armazenamento.url-expiracao-minutos`). O navegador faz upload e download direto no MinIO, sem
+que os bytes trafeguem pela API. Isso mantém a aplicação fora do caminho de arquivos grandes —
+que é o que derruba uma API primeiro sob carga.
+
+**Padrão de confirmação:** depois que o navegador termina o upload, um endpoint dedicado por
+recurso avisa o backend — por exemplo `POST /api/portfolio/{id}/foto-capa/confirmar` — para
+persistir a URL final. Não é um `PUT` genérico de atualização do recurso, para não misturar
+"atualizar dados" com "confirmar que o upload terminou".
 
 ### 6.2 SMTP — e-mail transacional
 
