@@ -1,40 +1,32 @@
+import { ErroApi, erroDaResposta, erroDeRede } from './erros';
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-interface ProblemDetail {
-  title: string;
-  status: number;
-  detail?: string;
-}
-
-export class ErroApi extends Error {
-  constructor(
-    public status: number,
-    public detail?: string,
-  ) {
-    super(detail ?? 'Erro na API');
-  }
-}
 
 export async function request(
   path: string,
   opcoes: RequestInit = {},
-  acessToken?: string,
+  accessToken?: string,
 ): Promise<unknown> {
   const headers = new Headers(opcoes.headers);
   headers.set('Content-Type', 'application/json');
-  if (acessToken) {
-    headers.set('Authorization', `Bearer ${acessToken}`);
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
-  const resposta = await fetch(`${BASE_URL}${path}`, {
-    ...opcoes,
-    credentials: 'include',
-    headers,
-  });
+  let resposta: Response;
+
+  try {
+    resposta = await fetch(`${BASE_URL}${path}`, {
+      ...opcoes,
+      credentials: 'include',
+      headers,
+    });
+  } catch (causa) {
+    throw erroDeRede(causa);
+  }
 
   if (!resposta.ok) {
-    const problema: ProblemDetail = await resposta.json();
-    throw new ErroApi(problema.status, problema.detail);
+    throw await erroDaResposta(resposta);
   }
 
   if (resposta.status === 204) {
@@ -43,3 +35,5 @@ export async function request(
 
   return resposta.json();
 }
+
+export { ErroApi };

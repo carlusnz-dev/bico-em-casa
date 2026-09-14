@@ -6,7 +6,7 @@ import br.com.bicoemcasa.api.modulos.autenticacao.dto.CadastroResponse;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.LoginRequest;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.LoginResponse;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.LogoutResponse;
-import jakarta.servlet.http.Cookie;
+import br.com.bicoemcasa.api.modulos.autenticacao.dto.RenovarResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,17 +14,29 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.HttpCookie;
 import java.time.Duration;
-import java.time.OffsetDateTime;
 
 @RestController
 @RequestMapping("/api/autenticacao")
 public class AutenticacaoController {
+    private static final String COOKIE_REFRESH_TOKEN = "refreshToken";
+    private static final Duration VALIDADE_COOKIE = Duration.ofDays(30);
+
     private final AutenticacaoService service;
 
     public AutenticacaoController(AutenticacaoService service) {
         this.service = service;
+    }
+
+    private static String cookieDeRefreshToken(String valor, Duration validade) {
+        return ResponseCookie.from(COOKIE_REFRESH_TOKEN, valor)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .sameSite("Lax")
+                .maxAge(validade)
+                .build()
+                .toString();
     }
 
     @PostMapping("/cadastrar")
@@ -36,30 +48,27 @@ public class AutenticacaoController {
     @PostMapping("/entrar")
     public ResponseEntity<LoginResponse> entrar(@Valid @RequestBody LoginRequest request) {
         LoginResponse loginResponse = service.entrar(request);
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", loginResponse.tokenBruto())
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .sameSite("Lax")
-                .maxAge(Duration.ofDays(30))
-                .build();
-        return ResponseEntity.ok().header(
-                HttpHeaders.SET_COOKIE, cookie.toString()
-        ).body(loginResponse);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieDeRefreshToken(loginResponse.tokenBruto(), VALIDADE_COOKIE))
+                .body(loginResponse);
+    }
+
+    @PostMapping("/renovar")
+    public ResponseEntity<RenovarResponse> renovar(@CookieValue(COOKIE_REFRESH_TOKEN) String refreshToken) {
+        RenovarResponse renovarResponse = service.renovar(refreshToken);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieDeRefreshToken(renovarResponse.tokenBruto(), VALIDADE_COOKIE))
+                .body(renovarResponse);
     }
 
     @PostMapping("/sair")
-    public ResponseEntity<LogoutResponse> sair(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<LogoutResponse> sair(@CookieValue(COOKIE_REFRESH_TOKEN) String refreshToken) {
         LogoutResponse logoutResponse = service.sair(refreshToken);
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .sameSite("Lax")
-                .maxAge(Duration.ZERO)
-                .build();
-        return ResponseEntity.ok().header(
-                HttpHeaders.SET_COOKIE, cookie.toString()
-        ).body(logoutResponse);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieDeRefreshToken("", Duration.ZERO))
+                .body(logoutResponse);
     }
 }

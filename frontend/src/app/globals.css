@@ -1,9 +1,6 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Paleta extraida do Figma (arquivo aBkPjiGi2KLE8Cc21BRO9d, pagina "Assets").
-     Nomeada por matiz, nao por papel semantico (primary/accent/danger) -
-     esse mapeamento e uma decisao de design da equipe, nao da LLM. */
   --color-teal: #17b3c1;
   --color-mint: #47d6b6;
   --color-mint-pale: #bff8d4;
@@ -15,6 +12,31 @@
   --color-white-warm: #fbf7f7;
   --color-navy: #1f3a52;
 
+  --color-primary: var(--color-teal);
+  --color-accent: var(--color-orange);
+  --color-sucesso: var(--color-mint);
+  --color-erro: var(--color-orange-red);
+  --color-info: var(--color-blue);
+  --color-texto: var(--color-navy);
+  --color-texto-suave: color-mix(in srgb, var(--color-navy) 65%, transparent);
+  --color-fundo: var(--color-white-warm);
+  --color-superficie: #ffffff;
+  --color-borda: var(--color-gray);
+
   --font-sans: var(--font-josefin-sans), sans-serif;
   --font-heading: var(--font-albert-sans), sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-fundo);
+    color: var(--color-texto);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+  }
 }

@@ -18,6 +18,7 @@ alguém, seis meses depois, refazer uma discussão já encerrada.
 | [0008](./0008-nomenclatura-de-tabelas.md) | Nomenclatura de tabelas: `snake_case` singular, sem prefixo | Banco | Aceito | 2026-08-22 |
 | [0009](./0009-perfil-id-uuid.md) | `perfil.id` como `uuid`, exceção ao critério de cadastro do ADR-0007 | Banco | Aceito | 2026-09-01 |
 | [0010](./0010-versionamento-migration-por-timestamp.md) | Versionamento de migration Flyway por timestamp em vez de sequencial | Processo · Banco | Aceito | 2026-09-01 |
+| [0011](./0011-rotacao-de-refresh-token.md) | Refresh token opaco, rotacionado a cada uso, renovado por endpoint próprio | Backend | Aceito | 2026-09-13 |
 
 ## Como criar um ADR
 

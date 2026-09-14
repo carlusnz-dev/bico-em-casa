@@ -8,6 +8,7 @@ import br.com.bicoemcasa.api.modulos.autenticacao.contrato.RefreshTokenService;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.RefreshTokenRequest;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.RefreshTokenResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -22,13 +23,29 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         this.repository = repository;
     }
 
+    private RefreshTokenResponse paraResponse(RefreshToken token) {
+        return new RefreshTokenResponse(
+                token.getId(),
+                token.getUsuarioId(),
+                token.getFamiliaId(),
+                token.getExpiraEm(),
+                token.getRevogadoEm(),
+                token.getCriadoEm()
+        );
+    }
+
     private List<RefreshTokenResponse> tokenResponseList(List<RefreshToken> tokens) {
-        return tokens.stream()
-                .map(token -> new RefreshTokenResponse(
-                        token.getId(), token.getUsuarioId(), token.getFamiliaId(),
-                        token.getExpiraEm(), token.getRevogadoEm(), token.getCriadoEm()
-                ))
-                .toList();
+        return tokens.stream().map(this::paraResponse).toList();
+    }
+
+    private void exigirTokenUtilizavel(RefreshToken token) {
+        if (token.getRevogadoEm() != null) {
+            throw new TokenInvalidoException("Token já foi revogado: " + token.getRevogadoEm());
+        }
+
+        if (token.getExpiraEm().toInstant().isBefore(Instant.now())) {
+            throw new TokenInvalidoException("Token já foi expirado: " + token.getExpiraEm());
+        }
     }
 
     @Override
@@ -36,14 +53,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken token = repository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Token não encontrado: " + id));
 
-        return new RefreshTokenResponse(
-                token.getId(),
-                token.getUsuarioId(),
-                token.getFamiliaId(),
-                token.getExpiraEm(),
-                token.getRevogadoEm(),
-                token.getCriadoEm()
-        );
+        return paraResponse(token);
     }
 
     @Override
@@ -51,28 +61,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken token = repository.findByHashToken(hashToken)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Token não encontrado: " + hashToken));
 
-        return new RefreshTokenResponse(
-                token.getId(),
-                token.getUsuarioId(),
-                token.getFamiliaId(),
-                token.getExpiraEm(),
-                token.getRevogadoEm(),
-                token.getCriadoEm()
-        );
+        return paraResponse(token);
     }
 
     @Override
     public List<RefreshTokenResponse> buscarPorUsuarioId(Long usuarioId) {
-        List<RefreshToken> tokens = repository.findByUsuarioId(usuarioId);
-
-        return tokenResponseList(tokens);
+        return tokenResponseList(repository.findByUsuarioId(usuarioId));
     }
 
     @Override
     public List<RefreshTokenResponse> buscarPorFamiliaId(UUID familiaId) {
-        List<RefreshToken> tokens = repository.findByFamiliaId(familiaId);
-
-        return tokenResponseList(tokens);
+        return tokenResponseList(repository.findByFamiliaId(familiaId));
     }
 
     @Override
@@ -85,14 +84,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         repository.save(token);
 
-        return new RefreshTokenResponse(
-                token.getId(),
-                token.getUsuarioId(),
-                token.getFamiliaId(),
-                token.getExpiraEm(),
-                token.getRevogadoEm(),
-                token.getCriadoEm()
-        );
+        return paraResponse(token);
     }
 
     @Override
@@ -100,15 +92,31 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken refreshToken = repository.findByHashToken(hashToken)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Token não encontrado: " + hashToken));
 
-        if (refreshToken.getRevogadoEm() != null) {
-            throw new TokenInvalidoException("Token já foi revogado: " + refreshToken.getRevogadoEm());
-        }
-
-        if (refreshToken.getExpiraEm().toInstant().isBefore(Instant.now())) {
-            throw new TokenInvalidoException("Token já foi expirado: " + refreshToken.getExpiraEm());
-        }
+        exigirTokenUtilizavel(refreshToken);
 
         refreshToken.setRevogadoEm(OffsetDateTime.now());
         repository.save(refreshToken);
+    }
+
+    @Override
+    @Transactional
+    public RefreshTokenResponse substituir(String hashTokenAntigo, String hashTokenNovo, OffsetDateTime expiraEm) {
+        RefreshToken antigo = repository.findByHashToken(hashTokenAntigo)
+                .orElseThrow(() -> new TokenInvalidoException("Refresh token não reconhecido"));
+
+        exigirTokenUtilizavel(antigo);
+
+        RefreshTokenResponse novo = criar(new RefreshTokenRequest(
+                antigo.getUsuarioId(),
+                antigo.getFamiliaId(),
+                hashTokenNovo,
+                expiraEm
+        ));
+
+        antigo.setSubstituidoPor(novo.id());
+        antigo.setRevogadoEm(OffsetDateTime.now());
+        repository.save(antigo);
+
+        return novo;
     }
 }

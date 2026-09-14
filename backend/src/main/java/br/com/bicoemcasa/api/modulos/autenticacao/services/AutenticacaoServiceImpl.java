@@ -35,17 +35,13 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
     private final PasswordEncoder passwordEncoder;
     private final UsuarioService usuarioService;
     private final JwtEncoder jwtEncoder;
+
     private static final SecureRandom secure = new SecureRandom();
     private static final Base64.Encoder base64 = Base64.getUrlEncoder();
-    private static final MessageDigest DIGEST;
 
-    static {
-        try {
-            DIGEST = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    private static final int TAMANHO_TOKEN_BYTES = 32;
+    private static final int VALIDADE_ACCESS_TOKEN_MINUTOS = 60;
+    private static final int VALIDADE_REFRESH_TOKEN_DIAS = 30;
 
     public AutenticacaoServiceImpl(
             RefreshTokenService refreshTokenService,
@@ -59,8 +55,6 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
         this.jwtEncoder = jwtEncoder;
     }
 
-    // metodos privados para geração do token
-    // e hash do mesmo
     private static String geracaoToken(int byteLength) {
         byte[] randomBytes = new byte[byteLength];
         secure.nextBytes(randomBytes);
@@ -68,8 +62,28 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
     }
 
     private static String hashToken(String token) {
-        byte[] hashBytes = DIGEST.digest(token.getBytes(StandardCharsets.UTF_8));
-        return HexFormat.of().formatHex(hashBytes);
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hashBytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 indisponível nesta JVM", e);
+        }
+    }
+
+    private String emitirAccessToken(Long usuarioId) {
+        Instant agora = Instant.now();
+        JwtClaimsSet claimsSet = JwtClaimsSet.builder()
+                .subject(usuarioId.toString())
+                .issuedAt(agora)
+                .expiresAt(agora.plus(VALIDADE_ACCESS_TOKEN_MINUTOS, ChronoUnit.MINUTES))
+                .build();
+
+        return jwtEncoder.encode(JwtEncoderParameters.from(claimsSet)).getTokenValue();
+    }
+
+    private static OffsetDateTime expiracaoDoRefreshToken() {
+        return OffsetDateTime.now().plusDays(VALIDADE_REFRESH_TOKEN_DIAS);
     }
 
     @Override
@@ -78,23 +92,30 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
                 .filter(c -> passwordEncoder.matches(request.senha(), c.hashSenha()))
                 .orElseThrow(() -> new SenhaNaoBateException("Credenciais inválidas"));
 
-        String tokenBruto = geracaoToken(32);
-        String hash = hashToken(tokenBruto);
-        UUID familiaId = UUID.randomUUID();
-        OffsetDateTime expiraEm = OffsetDateTime.now().plusDays(30);
+        String tokenBruto = geracaoToken(TAMANHO_TOKEN_BYTES);
 
-        refreshTokenService.criar(new RefreshTokenRequest(credencial.id(), familiaId, hash, expiraEm));
+        refreshTokenService.criar(new RefreshTokenRequest(
+                credencial.id(),
+                UUID.randomUUID(),
+                hashToken(tokenBruto),
+                expiracaoDoRefreshToken()
+        ));
 
-        Instant instant = Instant.now();
-        JwtClaimsSet claimsSet = JwtClaimsSet.builder()
-                .subject(credencial.id().toString())
-                .issuedAt(instant)
-                .expiresAt(instant.plus(60, ChronoUnit.MINUTES))
-                .build();
+        return new LoginResponse(true, emitirAccessToken(credencial.id()), tokenBruto);
+    }
 
-        String acessToken = jwtEncoder.encode(JwtEncoderParameters.from(claimsSet)).getTokenValue();
+    @Override
+    @Transactional
+    public RenovarResponse renovar(String tokenBruto) {
+        String tokenBrutoNovo = geracaoToken(TAMANHO_TOKEN_BYTES);
 
-        return new LoginResponse(true, acessToken, tokenBruto);
+        RefreshTokenResponse novo = refreshTokenService.substituir(
+                hashToken(tokenBruto),
+                hashToken(tokenBrutoNovo),
+                expiracaoDoRefreshToken()
+        );
+
+        return new RenovarResponse(emitirAccessToken(novo.usuarioId()), tokenBrutoNovo);
     }
 
     @Override
@@ -118,14 +139,14 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
 
         PerfilRequest perfilRequest = new PerfilRequest(
                 request.cadastroTipo(),
-                request.nomeCompleto(),
+                request.nomeUsuario(),
                 request.nomeExibicao(),
                 request.telefone(),
                 request.bio()
         );
 
         UsuarioRequest usuarioRequest = new UsuarioRequest(
-                perfilRequest.nomeUsuario(),
+                request.nomeCompleto(),
                 request.email(),
                 request.cpf(),
                 request.senha(),
