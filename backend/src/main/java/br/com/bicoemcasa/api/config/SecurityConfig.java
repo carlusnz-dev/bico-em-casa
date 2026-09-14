@@ -60,7 +60,9 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/actuator/health"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/servico/meus").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/servico", "/api/servico/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tag").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handling -> handling

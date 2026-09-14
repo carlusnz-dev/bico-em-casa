@@ -1,8 +1,9 @@
-package br.com.bicoemcasa.api.modulos.servicos;
+package br.com.bicoemcasa.api.modulos.servicos.services;
 
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.core.excecao.ServicoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.paginacao.PaginaResponse;
+import br.com.bicoemcasa.api.modulos.servicos.contrato.ServicoService;
 import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoRequest;
 import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoResponse;
 import br.com.bicoemcasa.api.modulos.servicos.models.Servico;
@@ -71,6 +72,14 @@ public class ServicoServiceImpl implements ServicoService {
     public PaginaResponse<ServicoResponse> listarAtivos(int pagina, int tamanho) {
         var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
         return PaginaResponse.de(servicoRepository.findByAtivoTrue(paginacao), this::paraResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginaResponse<ServicoResponse> listarMeus(Long usuarioId, int pagina, int tamanho) {
+        PerfilResponse perfil = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.PROFISSIONAL);
+        var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
+        return PaginaResponse.de(servicoRepository.findByPerfilId(perfil.id(), paginacao), this::paraResponse);
     }
 
     @Override

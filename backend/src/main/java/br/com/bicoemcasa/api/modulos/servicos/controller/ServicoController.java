@@ -1,6 +1,7 @@
-package br.com.bicoemcasa.api.modulos.servicos;
+package br.com.bicoemcasa.api.modulos.servicos.controller;
 
 import br.com.bicoemcasa.api.core.paginacao.PaginaResponse;
+import br.com.bicoemcasa.api.modulos.servicos.contrato.ServicoService;
 import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoRequest;
 import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoResponse;
 import jakarta.validation.Valid;
@@ -36,6 +37,16 @@ public class ServicoController {
     ) {
         var response = servicoService.criar(request, Long.valueOf(jwt.getSubject()));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/meus")
+    public ResponseEntity<PaginaResponse<ServicoResponse>> listarMeus(
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamanho,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        var response = servicoService.listarMeus(Long.valueOf(jwt.getSubject()), pagina, tamanho);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
