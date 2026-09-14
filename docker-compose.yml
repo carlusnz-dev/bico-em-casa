@@ -63,6 +63,9 @@ services:
         mc mb --ignore-existing local/portfolios
         mc mb --ignore-existing local/anexos
         mc mb --ignore-existing local/avatares
+        # portfolios e vitrine publica (RF003): leitura anonima liberada, upload continua
+        # exigindo URL pre-assinada emitida pelo backend. anexos e avatares ficam privados.
+        mc anonymous set download local/portfolios
         echo "Buckets portfolios, anexos e avatares prontos."
 
 volumes:

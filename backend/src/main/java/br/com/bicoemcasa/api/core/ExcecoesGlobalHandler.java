@@ -5,6 +5,8 @@ import br.com.bicoemcasa.api.core.excecao.AvaliacaoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.CadastroNaoPermitidoException;
 import br.com.bicoemcasa.api.core.excecao.ContratacaoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
+import br.com.bicoemcasa.api.core.excecao.PortfolioConflitoException;
+import br.com.bicoemcasa.api.core.excecao.PortfolioNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.SenhaNaoBateException;
 import br.com.bicoemcasa.api.core.excecao.ServicoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.TokenInvalidoException;
@@ -147,6 +149,36 @@ public class ExcecoesGlobalHandler {
                 ex.getMessage()
         );
         problemDetail.setTitle("Ação não permitida");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(PortfolioNaoPertenceAoPerfilException.class)
+    public ProblemDetail portfolioNaoPertenceAoPerfil(
+            PortfolioNaoPertenceAoPerfilException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Ação não permitida");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(PortfolioConflitoException.class)
+    public ProblemDetail portfolioConflito(
+            PortfolioConflitoException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Conflito");
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         problemDetail.setProperty("timestamp", Instant.now());
 
