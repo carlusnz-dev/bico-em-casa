@@ -77,4 +77,13 @@ public class ContratacaoController {
         var response = contratacaoService.arquivar(id, Long.valueOf(jwt.getSubject()));
         return ResponseEntity.ok(response);
     }
+
+    @PatchMapping("/{id}/desarquivar")
+    public ResponseEntity<ContratacaoResponse> desarquivar(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        var response = contratacaoService.desarquivar(id, Long.valueOf(jwt.getSubject()));
+        return ResponseEntity.ok(response);
+    }
 }

@@ -13,4 +13,5 @@ public interface ContratacaoService {
     PaginaResponse<ContratacaoResponse> listarMinhas(Long usuarioId, int pagina, int tamanho);
     ContratacaoResponse editar(UUID id, EditarContratacaoRequest request, Long usuarioId);
     ContratacaoResponse arquivar(UUID id, Long usuarioId);
+    ContratacaoResponse desarquivar(UUID id, Long usuarioId);
 }

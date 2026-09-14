@@ -91,6 +91,14 @@ public class ContratacaoServiceImpl implements ContratacaoService {
         return paraResponse(contratacao);
     }
 
+    @Override
+    public ContratacaoResponse desarquivar(UUID id, Long usuarioId) {
+        Contratacao contratacao = buscarContratacaoDoCliente(id, usuarioId);
+        contratacao.setStatus(StatusContratacao.ATIVA);
+        contratacaoRepository.save(contratacao);
+        return paraResponse(contratacao);
+    }
+
     private Contratacao buscarContratacaoDoCliente(UUID id, Long usuarioId) {
         Contratacao contratacao = contratacaoRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Contratação não encontrada"));

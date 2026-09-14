@@ -63,6 +63,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/servico/meus").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/servico", "/api/servico/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tag").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/perfil/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/perfil/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handling -> handling

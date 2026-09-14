@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 
 import { buscarServicoPorId } from '@/api/servicos';
 import { ErroApi } from '@/api/erros';
+import { BotaoContratar } from '@/components/BotaoContratar';
 import { formatarPreco } from '@/components/CardServico';
 import { Card } from '@/components/ui/Card';
 
@@ -35,6 +36,8 @@ export default async function ServicoDetalhePage({
           <p className="text-sm font-medium text-erro">Este serviço não está mais ativo.</p>
         )}
       </Card>
+
+      {servico.ativo && <BotaoContratar servicoId={servico.id} />}
     </div>
   );
 }
