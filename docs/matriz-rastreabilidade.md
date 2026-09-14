@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | **Gerado a partir de** | [`requisitos.json`](./requisitos.json) |
-| **Última sincronização** | 2026-08-27 |
+| **Última sincronização** | 2026-09-14 |
 | **Comando de manutenção** | `/revisar-matriz` |
 
 ---
@@ -56,7 +56,7 @@ existirem — o nome da tabela já é o definitivo, o DDL ainda não foi escrito
 | **RF017** | contratacoes | contratacao | mvp | Lacuna encontrada na revisão: RF012 notificava um aceite que nenhum requisito criava |
 | **RF018** | contratacoes | contratacao | mvp | PBB (Cancelar serviço) |
 | **RF019** | avaliacoes, profissionais | avaliacao, perfil | mvp | PBB (Visualizar nota média do profissional) |
-| **RF020** | servicos, usuarios | denuncia | mvp | PBB (Denunciar serviços inadequados) |
+| **RF020** | denuncias, servicos, usuarios | denuncia | mvp | PBB (Denunciar serviços inadequados) |
 | **RF021** | usuarios | usuario | mvp | PBB (Visualizar usuários ativos e inativos no site) |
 | **RF022** | usuarios | usuario, log_acao | mvp | PBB (Gerenciamento de usuários) |
 | **RF023** | contratacoes | conversa, mensagem | pos-mvp | PDF de especificação, quadro é–não é–faz–não faz; PBB (Falar com o profissional) |
@@ -95,6 +95,7 @@ Leitura inversa. Antes de mexer num módulo, esta é a lista do que ele precisa 
 | `autenticacao` | 7 | RF001, RF002, RNF001, RNF002, RNF019, RNF020, RNF021 |
 | `avaliacoes` | 3 | RF006, RF007, RF019 |
 | `contratacoes` | 12 | RF008, RF012, RF013, RF014, RF015, RF016, RF017, RF018, RF023, RF024, RNF017, RNF018 |
+| `denuncias` | 1 | RF020 |
 | `profissionais` | 10 | RF003, RF004, RF005, RF009, RF013, RF019, RNF005, RNF014, RNF017, RNF018 |
 | `servicos` | 6 | RF004, RF009, RF010, RF011, RF020, RNF005 |
 | `transversal` | 12 | RNF003, RNF004, RNF006, RNF007, RNF008, RNF009, RNF010, RNF011, RNF012, RNF013, RNF016, RNF022 |
@@ -104,8 +105,11 @@ Leitura inversa. Antes de mexer num módulo, esta é a lista do que ele precisa 
 
 ## 3. Leitura da cobertura
 
-**Os seis módulos do ADR-0004 têm requisito.** Nenhum módulo foi inventado sem necessidade, e
-nenhum requisito ficou órfão. Contagem confere: 46 requisitos (24 RF + 22 RNF), 0 sem módulo.
+**Os módulos do ADR-0004 têm requisito, e nenhum requisito ficou órfão.** Contagem confere: 46
+requisitos (24 RF + 22 RNF), 0 sem módulo. `denuncias` é o módulo mais novo da lista — separado
+de `avaliacoes` na sessão de 2026-09-14 porque o RF020 (denunciar serviço, perfil ou avaliação)
+não tem nada em comum com avaliar uma contratação além de ambos partirem de uma revisão de código
+enviada por um integrante fora da convenção vigente na época.
 
 **`autenticacao` saltou de 4 para 7 requisitos** com o [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md).
 Esse salto é a medida do que o Supabase estava fazendo pelo projeto de graça: ciclo de vida de

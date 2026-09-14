@@ -68,7 +68,7 @@ atual — fica registrado para não ser redescoberto do zero depois.
 | **RF017** | O sistema deve permitir que o profissional aceite ou recuse uma solicitação de orçamento recebida, respondendo com o valor proposto. | contratacoes | 2026-08-22 |
 | **RF018** | O sistema deve permitir que cliente ou profissional cancele uma contratação ainda não concluída, registrando o motivo. | contratacoes | 2026-08-22 |
 | **RF019** | O sistema deve calcular e exibir a nota média do profissional e a quantidade de avaliações recebidas. | avaliacoes, profissionais | 2026-08-22 |
-| **RF020** | O sistema deve permitir que qualquer usuário denuncie um serviço, perfil ou avaliação inadequado, e que o administrador registre o resultado da análise. | servicos, usuarios | 2026-08-22 |
+| **RF020** | O sistema deve permitir que qualquer usuário denuncie um serviço, perfil ou avaliação inadequado, e que o administrador registre o resultado da análise. | denuncias, servicos, usuarios | 2026-08-22 |
 | **RF021** | O sistema deve permitir que o administrador liste os usuários da plataforma filtrando por ativos e inativos. | usuarios | 2026-08-22 |
 | **RF022** | O sistema deve permitir que o administrador suspenda e reative contas de usuário, registrando o motivo da ação. | usuarios | 2026-08-22 |
 

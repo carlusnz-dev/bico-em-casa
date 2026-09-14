@@ -450,7 +450,8 @@
             "profissionais",
             "servicos",
             "contratacoes",
-            "avaliacoes"
+            "avaliacoes",
+            "denuncias"
           ],
           "estrutura_interna_do_modulo": {
             "controller/": "Endpoints REST (@RestController)",

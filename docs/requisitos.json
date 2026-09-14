@@ -11,6 +11,7 @@
       "servicos",
       "contratacoes",
       "avaliacoes",
+      "denuncias",
       "transversal"
     ],
     "status_validos": [
@@ -324,6 +325,7 @@
     "tipo": "funcional",
     "descricao": "O sistema deve permitir que qualquer usuário denuncie um serviço, perfil ou avaliação inadequado, e que o administrador registre o resultado da análise.",
     "modulos": [
+      "denuncias",
       "servicos",
       "usuarios"
     ],
