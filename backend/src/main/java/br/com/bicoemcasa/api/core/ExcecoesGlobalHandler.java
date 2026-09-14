@@ -1,6 +1,7 @@
 package br.com.bicoemcasa.api.core;
 
 import br.com.bicoemcasa.api.core.excecao.CadastroNaoPermitidoException;
+import br.com.bicoemcasa.api.core.excecao.ContratacaoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.core.excecao.SenhaNaoBateException;
 import br.com.bicoemcasa.api.core.excecao.ServicoNaoPertenceAoPerfilException;
@@ -94,6 +95,21 @@ public class ExcecoesGlobalHandler {
             ServicoNaoPertenceAoPerfilException ex,
             HttpServletRequest request
     ) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Ação não permitida");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(ContratacaoNaoPertenceAoPerfilException.class)
+    public ProblemDetail contratacaoNaoPertenceAoPerfil(
+            ContratacaoNaoPertenceAoPerfilException ex,
+            HttpServletRequest request) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.FORBIDDEN,
                 ex.getMessage()
