@@ -5,8 +5,8 @@ CREATE TYPE status_denuncia AS ENUM ('PENDENTE' ,'PROCEDENTE' ,'IMPROCEDENTE');
 
 CREATE TABLE denuncia(
     id                  UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    autor_perfil_id      BIGINT          NOT NULL , 
-    denunciado_perfil_id  BIGINT, 
+    autor_perfil_id      UUID          NOT NULL , 
+    denunciado_perfil_id  UUID, 
     contratacao_id      UUID, 
     alvo_tipo           tipo_alvo_denuncia  NOT NULL,
     alvo_id             VARCHAR(64)  NOT NULL,
@@ -14,11 +14,23 @@ CREATE TABLE denuncia(
     descricao           VARCHAR(1000)  ,
     fotos               JSONB  ,
     status              status_denuncia NOT NULL DEFAULT 'PENDENTE',
-    analisado_por_perfil_id     BIGINT, 
+    analisado_por_perfil_id     UUID, 
     analisado_em        TIMESTAMPTZ , 
     parecer             VARCHAR(1000),
     criado_em           TIMESTAMPTZ     NOT NULL DEFAULT now(), 
-    atualizado_em       TIMESTAMPTZ     NOT NULL DEFAULT now()
+    atualizado_em       TIMESTAMPTZ     NOT NULL DEFAULT now(),
+    CONSTRAINT fk_denuncia_perfil_autor
+        FOREIGN KEY (autor_perfil_id) REFERENCES perfil (id) 
+        ON DELETE RESTRICT , 
+
+    CONSTRAINT fk_denuncia_perfil_denunciado
+        FOREIGN KEY (denunciado_perfil_id) REFERENCES perfil (id) 
+        ON DELETE RESTRICT , 
+
+    CONSTRAINT fk_denuncia_perfil_analisado_por
+        FOREIGN KEY (analisado_por_perfil_id) REFERENCES perfil (id) 
+        ON DELETE SET NULL 
+        
 );    
 
 CREATE INDEX idx_denuncia_status        on denuncia(status); 
