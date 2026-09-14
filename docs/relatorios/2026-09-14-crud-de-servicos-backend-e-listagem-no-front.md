@@ -256,3 +256,28 @@ guard que redireciona usuário anônimo para `/login`) foi testado num Chrome re
 3. Revisar as pendências de `autenticacao`/`usuarios` listadas acima antes que acumulem mais dívida
 4. Abrir PR de `feat/servicos` contra `develop`, registrando no PR a exceção à Regra nº 3 (migration
    escrita pela LLM por decisão explícita do usuário)
+
+## Nota de atribuição (pós-fechamento)
+
+O PR #10 (`feat/servicos` → `develop`) foi mergeado com todos os commits sob autoria de Carlos
+Antunes. Isso apagou da history de `develop` a autoria original do módulo: o `origin/feat/servicos`
+antigo, sobrescrito nesta sessão via `git push --force-with-lease` (ver "Decisões tomadas" acima),
+tinha 7 commits de feature autorados por **LucasMaiorquin <lemaiorquin@gmail.com>**, o dono original
+dessa branch:
+
+```
+57bc817 feat(frontend): adicionar fluxo de cadastro de servico
+4e8510e feat(servicos): adicionar endpoint de cadastro de servico
+2840621 feat(servicos): adicionar contrato e implementacao do cadastro de servico
+d43b592 feat(servicos): adicionar DTOs de requisicao e resposta do servico
+8d99727 feat(servicos): adicionar repositories de Servico e Tag
+75dafb5 feat(servicos): adicionar entidades Servico e Tag
+ffa5749 docs(servicos): adicionar historia de cadastro de servico
+```
+
+Esses commits divergiram de `develop` em 2026-08-31 (ver "Resumo") e não puderam ser rebaseados
+sem conflito massivo em arquivos sem relação com serviços; o conteúdo foi portado manualmente na
+sessão de 2026-09-14, corrigindo incompatibilidades com o módulo de autenticação. Os objetos ainda
+existem no repositório local no momento desta nota (`57bc817` e os hashes acima), mas o ramo remoto
+que os continha foi sobrescrito. Registrado aqui para que a autoria original não se perca da
+documentação, já que não consta mais no histórico de `develop`.
