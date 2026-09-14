@@ -60,6 +60,14 @@ public class ServicoServiceImpl implements ServicoService {
 
     @Override
     @Transactional(readOnly = true)
+    public ServicoResponse buscarPorId(UUID id) {
+        Servico servico = servicoRepository.findById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Serviço não encontrado"));
+        return paraResponse(servico);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PaginaResponse<ServicoResponse> listarAtivos(int pagina, int tamanho) {
         var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
         return PaginaResponse.de(servicoRepository.findByAtivoTrue(paginacao), this::paraResponse);

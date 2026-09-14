@@ -38,6 +38,11 @@ public class ServicoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ServicoResponse> buscarPorId(@PathVariable UUID id) {
+        return ResponseEntity.ok(servicoService.buscarPorId(id));
+    }
+
     @GetMapping
     public ResponseEntity<PaginaResponse<ServicoResponse>> listarAtivos(
             @RequestParam(defaultValue = "0") int pagina,
