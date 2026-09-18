@@ -70,10 +70,9 @@ Ao final da implementação:
       de auditoria, seguindo a nomeação real, provavelmente nasce em `core/auditoria/`
 - [ ] **`RF026` implementado antes ou junto** — HU13 CA4 registra log de auditoria da mesma forma
       que HU12; faz sentido implementar as duas junto com a fundação de `log_acao`
-- [ ] **Lista de categorias predefinidas e migration de seed** — o time decide *quais* categorias
-      existem (ex.: "Elétrica", "Encanamento", "Limpeza"...) e escreve o `INSERT INTO tag (...)`
-      na migration. É conteúdo de negócio, não escolha técnica, então não vem prescrito aqui.
-      Sem isso, `RF010` (cadastro de serviço) continua sem categoria para oferecer no formulário
+- [x] **Lista de categorias predefinidas e migration de seed** — definida pelo dev responsável em
+      2026-09-18 (Mecânica, Hidráulica, Limpeza, Elétrica, Pintura) e aplicada em
+      `V20260918120000__popular_tag_categorias_iniciais.sql`
 
 ## Especificação
 
@@ -182,7 +181,13 @@ Este plano altera `docs/arquitetura-sistema.json`?
       decidido em 2026-09-18 (substitui a decisão anterior de slug informado pelo admin, que caiu
       junto: sem criação pela API, não há formulário de criação para pedir o slug)
 - [x] Corrigir HU13 CA1 em `historias-usuario-administrador-servicos.md` — feito em 2026-09-18
-- [ ] Time define a lista de categorias predefinidas e escreve a migration de seed
+- [x] Lista de categorias predefinidas definida pelo dev responsável em 2026-09-18: Mecânica
+      (`mecanica`), Hidráulica (`hidraulica`), Limpeza (`limpeza`), Elétrica (`eletrica`) e
+      Pintura (`pintura`). Migration de seed em
+      `backend/src/main/resources/db/migration/V20260918120000__popular_tag_categorias_iniciais.sql`.
+      **Exceção consciente à Regra nº 3** — o dev responsável pediu explicitamente que a LLM
+      escrevesse esta migration de dado para destravar o teste; registrado aqui para constar no
+      checklist de revisão do PR
 - [ ] Time confirma: `slug` fica imutável após o seed (recomendação desta especificação) ou pode
       ser editado junto do `nome`
 - [ ] Time decide: endpoint de moderação dedicado ou flag no `editar()` existente (ver seção 2)
