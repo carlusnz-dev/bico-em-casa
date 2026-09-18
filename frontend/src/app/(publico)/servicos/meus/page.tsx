@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { ativarServico, desativarServico, listarMeusServicos } from '@/api/servicos';
+import { ativarServico, desativarServico, listarMeusServicos, deletarServico } from '@/api/servicos';
 import type { Servico } from '@/api/contratos/servico';
 import { ErroApi } from '@/api/erros';
 import { formatarPreco } from '@/components/CardServico';
@@ -60,6 +60,17 @@ export default function MeusServicosPage() {
       setIdEmAcao(null);
     }
   }
+  async function handleDeletar(id: string) {
+    if (!accessToken) return;
+    if (!window.confirm("Tem certeza que deseja excluir este serviço?")) return;
+
+    try {
+      await deletarServico(id, accessToken);
+      setServicos((atual) => atual?.filter((sv) => sv.id !== id) ?? atual);
+    } catch (causa) {
+      setErro(mensagemDeErro(causa, 'Não foi possível excluir o serviço.'));
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -71,7 +82,7 @@ export default function MeusServicosPage() {
       </div>
 
       {erro && (
-        <p role="alert" className="rounded-lg bg-erro/10 px-3 py-2 text-sm text-erro">
+        <p role="alert" className="bg-erro/10 text-erro rounded-lg px-3 py-2 text-sm">
           {erro}
         </p>
       )}
@@ -91,14 +102,14 @@ export default function MeusServicosPage() {
                     <span
                       className={
                         servico.ativo
-                          ? 'rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary'
-                          : 'rounded-full bg-borda/40 px-2 py-0.5 text-xs font-medium text-texto-suave'
+                          ? 'bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium'
+                          : 'bg-borda/40 text-texto-suave rounded-full px-2 py-0.5 text-xs font-medium'
                       }
                     >
                       {servico.ativo ? 'Ativo' : 'Inativo'}
                     </span>
                   </div>
-                  <p className="text-sm text-texto-suave">
+                  <p className="text-texto-suave text-sm">
                     {formatarPreco(servico.precoPrevio, servico.unidadePreco)}
                   </p>
                 </div>
@@ -116,6 +127,14 @@ export default function MeusServicosPage() {
                     onClick={() => alternarStatus(servico)}
                   >
                     {servico.ativo ? 'Desativar' : 'Ativar'}
+                  </Botao>
+                  <Botao
+                    variante="fantasma"
+                    tamanho="medio"
+                    className="text-erro hover:bg-erro/10"
+                    onClick={() => handleDeletar(servico.id)}
+                  >
+                    Excluir
                   </Botao>
                 </div>
               </Card>

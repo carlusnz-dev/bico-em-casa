@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | **Gerado a partir de** | [`requisitos.json`](./requisitos.json) |
-| **Última sincronização** | 2026-08-27 |
+| **Última sincronização** | 2026-09-18 |
 | **Comando de manutenção** | `/revisar-matriz` |
 
 ---
@@ -61,6 +61,10 @@ existirem — o nome da tabela já é o definitivo, o DDL ainda não foi escrito
 | **RF022** | usuarios | usuario, log_acao | mvp | PBB (Gerenciamento de usuários) |
 | **RF023** | contratacoes | conversa, mensagem | pos-mvp | PDF de especificação, quadro é–não é–faz–não faz; PBB (Falar com o profissional) |
 | **RF024** | contratacoes | mensagem | pos-mvp | Tabela de requisitos do grupo (era o primeiro RF016 duplicado) |
+| **RF025** | servicos | servico, tag, servico_tag | mvp | PBB (Gerenciamento de serviços); docs/historias-usuario-administrador-servicos.md, HU 11 |
+| **RF026** | servicos | servico, log_acao | mvp | PBB (Gerenciamento de serviços); docs/historias-usuario-administrador-servicos.md, HU 12 |
+| **RF027** | servicos | tag, servico_tag, servico, log_acao | mvp | PBB (Gerenciamento de serviços); docs/historias-usuario-administrador-servicos.md, HU 13 |
+| **RF030** | servicos | servico, contratacao | mvp | Consenso da equipe em 2026-09-18, ao revisar a implementação de ativar/desativar/deletar em ServicoServiceImpl |
 | **RNF001** | autenticacao | usuario | mvp | ADR-0006 |
 | **RNF002** | autenticacao, usuarios | usuario, perfil | mvp | ADR-0006; CLAUDE.md, seção Nunca faça |
 | **RNF003** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
@@ -96,7 +100,7 @@ Leitura inversa. Antes de mexer num módulo, esta é a lista do que ele precisa 
 | `avaliacoes` | 3 | RF006, RF007, RF019 |
 | `contratacoes` | 12 | RF008, RF012, RF013, RF014, RF015, RF016, RF017, RF018, RF023, RF024, RNF017, RNF018 |
 | `profissionais` | 10 | RF003, RF004, RF005, RF009, RF013, RF019, RNF005, RNF014, RNF017, RNF018 |
-| `servicos` | 6 | RF004, RF009, RF010, RF011, RF020, RNF005 |
+| `servicos` | 10 | RF004, RF009, RF010, RF011, RF020, RF025, RF026, RF027, RF030, RNF005 |
 | `transversal` | 12 | RNF003, RNF004, RNF006, RNF007, RNF008, RNF009, RNF010, RNF011, RNF012, RNF013, RNF016, RNF022 |
 | `usuarios` | 8 | RF002, RF020, RF021, RF022, RNF002, RNF014, RNF015, RNF022 |
 
@@ -105,7 +109,14 @@ Leitura inversa. Antes de mexer num módulo, esta é a lista do que ele precisa 
 ## 3. Leitura da cobertura
 
 **Os seis módulos do ADR-0004 têm requisito.** Nenhum módulo foi inventado sem necessidade, e
-nenhum requisito ficou órfão. Contagem confere: 46 requisitos (24 RF + 22 RNF), 0 sem módulo.
+nenhum requisito ficou órfão. Contagem confere: 50 requisitos (28 RF + 22 RNF), 0 sem módulo.
+
+**`servicos` saltou de 6 para 10 requisitos** em duas rodadas do mesmo dia: `RF025`–`RF027`
+(v1.2.0) registraram a primeira leva da feature "Gerenciamento de serviços" do administrador,
+detalhada em
+[`historias-usuario-administrador-servicos.md`](./historias-usuario-administrador-servicos.md);
+`RF030` (v1.3.0) veio de uma revisão de código que achou um `deletar()` sem requisito, sem
+contrato e sem implementação real — ver `requisitos.md` §4.6.
 
 **`autenticacao` saltou de 4 para 7 requisitos** com o [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md).
 Esse salto é a medida do que o Supabase estava fazendo pelo projeto de graça: ciclo de vida de

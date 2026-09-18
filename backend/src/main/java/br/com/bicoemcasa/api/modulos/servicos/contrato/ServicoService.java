@@ -14,4 +14,6 @@ public interface ServicoService {
     ServicoResponse editar(UUID id, ServicoRequest request, Long usuarioId);
     ServicoResponse ativar(UUID id, Long usuarioId);
     ServicoResponse desativar(UUID id, Long usuarioId);
+
+    void deletar(UUID id, Long usuarioId);
 }
