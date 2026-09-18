@@ -49,6 +49,7 @@ export const NAVEGACAO_POR_STATUS: Record<StatusSessao, ApresentacaoDaSessao> = 
       { rotulo: 'Meus serviços', href: '/servicos/meus' },
       { rotulo: 'Meu portfólio', href: '/profissionais/meu' },
       { rotulo: 'Meu perfil', href: '/perfil' },
+      { rotulo: 'Minhas avaliações', href: '/perfil/avaliacoes' },
       { rotulo: 'Sair', acao: 'logout' },
     ],
     mostrarEsqueleto: false,
