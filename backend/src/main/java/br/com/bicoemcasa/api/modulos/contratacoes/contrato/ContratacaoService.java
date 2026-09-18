@@ -4,7 +4,9 @@ import br.com.bicoemcasa.api.core.paginacao.PaginaResponse;
 import br.com.bicoemcasa.api.modulos.contratacoes.dto.ContratacaoResponse;
 import br.com.bicoemcasa.api.modulos.contratacoes.dto.ContratarServicoRequest;
 import br.com.bicoemcasa.api.modulos.contratacoes.dto.EditarContratacaoRequest;
+import br.com.bicoemcasa.api.modulos.contratacoes.models.Contratacao;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ContratacaoService {
@@ -14,4 +16,5 @@ public interface ContratacaoService {
     ContratacaoResponse editar(UUID id, EditarContratacaoRequest request, Long usuarioId);
     ContratacaoResponse arquivar(UUID id, Long usuarioId);
     ContratacaoResponse desarquivar(UUID id, Long usuarioId);
+    List<Contratacao> buscarPorServico(UUID servicoId);
 }

@@ -20,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -97,6 +98,11 @@ public class ContratacaoServiceImpl implements ContratacaoService {
         contratacao.setStatus(StatusContratacao.ATIVA);
         contratacaoRepository.save(contratacao);
         return paraResponse(contratacao);
+    }
+
+    @Override
+    public List<Contratacao> buscarPorServico(UUID servicoId){
+        return contratacaoRepository.findByServicoId(servicoId);
     }
 
     private Contratacao buscarContratacaoDoCliente(UUID id, Long usuarioId) {

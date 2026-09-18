@@ -10,6 +10,7 @@ import br.com.bicoemcasa.api.modulos.avaliacoes.models.Avaliacao;
 import br.com.bicoemcasa.api.modulos.avaliacoes.repository.AvaliacaoRepository;
 import br.com.bicoemcasa.api.modulos.contratacoes.contrato.ContratacaoService;
 import br.com.bicoemcasa.api.modulos.contratacoes.dto.ContratacaoResponse;
+import br.com.bicoemcasa.api.modulos.contratacoes.models.Contratacao;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.PerfilService;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilResponse;
 import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
@@ -96,6 +97,30 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
         avaliacaoRepository.delete(avaliacao);
     }
 
+    @Override
+    public Double calcularMediaPorProfissional(Long profissionalId){
+        return avaliacaoRepository.calcularMediaPorAvaliado(profissionalId);
+    }
+
+    @Override
+    public Double calcularMediaPorServico(UUID servicoId) {
+
+        List<Contratacao> contratacoes =
+                contratacaoService.buscarPorServico(servicoId);
+
+        List<UUID> contratacaoIds = contratacoes.stream()
+                .map(Contratacao::getId)
+                .toList();
+
+        List<Avaliacao> avaliacoes =
+                avaliacaoRepository.findByContratacaoIdIn(contratacaoIds);
+
+        return avaliacoes.stream()
+                .mapToInt(Avaliacao::getNota)
+                .average()
+                .orElse(0.0);
+    }
+
     private Avaliacao buscarAvaliacaoDoAutor(UUID id, Long usuarioId) {
         Avaliacao avaliacao = buscarOuFalhar(id);
         PerfilResponse cliente = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.CLIENTE);
@@ -124,4 +149,5 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
                 avaliacao.getAtualizadoEm()
         );
     }
+
 }

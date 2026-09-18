@@ -70,4 +70,14 @@ public class AvaliacaoController {
         avaliacaoService.deletar(id, Long.valueOf(jwt.getSubject()));
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/avaliado/{avaliadoPerfilId}/media")
+    public Double calcularMediaPorProfissional(@PathVariable Long avaliadoId){
+        return avaliacaoService.calcularMediaPorProfissional(avaliadoId);
+    }
+
+    @GetMapping("/servico/{servicoId}/media")
+    public Double calcularMediaPorServico(@PathVariable UUID servicoId) {
+        return avaliacaoService.calcularMediaPorServico((servicoId));
+    }
 }
