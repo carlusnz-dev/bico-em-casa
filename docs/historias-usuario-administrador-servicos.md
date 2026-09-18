@@ -71,6 +71,12 @@
 > o `DELETE` físico é tecnicamente possível — `contratacao.servico_id` é `ON DELETE SET NULL` —
 > mas a contratação perderia a referência do que foi vendido, e a ação não volta atrás.
 > Desativação some da busca do mesmo jeito, é reversível e é auditável.
+>
+> **Isto vale para o administrador moderando o serviço de outra pessoa, não para o profissional
+> dono.** Em 2026-09-18 o grupo decidiu, por consenso, permitir que o profissional exclua
+> definitivamente o próprio serviço (`RF030`, ver `requisitos.md` §4.6) — o mesmo risco técnico do
+> `ON DELETE SET NULL` se aplica, mas o grupo aceitou a troca para esse caso específico. As duas
+> decisões não se contradizem: são autorizações diferentes para atores diferentes.
 
 ---
 

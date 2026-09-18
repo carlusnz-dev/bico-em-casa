@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão** | 1.2.0 |
+| **Versão** | 1.3.0 |
 | **Última revisão** | 2026-09-18 |
 | **Fonte da verdade** | [`requisitos.json`](./requisitos.json) |
 | **Matriz derivada** | [`matriz-rastreabilidade.md`](./matriz-rastreabilidade.md) |
@@ -74,6 +74,7 @@ atual — fica registrado para não ser redescoberto do zero depois.
 | **RF025** | O sistema deve permitir que o administrador visualize a listagem paginada de todos os serviços cadastrados, com filtro por situação e por categoria, e busca por título ou por profissional responsável. | servicos | 2026-09-18 |
 | **RF026** | O sistema deve permitir que o administrador desative um serviço inadequado registrando o motivo, e o reative caso a análise mude, sem apagar o histórico das contratações já realizadas. | servicos | 2026-09-18 |
 | **RF027** | O sistema deve permitir que o administrador mantenha as categorias de serviço e corrija título, descrição e categorias de um serviço cadastrado por um profissional. | servicos | 2026-09-18 |
+| **RF030** | O sistema deve permitir que o profissional exclua definitivamente um serviço próprio, além da opção de apenas desativá-lo. | servicos | 2026-09-18 |
 
 ## 2. Requisitos Funcionais — fora do MVP
 
@@ -223,6 +224,37 @@ mudança de schema:
 > — e a Regra nº 1 do `CLAUDE.md` proíbe mudar schema sem ADR prévio. Enquanto o ADR não existir,
 > esses dois PBIs continuam como rascunho em `historias-usuario-administrador-servicos.md`, sem
 > código correspondente.
+
+### 4.6 Versão 1.3.0 — exclusão definitiva de serviço pelo profissional
+
+`RF030` nasceu de uma revisão de código: ao implementar `deletar()` em `ServicoServiceImpl`, a
+função só chamava `save()` sobre o mesmo objeto — não excluía nada, e não estava no contrato
+`ServicoService` nem tinha requisito registrado. O grupo revisou e decidiu, por consenso em
+2026-09-18, manter **as duas opções** para o profissional sobre o próprio serviço: `desativar()`
+(reversível, já existente) e `deletar()` (definitivo, novo).
+
+> [!WARNING]
+> **Isto é uma exclusão física, mesmo com `RF026` tendo decidido o contrário para o administrador.**
+> A HU12 de `historias-usuario-administrador-servicos.md` rejeitou `DELETE` físico de `servico`
+> porque `contratacao.servico_id` é `ON DELETE SET NULL` — apagar o serviço apaga a referência do
+> que foi contratado. Esse motivo técnico **não mudou** com `RF030`: continua sendo verdade que
+> excluir um serviço com contratação associada faz a contratação perder essa referência. A
+> diferença é o consenso da equipe de que, para o **profissional excluindo o próprio serviço**
+> (ao contrário do admin moderando o de terceiros), esse risco é aceitável — mas nada no pedido
+> mencionou impedir a exclusão quando já existe `contratacao` vinculada. Isso fica registrado
+> como pendência de implementação abaixo, não decidido por mim.
+
+**Numeração:** pulei `RF028` e `RF029` porque `historias-usuario-administrador-servicos.md` já os
+reserva para HU14 e HU15 (faixa de preço e fila de aprovação), mesmo eles ainda não estando no
+JSON — código de requisito não é reaproveitado, e usar 028/029 aqui criaria colisão quando aquelas
+duas HUs forem registradas.
+
+**Pendência de implementação (não é decisão de documentação, é código da equipe):**
+- [ ] Decidir se `deletar()` bloqueia quando existe `contratacao` referenciando o serviço, ou se
+      aceita o `ON DELETE SET NULL` sem checagem
+- [ ] Implementar de fato — trocar `servicoRepository.save(servico)` por
+      `servicoRepository.delete(servico)`, adicionar `deletar` ao contrato `ServicoService` e
+      expor o endpoint em `ServicoController`
 
 ---
 
