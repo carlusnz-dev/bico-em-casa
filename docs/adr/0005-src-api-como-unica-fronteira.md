@@ -105,6 +105,6 @@ Esta decisão altera `docs/arquitetura-sistema.json`?
 
 ## Referências
 
-- [`design-sistema.md` §4.2 e §10.3](../design-sistema.md)
+- [`design-sistema.md` §4.2 e §11.3](../design-sistema.md)
 - [Zod — inferência de tipos](https://zod.dev/)
 - [RFC 9457 — Problem Details for HTTP APIs](https://www.rfc-editor.org/rfc/rfc9457)

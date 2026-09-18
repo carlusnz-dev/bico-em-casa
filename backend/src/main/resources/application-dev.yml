@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bicoemcasa
+    username: bicoemcasa
+    password: ${DB_PASSWORD:bicoemcasa}
+
+app:
+  rsa:
+    private-key-path: ${user.home}/.bicoemcasa/keys/private.pem
+    public-key-path: ${user.home}/.bicoemcasa/keys/public.pem
+
+armazenamento:
+  endpoint: http://localhost:9000
+  access-key: ${MINIO_ROOT_USER:bicoemcasa}
+  secret-key: ${MINIO_ROOT_PASSWORD:bicoemcasa123}

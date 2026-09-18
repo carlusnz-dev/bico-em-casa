@@ -37,6 +37,19 @@ não há conflito entre a exigência do usuário e a linha de framework escolhid
 Ajustes de versão decorrentes: `springdoc-openapi` sobe para a linha **3.1.x** (a linha 2.x não
 é compatível com Boot 4), Flyway para **13.3.x** e Testcontainers para **2.0.x**.
 
+> [!NOTE]
+> **Revisão de 2026-08-27 — a faixa do Flyway mudou.** Ao fundar o backend de fato, o
+> desenvolvedor decidiu que **toda biblioteca gerenciada pelo BOM do Spring Boot herda a versão
+> do BOM**, sem override no `pom.xml`. O BOM do Boot 4.1.1 gerencia o Flyway **12.4.0**, então é
+> essa a versão vigente — não a 13.3.x prevista aqui. A 13.3.x existe e é mais nova; a escolha
+> foi por não manter override de versão de uma biblioteca que o BOM já resolve, e assim não ter
+> que revalidar a compatibilidade a cada bump do Boot.
+>
+> O restante desta decisão (Spring Boot 4.1, Java 21, Maven, springdoc 3.1.x, Testcontainers
+> 2.0.x) continua valendo. A versão vigente está sempre em
+> [`arquitetura-sistema.json`](../arquitetura-sistema.json), que é a fonte da verdade.
+> Ver [o plano de fundação](../planos/2026-08-27-fundacao-backend-frontend-e-infra.md).
+
 ## Alternativas Consideradas
 
 | Opção | Prós | Contras | Por que foi recusada |
