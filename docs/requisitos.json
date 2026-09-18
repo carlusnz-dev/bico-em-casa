@@ -1,8 +1,8 @@
 {
   "_meta": {
     "projeto": "Bico em Casa",
-    "versao": "1.1.0",
-    "atualizado_em": "2026-08-22",
+    "versao": "1.2.0",
+    "atualizado_em": "2026-09-18",
     "descricao": "Fonte da verdade dos requisitos. A chave de cada entrada é o código do requisito. `docs/requisitos.md` é o espelho legível e `docs/matriz-rastreabilidade.md` é derivado deste arquivo.",
     "modulos_validos": [
       "autenticacao",
@@ -391,6 +391,54 @@
     "status": "pos-mvp",
     "origem": "Tabela de requisitos do grupo (era o primeiro RF016 duplicado)",
     "data_criada": "2026-08-19"
+  },
+  "RF025": {
+    "codigo": "RF025",
+    "tipo": "funcional",
+    "descricao": "O sistema deve permitir que o administrador visualize a listagem paginada de todos os serviços cadastrados, com filtro por situação e por categoria, e busca por título ou por profissional responsável.",
+    "modulos": [
+      "servicos"
+    ],
+    "entidades": [
+      "servico",
+      "tag",
+      "servico_tag"
+    ],
+    "status": "mvp",
+    "origem": "PBB (Gerenciamento de serviços); docs/historias-usuario-administrador-servicos.md, HU 11",
+    "data_criada": "2026-09-18"
+  },
+  "RF026": {
+    "codigo": "RF026",
+    "tipo": "funcional",
+    "descricao": "O sistema deve permitir que o administrador desative um serviço inadequado registrando o motivo, e o reative caso a análise mude, sem apagar o histórico das contratações já realizadas.",
+    "modulos": [
+      "servicos"
+    ],
+    "entidades": [
+      "servico",
+      "log_acao"
+    ],
+    "status": "mvp",
+    "origem": "PBB (Gerenciamento de serviços); docs/historias-usuario-administrador-servicos.md, HU 12",
+    "data_criada": "2026-09-18"
+  },
+  "RF027": {
+    "codigo": "RF027",
+    "tipo": "funcional",
+    "descricao": "O sistema deve permitir que o administrador mantenha as categorias de serviço e corrija título, descrição e categorias de um serviço cadastrado por um profissional.",
+    "modulos": [
+      "servicos"
+    ],
+    "entidades": [
+      "tag",
+      "servico_tag",
+      "servico",
+      "log_acao"
+    ],
+    "status": "mvp",
+    "origem": "PBB (Gerenciamento de serviços); docs/historias-usuario-administrador-servicos.md, HU 13",
+    "data_criada": "2026-09-18"
   },
   "RNF001": {
     "codigo": "RNF001",

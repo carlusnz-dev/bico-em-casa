@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão** | 1.1.0 |
-| **Última revisão** | 2026-08-22 |
+| **Versão** | 1.2.0 |
+| **Última revisão** | 2026-09-18 |
 | **Fonte da verdade** | [`requisitos.json`](./requisitos.json) |
 | **Matriz derivada** | [`matriz-rastreabilidade.md`](./matriz-rastreabilidade.md) |
 | **Escopo** | MVP acadêmico — PUCPR, Engenharia de Software |
@@ -71,6 +71,9 @@ atual — fica registrado para não ser redescoberto do zero depois.
 | **RF020** | O sistema deve permitir que qualquer usuário denuncie um serviço, perfil ou avaliação inadequado, e que o administrador registre o resultado da análise. | servicos, usuarios | 2026-08-22 |
 | **RF021** | O sistema deve permitir que o administrador liste os usuários da plataforma filtrando por ativos e inativos. | usuarios | 2026-08-22 |
 | **RF022** | O sistema deve permitir que o administrador suspenda e reative contas de usuário, registrando o motivo da ação. | usuarios | 2026-08-22 |
+| **RF025** | O sistema deve permitir que o administrador visualize a listagem paginada de todos os serviços cadastrados, com filtro por situação e por categoria, e busca por título ou por profissional responsável. | servicos | 2026-09-18 |
+| **RF026** | O sistema deve permitir que o administrador desative um serviço inadequado registrando o motivo, e o reative caso a análise mude, sem apagar o histórico das contratações já realizadas. | servicos | 2026-09-18 |
+| **RF027** | O sistema deve permitir que o administrador mantenha as categorias de serviço e corrija título, descrição e categorias de um serviço cadastrado por um profissional. | servicos | 2026-09-18 |
 
 ## 2. Requisitos Funcionais — fora do MVP
 
@@ -158,6 +161,9 @@ Seis vieram do canvas PBB e da revisão. Estavam no quadro da aula mas nunca che
 | `RF020` — denunciar conteúdo inadequado | PBB, cartão "Denunciar serviços inadequados" |
 | `RF021` — admin lista usuários ativos/inativos | PBB, cartão "Visualizar usuários ativos e inativos no site" |
 | `RF022` — admin suspende e reativa contas | PBB, bloco "Gerenciamento de usuários" |
+| `RF025` — admin lista e filtra serviços cadastrados | PBB, feature "Gerenciamento de serviços"; `docs/historias-usuario-administrador-servicos.md`, HU 11 |
+| `RF026` — admin desativa/reativa serviço inadequado | PBB, feature "Gerenciamento de serviços"; HU 12 |
+| `RF027` — admin mantém categoria (`tag`) e corrige serviço | PBB, feature "Gerenciamento de serviços"; HU 13 |
 
 ### 4.3 Decisões de escopo
 
@@ -196,6 +202,27 @@ terceirizava justamente o que se quer aprender.
 > mais: erro de comparação de hash ou de validação de token não falha ruidoso, falha silencioso e
 > explorável. `RNF019` a `RNF022` existem para que essas garantias sejam **testáveis**, não
 > presumidas.
+
+### 4.5 Versão 1.2.0 — administração de serviços (parte 1)
+
+`RF020`–`RF022` (versão 1.1.0) cobriam apenas administração de **usuários**. O canvas PBB também
+promete uma feature "Gerenciamento de serviços" para o administrador, detalhada em
+[`historias-usuario-administrador-servicos.md`](./historias-usuario-administrador-servicos.md) em
+5 histórias de usuário (HU 11–15). Esta versão registra as **três primeiras**, que não exigem
+mudança de schema:
+
+| Código | O que cobre |
+|---|---|
+| `RF025` | Listagem paginada de serviços com filtro de situação/categoria e busca (HU 11) |
+| `RF026` | Desativação reversível e auditável de serviço, sem exclusão física (HU 12) |
+| `RF027` | CRUD de categoria (`tag`) e correção de serviço pelo administrador (HU 13) |
+
+> [!NOTE]
+> **`RF028` e `RF029` ficam de fora desta versão.** HU 14 (faixa de preço sugerida por categoria)
+> e HU 15 (fila de aprovação de serviço) exigem migration — colunas novas em `tag` e em `servico`
+> — e a Regra nº 1 do `CLAUDE.md` proíbe mudar schema sem ADR prévio. Enquanto o ADR não existir,
+> esses dois PBIs continuam como rascunho em `historias-usuario-administrador-servicos.md`, sem
+> código correspondente.
 
 ---
 
