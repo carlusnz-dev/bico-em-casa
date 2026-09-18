@@ -153,4 +153,10 @@ public class ServicoServiceImpl implements ServicoService {
                 servico.getCriadoEm()
         );
     }
+
+    @Override
+    public void deletar(UUID id, Long usuarioId) {
+        Servico servico = buscarServicoDoPerfil(id, usuarioId);
+        servicoRepository.delete(servico);
+    }
 }
