@@ -16,8 +16,6 @@ armazenamento:
 cors:
   allowed-origins:
     - "http://localhost:3000"
-    - "http://localhost:3001"
-    - "http://localhost:3002"
     - "https://bicoemcasa.com.br"
   allowed-methods:
     - "GET"
