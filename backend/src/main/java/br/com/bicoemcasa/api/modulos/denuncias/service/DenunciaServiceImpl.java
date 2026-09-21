@@ -6,6 +6,7 @@ import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.modulos.denuncias.contrato.DenunciaService;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaAnaliseRequest;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaAtualizacaoRequest;
+import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaContraMimResponse;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaRequest;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaResponse;
 import br.com.bicoemcasa.api.modulos.denuncias.models.Denuncia;
@@ -138,6 +139,13 @@ public class DenunciaServiceImpl implements DenunciaService {
             throw new DenunciaNaoPendenteException("Apenas denúncias pendentes podem ser atualizadas, excluídas ou analisadas");
         }
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Page<DenunciaContraMimResponse> listarContraMim(Long usuarioId, Pageable pageable) {
+        PerfilResponse autor = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.PROFISSIONAL);
+        return denunciaRepository.findByDenunciadoPerfilId(autor.id(), pageable).map(this::paraContraMimResponse);
+    }
 
     private DenunciaResponse paraResponse(Denuncia denuncia) {
         return new DenunciaResponse(
@@ -155,6 +163,20 @@ public class DenunciaServiceImpl implements DenunciaService {
                 denuncia.getParecer(),
                 denuncia.getCriadoEm(),
                 denuncia.getAtualizadoEm()
+        );
+    }
+
+    private DenunciaContraMimResponse paraContraMimResponse(Denuncia denuncia) {
+        return new DenunciaContraMimResponse(
+                denuncia.getId(),
+                denuncia.getAlvoTipo(),
+                denuncia.getAlvoId(),
+                denuncia.getMotivo(),
+                denuncia.getDescricao(),
+                denuncia.getStatus(),
+                denuncia.getAnalisadoEm(),
+                denuncia.getParecer(),
+                denuncia.getCriadoEm()
         );
     }
 }

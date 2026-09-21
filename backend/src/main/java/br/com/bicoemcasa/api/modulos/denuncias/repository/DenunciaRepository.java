@@ -13,4 +13,7 @@ public interface DenunciaRepository extends JpaRepository<Denuncia, UUID> {
     Page<Denuncia> findByAutorPerfilId(UUID autorPerfilId, Pageable pageable);
 
     Page<Denuncia> findByStatus(StatusDenuncia status, Pageable pageable);
+
+
+    Page<Denuncia> findByDenunciadoPerfilId(UUID denunciaPerfilId, Pageable pageable);
 }

@@ -2,6 +2,7 @@ package br.com.bicoemcasa.api.modulos.denuncias.contrato;
 
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaAnaliseRequest;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaAtualizacaoRequest;
+import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaContraMimResponse;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaRequest;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaResponse;
 import br.com.bicoemcasa.api.modulos.denuncias.models.StatusDenuncia;
@@ -18,6 +19,8 @@ public interface DenunciaService {
     Page<DenunciaResponse> listarDoAutor(Long usuarioId, Pageable pageable);
 
     Page<DenunciaResponse> listarParaAdmin(Long usuarioIdAdmin, StatusDenuncia status, Pageable pageable);
+
+    Page<DenunciaContraMimResponse> listarContraMim(Long usuarioId,  Pageable pageable);
 
     DenunciaResponse atualizar(UUID id, Long usuarioId, DenunciaAtualizacaoRequest request);
 

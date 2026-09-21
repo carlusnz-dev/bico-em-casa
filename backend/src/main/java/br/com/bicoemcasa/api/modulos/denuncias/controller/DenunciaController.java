@@ -3,6 +3,7 @@ package br.com.bicoemcasa.api.modulos.denuncias.controller;
 import br.com.bicoemcasa.api.modulos.denuncias.contrato.DenunciaService;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaAnaliseRequest;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaAtualizacaoRequest;
+import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaContraMimResponse;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaRequest;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaResponse;
 import br.com.bicoemcasa.api.modulos.denuncias.models.StatusDenuncia;
@@ -76,6 +77,15 @@ public class DenunciaController {
             @PageableDefault(size = 20, sort = "criadoEm", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         var pagina = denunciaService.listarDoAutor(Long.valueOf(jwt.getSubject()), pageable);
+        return ResponseEntity.ok(new PagedModel<>(pagina));
+    }
+
+    @GetMapping("/contra-mim")
+    public ResponseEntity<PagedModel<DenunciaContraMimResponse>> listarContraMim(
+            @AuthenticationPrincipal Jwt jwt,
+            @PageableDefault(size = 20, sort = "criadoEm", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        var pagina = denunciaService.listarContraMim(Long.valueOf(jwt.getSubject()), pageable);
         return ResponseEntity.ok(new PagedModel<>(pagina));
     }
 
