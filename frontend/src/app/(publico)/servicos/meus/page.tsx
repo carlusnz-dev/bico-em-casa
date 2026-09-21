@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { ativarServico, desativarServico, listarMeusServicos } from '@/api/servicos';
 import type { Servico } from '@/api/contratos/servico';
 import { ErroApi } from '@/api/erros';
-import { formatarPreco } from '@/components/CardServico';
+import { formatarPreco } from '@/components/formatarPreco';
 import { Botao, classesDoBotao } from '@/components/ui/Botao';
 import { Card } from '@/components/ui/Card';
 import { useSessao } from '@/hooks/useSessao';
