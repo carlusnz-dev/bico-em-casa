@@ -166,6 +166,9 @@ export default function DetalheContratacaoPage() {
         <Link href={`/contratacoes/${contratacao.id}/avaliar`} className={classesDoBotao('secundario')}>
           Avaliar
         </Link>
+        <Link href={`/contratacoes/${contratacao.id}/denunciar`} className={classesDoBotao('fantasma')}>
+          Denunciar
+        </Link>
         <Botao variante="fantasma" carregando={carregandoAcao} onClick={alternarStatus}>
           {contratacao.status === 'ATIVA' ? 'Arquivar' : 'Desarquivar'}
         </Botao>

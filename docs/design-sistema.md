@@ -570,7 +570,8 @@ backend/
     │   │       ├── profissionais/
     │   │       ├── servicos/
     │   │       ├── contratacoes/
-    │   │       └── avaliacoes/
+    │   │       ├── avaliacoes/
+    │   │       └── denuncias/
     │   └── resources/
     │       ├── db/migration/         # V1__criar_usuarios.sql, V2__criar_profissionais.sql
     │       ├── application.yml
