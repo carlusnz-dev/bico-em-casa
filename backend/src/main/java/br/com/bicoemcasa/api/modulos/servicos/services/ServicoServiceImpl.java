@@ -6,6 +6,7 @@ import br.com.bicoemcasa.api.core.paginacao.PaginaResponse;
 import br.com.bicoemcasa.api.modulos.servicos.contrato.ServicoService;
 import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoRequest;
 import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoResponse;
+import br.com.bicoemcasa.api.modulos.servicos.dto.TopListResponse;
 import br.com.bicoemcasa.api.modulos.servicos.models.Servico;
 import br.com.bicoemcasa.api.modulos.servicos.models.Tag;
 import br.com.bicoemcasa.api.modulos.servicos.repository.ServicoRepository;
@@ -114,6 +115,12 @@ public class ServicoServiceImpl implements ServicoService {
         servico.setAtivo(false);
         servicoRepository.save(servico);
         return paraResponse(servico);
+    }
+
+    @Override
+    public List<TopListResponse> listarTop5PorPerfilId(UUID perfilId) {
+        return servicoRepository.findTop5ByPerfilId(perfilId)
+                .stream().map(TopListResponse::new).toList();
     }
 
     private Servico buscarServicoDoPerfil(UUID id, Long usuarioId) {
