@@ -110,7 +110,8 @@ Leitura inversa. Antes de mexer num módulo, esta é a lista do que ele precisa 
 ## 3. Leitura da cobertura
 
 **Os módulos do ADR-0004 têm requisito.** Nenhum módulo foi inventado sem necessidade, e
-nenhum requisito ficou órfão.
+nenhum requisito ficou órfão. Contagem confere: 50 requisitos (28 RF + 22 RNF), 0 sem módulo,
+distribuídos em 8 módulos.
 
 **`servicos` saltou de 6 para 10 requisitos** em duas rodadas do mesmo dia: `RF025`–`RF027`
 (v1.2.0) registraram a primeira leva da feature "Gerenciamento de serviços" do administrador,
@@ -149,17 +150,47 @@ algum domínio. RNF transversal é garantido em `config/`, `comum/` e no CI, nã
 
 ## 4. Rastro para código
 
-Vazio por enquanto — **não existe código de aplicação no repositório**. Desde 2026-08-27 existe
-a *fundação* (`backend/` compila, `frontend/` builda, o compose sobe PostgreSQL e MinIO), mas
-fundação não implementa requisito: não há migration, entidade, endpoint nem tela.
+Liga cada requisito que já tem código ao arquivo que o implementa. Requisito sem código fica com
+`—` — a ausência é informação, não lacuna a preencher com promessa. O código de aplicação é
+**escrito pela equipe**, não pela LLM (`CLAUDE.md`, regra nº 3).
 
-Esta seção passa a ser preenchida quando as migrations e os módulos forem escritos, ligando cada
-requisito ao arquivo que o implementa e ao teste que o prova. Esse código é **escrito pela
-equipe**, não pela LLM (`CLAUDE.md`, regra nº 3).
+Caminhos relativos a `backend/src/main/` (migrations em `resources/db/migration/`, classes em
+`java/br/com/bicoemcasa/api/`) e a `frontend/src/`.
 
 | Código | Migration | Implementação | Teste |
 |---|---|---|---|
-| — | — | — | — |
+| **RF001** | `V1`, `V3` | `modulos/autenticacao/AutenticacaoController.java` | — |
+| **RF002** | `V2` | `modulos/usuarios/controller/PerfilController.java` | — |
+| **RF003** | `V20260914083923` | `modulos/profissionais/PortfolioController.java` | — |
+| **RF006** | `V20260914043758` | `modulos/avaliacoes/controller/AvaliacaoController.java` | — |
+| **RF007** | `V20260914043758` | `modulos/avaliacoes/service/AvaliacaoServiceImpl.java` | — |
+| **RF010** | `V20260913223500` | `modulos/servicos/controller/ServicoController.java` | — |
+| **RF016** | `V20260914025741` | `modulos/contratacoes/controller/ContratacaoController.java` | — |
+| **RF019** | `V20260914043758` | `modulos/avaliacoes/controller/AvaliacaoController.java` | — |
+| **RF020** | `V20260914050733` | `modulos/denuncias/controller/DenunciaController.java` | `modulos/denuncias/DenunciaServiceImplTest.java` |
+| **RF027** | `V20260918120000` | `modulos/servicos/controller/TagController.java` | — |
+| **RF030** | — | `modulos/servicos/controller/ServicoController.java` | — |
+
+Os demais requisitos continuam sem código.
+
+### Cobertura parcial — o que a linha não diz
+
+Três requisitos têm implementação que **não cobre a descrição inteira**:
+
+- **RF001** — cadastro, login e encerramento de sessão existem; **recuperação de senha por
+  e-mail não**. A entidade `token_recuperacao` não tem migration.
+- **RF003** — portfólio com foto de capa existe; a **galeria de imagens não**. A entidade
+  `portfolio_foto` não tem migration.
+- **RF019** — a nota média é calculada no frontend a partir da lista de avaliações. O endpoint
+  `GET /api/avaliacao/avaliado/{id}/media` existe mas **responde 500** (ver abaixo).
+
+### Defeito aberto
+
+`AvaliacaoRepository.calcularMediaPorAvaliado` declara `@Param("avaliadoId")` enquanto a
+`@Query` referencia `:avaliadoPerfilId`, e recebe `Long` onde a entidade usa `UUID`. O
+controller agrava com `@PathVariable Long avaliadoId` sob o template `{avaliadoPerfilId}`.
+Resultado verificado em 2026-09-20: `GET /api/avaliacao/avaliado/{uuid}/media` → **HTTP 500**.
+`GET /api/avaliacao/servico/{uuid}/media` responde 200 normalmente.
 
 ---
 
