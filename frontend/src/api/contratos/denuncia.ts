@@ -25,6 +25,7 @@ export const denunciaSchema = z.object({
   atualizadoEm: z.string(),
 });
 
+
 export type Denuncia = z.infer<typeof denunciaSchema>;
 
 export const denunciaRequestSchema = z.object({
@@ -40,3 +41,18 @@ export const denunciaRequestSchema = z.object({
 });
 
 export type DenunciaRequest = z.infer<typeof denunciaRequestSchema>;
+
+
+export const denunciaContraMimSchema = z.object({
+  id: z.uuid(),
+  alvoTipo: tipoAlvoDenunciaSchema ,      
+  alvoId: z.string(),
+  motivo: z.string(),
+  descricao: z.string().nullable(),
+  status: statusDenunciaSchema   ,         
+  analisadoEm: z.string().nullable(),
+  parecer: z.string().nullable(),
+  criadoEm: z.string()
+});
+
+export type DenunciaContraMim = z.infer<typeof denunciaContraMimSchema >;

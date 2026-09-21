@@ -265,7 +265,8 @@
         "healthcheck": "pg_isready -U bicoemcasa -d bicoemcasa"
       },
       "minio": {
-        "image": "minio/minio:RELEASE.2025-09-07T16-13-09Z",
+        "image": "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z",
+        "registry_rationale": "As imagens minio/minio e minio/mc no Docker Hub passaram a negar pull anonimo (pull access denied ... repository does not exist or may require docker login), inclusive na tag latest. quay.io e o registro do proprio MinIO e serve as mesmas tags sem login. A versao fixada nao mudou, so o registro de origem.",
         "ports": {
           "9000": "API S3",
           "9001": "Console web"
@@ -273,7 +274,7 @@
         "volume": "bec-minio-dados montado em /data"
       },
       "minio-init": {
-        "image": "minio/mc:RELEASE.2025-08-13T08-35-41Z",
+        "image": "quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z",
         "role": "Executa uma vez e sai. Cria os buckets portfolios, anexos e avatares.",
         "idempotency": "mc mb --ignore-existing. Sem isso o SEGUNDO docker compose up falha com bucket already exists.",
         "wait_strategy": "Laco explicito until mc alias set local ...; do sleep 1; done, com depends_on: [minio]. Nao se usa healthcheck na imagem minio/minio: ela nao traz curl, entao o healthcheck nunca fica verde e travaria o depends_on para sempre."

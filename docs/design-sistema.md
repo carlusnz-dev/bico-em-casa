@@ -365,8 +365,14 @@ muda sozinho não é reproduzível, e a hora de descobrir isso nunca é boa.
 | Serviço | Imagem | Portas | Papel |
 |---|---|---|---|
 | `postgres` | `postgres:18.6-alpine` | 5432 | Banco `bicoemcasa`, usuário `bicoemcasa`, volume `bec-postgres-dados`, healthcheck `pg_isready -U bicoemcasa -d bicoemcasa` |
-| `minio` | `minio/minio:RELEASE.2025-09-07T16-13-09Z` | 9000 (API S3), 9001 (console) | Armazenamento S3, volume `bec-minio-dados` em `/data` |
-| `minio-init` | `minio/mc:RELEASE.2025-08-13T08-35-41Z` | — | Roda **uma vez** e sai. Cria `portfolios`, `anexos` e `avatares` |
+| `minio` | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` | 9000 (API S3), 9001 (console) | Armazenamento S3, volume `bec-minio-dados` em `/data` |
+| `minio-init` | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z` | — | Roda **uma vez** e sai. Cria `portfolios`, `anexos` e `avatares` |
+
+**As imagens do MinIO vêm do `quay.io`, não do Docker Hub.** `minio/minio` e `minio/mc` no Hub
+passaram a negar pull anônimo — `pull access denied [...] repository does not exist or may require
+'docker login'`, inclusive na tag `latest`, então não é tag errada nem rate limit. O `quay.io` é o
+registro do próprio MinIO e serve as mesmas tags sem login. A versão fixada é a mesma; só mudou de
+onde ela é baixada.
 
 **Volumes nomeados:** `bec-postgres-dados` e `bec-minio-dados`, declarados no bloco `volumes:` do
 topo. Esse bloco não é decorativo — **sem ele o `docker compose config` falha na validação**.

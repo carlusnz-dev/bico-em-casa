@@ -27,7 +27,10 @@ services:
       start_period: 10s
 
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    # As imagens do MinIO vem do quay.io: minio/minio e minio/mc no Docker Hub passaram a
+    # negar pull anonimo, inclusive na tag latest. quay.io e o registro do proprio MinIO e
+    # serve as mesmas tags sem login. A versao e a mesma; so mudou de onde ela vem.
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: bec-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -41,7 +44,7 @@ services:
       - bec-minio-dados:/data
 
   minio-init:
-    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
     container_name: bec-minio-init
     depends_on:
       - minio
