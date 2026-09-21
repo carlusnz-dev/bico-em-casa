@@ -6,11 +6,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { criarPortfolio, editarPortfolio } from '@/api/portfolio';
-import {
-  Portfolio,
-  PortfolioRequest,
-  portfolioRequestSchema,
-} from '@/api/contratos/portfolio';
+import { Portfolio, PortfolioRequest, portfolioRequestSchema } from '@/api/contratos/portfolio';
 import { ErroApi } from '@/api/erros';
 import { Botao } from '@/components/ui/Botao';
 import { Input } from '@/components/ui/Input';
@@ -22,6 +18,7 @@ export function FormPortfolio({ portfolio }: { portfolio?: Portfolio }) {
   const { accessToken, status } = useSessao();
   const router = useRouter();
   const [erroGeral, setErroGeral] = useState<string | null>(null);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     if (status === 'anonimo') {
@@ -80,7 +77,7 @@ export function FormPortfolio({ portfolio }: { portfolio?: Portfolio }) {
           Título
         </Label>
         <Input id="titulo" erro={Boolean(errors.titulo)} {...register('titulo')} />
-        {errors.titulo && <p className="text-sm text-erro">{errors.titulo.message}</p>}
+        {errors.titulo && <p className="text-erro text-sm">{errors.titulo.message}</p>}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -88,10 +85,14 @@ export function FormPortfolio({ portfolio }: { portfolio?: Portfolio }) {
         <Textarea
           id="descricao"
           rows={4}
+          className={hidden ? 'block' : 'hidden'}
           erro={Boolean(errors.descricao)}
           {...register('descricao')}
         />
-        {errors.descricao && <p className="text-sm text-erro">{errors.descricao.message}</p>}
+        {errors.descricao && <p className="text-erro text-sm">{errors.descricao.message}</p>}
+
+        <Botao onClick={() => setHidden(!hidden)}>Ocultar</Botao>
+        <p>{hidden ? 'verdade' : 'false'}</p>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -99,11 +100,11 @@ export function FormPortfolio({ portfolio }: { portfolio?: Portfolio }) {
           Endereço (ex.: joao-eletricista)
         </Label>
         <Input id="slugUrl" erro={Boolean(errors.slugUrl)} {...register('slugUrl')} />
-        {errors.slugUrl && <p className="text-sm text-erro">{errors.slugUrl.message}</p>}
+        {errors.slugUrl && <p className="text-erro text-sm">{errors.slugUrl.message}</p>}
       </div>
 
       {erroGeral && (
-        <p role="alert" className="rounded-lg bg-erro/10 px-3 py-2 text-sm text-erro">
+        <p role="alert" className="bg-erro/10 text-erro rounded-lg px-3 py-2 text-sm">
           {erroGeral}
         </p>
       )}

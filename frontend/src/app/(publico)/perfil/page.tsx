@@ -12,7 +12,7 @@ import { ErroApi } from '@/api/erros';
 import { buscarMeuPerfil } from '@/api/perfil';
 import { listarMeusServicos } from '@/api/servicos';
 import { AvatarIniciais } from '@/components/AvatarIniciais';
-import { formatarPreco } from '@/components/CardServico';
+import { formatarPreco } from '@/components/formatarPreco';
 import { Card } from '@/components/ui/Card';
 import { useSessao } from '@/hooks/useSessao';
 

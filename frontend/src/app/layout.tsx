@@ -20,9 +20,20 @@ export const metadata: Metadata = {
     'Plataforma de contratação de profissionais autônomos para serviços rápidos.',
 };
 
+const SCRIPT_TEMA_INICIAL = `
+  try {
+    var tema = localStorage.getItem('bico-em-casa:tema');
+    var escuro = tema ? tema === 'escuro' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.classList.toggle('dark', escuro);
+  } catch (e) {}
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${josefinSans.variable} ${albertSans.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA_INICIAL }} />
+      </head>
       <body>
         <Provedores>{children}</Provedores>
       </body>

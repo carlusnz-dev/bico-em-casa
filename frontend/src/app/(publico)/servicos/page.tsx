@@ -1,6 +1,9 @@
 import Link from 'next/link';
 
+import type { Perfil } from '@/api/contratos/perfil';
+import { buscarPerfilPorId } from '@/api/perfil';
 import { listarServicos } from '@/api/servicos';
+import { listarTags } from '@/api/tags';
 import { CardServico } from '@/components/CardServico';
 import { classesDoBotao } from '@/components/ui/Botao';
 
@@ -13,7 +16,21 @@ export default async function ServicosPage({
 }) {
   const { pagina: paginaParam } = await searchParams;
   const pagina = Number(paginaParam ?? '0');
-  const { conteudo: servicos, totalPaginas } = await listarServicos(pagina, TAMANHO_PAGINA);
+
+  const [{ conteudo: servicos, totalPaginas }, tags] = await Promise.all([
+    listarServicos(pagina, TAMANHO_PAGINA),
+    listarTags(),
+  ]);
+
+  const tagsPorId = new Map(tags.map((tag) => [tag.id, tag]));
+
+  const perfilIds = [...new Set(servicos.map((servico) => servico.perfilId))];
+  const perfis = await Promise.all(
+    perfilIds.map((id) => buscarPerfilPorId(id).catch(() => null)),
+  );
+  const perfilPorId = new Map<string, Perfil | null>(
+    perfilIds.map((id, indice) => [id, perfis[indice] ?? null]),
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -25,10 +42,14 @@ export default async function ServicosPage({
       {servicos.length === 0 ? (
         <p className="text-texto-suave">Nenhum serviço ativo no momento.</p>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {servicos.map((servico) => (
             <li key={servico.id}>
-              <CardServico servico={servico} />
+              <CardServico
+                servico={servico}
+                tags={servico.tagIds.map((id) => tagsPorId.get(id)).filter((tag) => tag !== undefined)}
+                perfil={perfilPorId.get(servico.perfilId) ?? null}
+              />
             </li>
           ))}
         </ul>
