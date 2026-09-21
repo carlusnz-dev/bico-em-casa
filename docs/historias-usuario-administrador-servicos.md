@@ -7,17 +7,17 @@
 | **PBIs cobertos** | 5 cartões do canvas `PBB_bico-em-casa.png` |
 | **Autor** | Carlos Antunes |
 | **Data** | `2026-08-23` |
-| **Status** | Rascunho — requisitos correspondentes ainda **não** existem em `requisitos.json` |
+| **Status** | HU 11–13 registradas como `RF025`–`RF027` em `requisitos.json` v1.2.0 (2026-09-18). HU 14–15 continuam rascunho — dependem de ADR de schema |
 | **Fonte** | `BES-Especificação do Projeto - Bico em Casa.pdf`, Artefato 5 · canvas PBB |
 
 ---
 
 > [!WARNING]
-> **Nenhum dos 5 PBIs abaixo tem requisito funcional hoje.** `RF020`–`RF022` cobrem denúncia e
-> gestão de **usuários**; não existe RF de administrador sobre **serviços**. Os códigos `RF025`
-> a `RF029` citados aqui são **propostos**, não registrados. Enquanto não entrarem em
-> `requisitos.json` (fonte da verdade) → `requisitos.md` → `/revisar-matriz`, no mesmo commit,
-> estas histórias são rascunho de discussão, não backlog aprovado.
+> **HU 14 e HU 15 ainda não têm requisito funcional.** HU 11–13 foram registradas como `RF025`,
+> `RF026` e `RF027` em `requisitos.json` v1.2.0. `RF028` e `RF029` (HU 14 e HU 15) continuam
+> **propostos**, não registrados, porque exigem migration e a Regra nº 1 do `CLAUDE.md` pede ADR
+> antes de mudar schema. Enquanto o ADR não sair, essas duas permanecem rascunho de discussão,
+> não backlog aprovado.
 
 > [!NOTE]
 > **Numeração.** O PDF entrega 10 histórias depois da figura de exemplo (7 de Cliente, 3 de
@@ -42,7 +42,7 @@
 | **Critério de Aceite 3** | **DADO QUE**: o administrador está na listagem de serviços.<br>**QUANDO**: digita um termo no campo de busca e aciona "Buscar".<br>**ENTÃO**: a listagem mostra apenas os serviços cujo **título** contenha o termo, ou cujo **profissional responsável** tenha o termo no nome ou no e-mail, sem diferenciar maiúsculas de minúsculas nem acentuação. |
 | **Critério de Aceite 4** | **DADO QUE**: um usuário autenticado **sem** o papel de administrador tenta acessar a listagem de serviços do painel.<br>**QUANDO**: a requisição chega ao backend.<br>**ENTÃO**: o acesso é negado com HTTP 403 no formato `ProblemDetail`, sem expor detalhe interno, e o papel é verificado na base de dados — **nunca** por claim do JWT. |
 
-**Rastreabilidade:** `RF025` (proposto) · apoia-se em `RNF002`, `RNF006`, `RNF009`.
+**Rastreabilidade:** `RF025` (registrado) · apoia-se em `RNF002`, `RNF006`, `RNF009`.
 **Dados:** leitura de `servico` (com `perfil_id`, `titulo`, `preco_previo`, `ativo`, `criado_em`) e de `servico_tag` × `tag`. **Não exige migration.**
 
 ---
@@ -63,7 +63,7 @@
 | **Critério de Aceite 4** | **DADO QUE**: o serviço que será desativado possui contratações em andamento.<br>**QUANDO**: a desativação é efetivada.<br>**ENTÃO**: as contratações existentes permanecem intactas, com status, histórico de transições e valores preservados, e apenas **novas** solicitações de orçamento para aquele serviço passam a ser recusadas. |
 | **Critério de Aceite 5** | **DADO QUE**: o profissional dono do serviço acessa o próprio painel.<br>**QUANDO**: um serviço dele foi desativado pelo administrador.<br>**ENTÃO**: ele vê o serviço marcado como desativado pela moderação, com o motivo informado, e **não** consegue reativá-lo por conta própria. |
 
-**Rastreabilidade:** `RF026` (proposto) · complementa `RF020` (denúncia) · apoia-se em `RNF022`.
+**Rastreabilidade:** `RF026` (registrado) · complementa `RF020` (denúncia) · apoia-se em `RNF022`.
 **Dados:** `UPDATE servico SET ativo = false` + escrita em `log_acao`. **Não exige migration.**
 
 > [!IMPORTANT]
@@ -71,6 +71,12 @@
 > o `DELETE` físico é tecnicamente possível — `contratacao.servico_id` é `ON DELETE SET NULL` —
 > mas a contratação perderia a referência do que foi vendido, e a ação não volta atrás.
 > Desativação some da busca do mesmo jeito, é reversível e é auditável.
+>
+> **Isto vale para o administrador moderando o serviço de outra pessoa, não para o profissional
+> dono.** Em 2026-09-18 o grupo decidiu, por consenso, permitir que o profissional exclua
+> definitivamente o próprio serviço (`RF030`, ver `requisitos.md` §4.6) — o mesmo risco técnico do
+> `ON DELETE SET NULL` se aplica, mas o grupo aceitou a troca para esse caso específico. As duas
+> decisões não se contradizem: são autorizações diferentes para atores diferentes.
 
 ---
 
@@ -84,19 +90,31 @@
 
 | | |
 |---|---|
-| **Critério de Aceite 1** | **DADO QUE**: o administrador acessa a tela de categorias.<br>**QUANDO**: informa o nome de uma nova categoria e confirma.<br>**ENTÃO**: a categoria é criada com nome e identificador de URL únicos, e passa imediatamente a estar disponível para vínculo com serviços e como opção do filtro de busca do cliente. |
-| **Critério de Aceite 2** | **DADO QUE**: o administrador cadastra ou renomeia uma categoria.<br>**QUANDO**: informa um nome que já existe — ignorando maiúsculas, minúsculas e espaços nas pontas.<br>**ENTÃO**: a operação é recusada com erro de conflito em `ProblemDetail`, e nenhuma categoria duplicada é criada. |
+| **Critério de Aceite 1** | **DADO QUE**: o administrador acessa a tela de categorias.<br>**QUANDO**: a tela carrega.<br>**ENTÃO**: o sistema exibe a lista de categorias predefinidas da plataforma — semeadas por migration, não cadastradas pelo administrador —, cada uma já disponível para vínculo com serviço e como opção do filtro de busca do cliente. Não existe ação de criar categoria nova nesta tela. |
+| **Critério de Aceite 2** | **DADO QUE**: o administrador renomeia uma categoria existente.<br>**QUANDO**: informa um nome que já existe em outra categoria — ignorando maiúsculas, minúsculas e espaços nas pontas.<br>**ENTÃO**: a operação é recusada com erro de conflito em `ProblemDetail`, e o nome anterior é mantido. |
 | **Critério de Aceite 3** | **DADO QUE**: uma categoria já está vinculada a serviços cadastrados.<br>**QUANDO**: o administrador altera o nome dessa categoria e confirma.<br>**ENTÃO**: todos os serviços vinculados passam a exibir o nome novo, **nenhum vínculo é perdido**, e o filtro de busca por essa categoria continua devolvendo exatamente os mesmos serviços de antes. |
 | **Critério de Aceite 4** | **DADO QUE**: o administrador abre o detalhe de um serviço cadastrado por um profissional.<br>**QUANDO**: corrige título, descrição ou as categorias vinculadas, informa o motivo da correção e confirma.<br>**ENTÃO**: as alterações são salvas, o profissional dono é notificado de que o serviço foi editado pela moderação, e o log de auditoria guarda o valor anterior e o novo de cada campo alterado. |
 | **Critério de Aceite 5** | **DADO QUE**: uma categoria está vinculada a pelo menos um serviço.<br>**QUANDO**: o administrador tenta removê-la.<br>**ENTÃO**: a remoção é recusada, e o sistema informa quantos serviços ainda usam aquela categoria — a categoria só pode ser removida quando não houver nenhum vínculo. |
 
-**Rastreabilidade:** `RF027` (proposto) · dá ao administrador o outro lado de `RF004` e `RF010`.
-**Dados:** CRUD em `tag`, ajuste de `servico_tag`, `UPDATE servico` (título/descrição) + `log_acao`. **Não exige migration.**
+**Rastreabilidade:** `RF027` (registrado) · dá ao administrador o outro lado de `RF004` e `RF010`.
+**Dados:** `UPDATE`/`DELETE` em `tag` (sem `INSERT` pela API), ajuste de `servico_tag`,
+`UPDATE servico` (título/descrição) + `log_acao`. **Não exige migration de schema** — exige uma
+migration de **dado** (seed) com a lista de categorias predefinidas, ver
+[`planos/2026-09-18-especificacao-tecnica-hu13-categorias.md`](./planos/2026-09-18-especificacao-tecnica-hu13-categorias.md).
 
 > [!NOTE]
 > **"Categoria" é a tabela `tag` do modelo v4.0.0.** O modelo não tem entidade chamada `categoria`;
 > `tag` já é o que `RF004` filtra e o que `RF010` grava. Nomear categoria como entidade nova
 > criaria duas coisas para o mesmo conceito.
+
+> [!IMPORTANT]
+> **Categoria é predefinida, o administrador não cria uma nova.** Decisão tomada em 2026-09-18,
+> registrada em
+> [`planos/2026-09-18-especificacao-tecnica-hu13-categorias.md`](./planos/2026-09-18-especificacao-tecnica-hu13-categorias.md).
+> O cartão do PBB e a redação original do CA1 previam o administrador cadastrando categoria pela
+> tela; a decisão trocou isso por uma lista semeada no backend via migration. O administrador
+> continua podendo **renomear** (CA2/CA3) e **remover** (CA5) uma categoria existente — só a
+> criação deixou de ser ação do admin.
 
 ---
 
@@ -156,13 +174,13 @@
 
 ## Resumo — do cartão ao requisito
 
-| # | Cartão do PBB | História | RF proposto | Migration? |
+| # | Cartão do PBB | História | RF | Migration? |
 |---:|---|---|---|---|
-| 11 | Visualizar listagem de todos os serviços cadastrados | Listagem paginada com filtro e busca | `RF025` | Não |
-| 12 | Desativar ou excluir serviços inadequados | Desativação reversível com motivo | `RF026` | Não |
-| 13 | Editar categorias e informações de serviços | CRUD de categoria + correção de serviço | `RF027` | Não |
-| 14 | Definir faixas de preços sugeridos por serviço | Faixa mínimo/máximo por categoria | `RF028` | **Sim** — 2 colunas em `tag` |
-| 15 | Aprovar ou reprovar novos serviços cadastrados | Fila de revisão posterior | `RF029` | **Sim** — 1 coluna em `servico` |
+| 11 | Visualizar listagem de todos os serviços cadastrados | Listagem paginada com filtro e busca | `RF025` (registrado) | Não |
+| 12 | Desativar ou excluir serviços inadequados | Desativação reversível com motivo | `RF026` (registrado) | Não |
+| 13 | Editar categorias e informações de serviços | Renomear/remover categoria predefinida + correção de serviço | `RF027` (registrado) | Dado (seed), não schema |
+| 14 | Definir faixas de preços sugeridos por serviço | Faixa mínimo/máximo por categoria | `RF028` (proposto) | **Sim** — 2 colunas em `tag` |
+| 15 | Aprovar ou reprovar novos serviços cadastrados | Fila de revisão posterior | `RF029` (proposto) | **Sim** — 1 coluna em `servico` |
 
 ## Decisões embutidas nestas histórias
 
@@ -172,12 +190,15 @@
 | Faixa de preço por categoria (`tag`) | HU 14 | Faixa por serviço individual, colidindo com `preco_previo` |
 | Moderação **posterior** à publicação | HU 15 | Moderação prévia, com serviço nascendo pendente |
 | "Categoria" é a `tag` já existente | HU 13 | Criar entidade `categoria` separada |
+| Categoria é **predefinida por seed**, admin não cria pela API | HU 13, CA 1 | Admin cadastra categoria nova pela tela (redação original do CA1) |
 | Aviso de preço fora da faixa é **não bloqueante** | HU 14, CA 3 | Bloquear o cadastro fora da faixa — **ainda não confirmado** |
 
 ## Pendências
 
-- [ ] Registrar `RF025`–`RF029` em `requisitos.json` → refletir em `requisitos.md` → rodar
-      `/revisar-matriz`, **no mesmo commit** (Regra nº 1 do `CLAUDE.md`)
+- [x] Registrar `RF025`–`RF027` em `requisitos.json` → refletir em `requisitos.md` → rodar
+      `/revisar-matriz`, **no mesmo commit** (Regra nº 1 do `CLAUDE.md`) — feito em v1.2.0
+      (2026-09-18)
+- [ ] Registrar `RF028`–`RF029` em `requisitos.json` assim que o ADR abaixo sair
 - [ ] **ADR** para as duas mudanças de schema das HU 14 e HU 15 — faixa de preço em `tag` e
       motivo de reprovação em `servico`. Schema não muda sem ADR
 - [ ] Atualizar `docs/modelo-dados.dbml` e `docs/modelo-dados.md` depois que o ADR sair

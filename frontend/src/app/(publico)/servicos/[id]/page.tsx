@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { buscarServicoPorId } from '@/api/servicos';
 import { ErroApi } from '@/api/erros';
 import { BotaoContratar } from '@/components/BotaoContratar';
-import { formatarPreco } from '@/components/CardServico';
+import { formatarPreco } from '@/components/formatarPreco';
 import { Card } from '@/components/ui/Card';
 
 export default async function ServicoDetalhePage({

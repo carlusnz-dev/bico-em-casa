@@ -56,3 +56,7 @@ export async function desativarServico(id: string, accessToken: string): Promise
   const resposta = await request(`/servico/${id}/desativar`, { method: 'PATCH' }, accessToken);
   return servicoSchema.parse(resposta);
 }
+
+export async function deletarServico(id: string, accessToken: string): Promise<void> {
+  await request(`/servico/${id}`, { method: 'DELETE' }, accessToken);
+}

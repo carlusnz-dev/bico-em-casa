@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | **Gerado a partir de** | [`requisitos.json`](./requisitos.json) |
-| **Última sincronização** | 2026-08-27 |
+| **Última sincronização** | 2026-09-20 |
 | **Comando de manutenção** | `/revisar-matriz` |
 
 ---
@@ -56,11 +56,15 @@ existirem — o nome da tabela já é o definitivo, o DDL ainda não foi escrito
 | **RF017** | contratacoes | contratacao | mvp | Lacuna encontrada na revisão: RF012 notificava um aceite que nenhum requisito criava |
 | **RF018** | contratacoes | contratacao | mvp | PBB (Cancelar serviço) |
 | **RF019** | avaliacoes, profissionais | avaliacao, perfil | mvp | PBB (Visualizar nota média do profissional) |
-| **RF020** | servicos, usuarios | denuncia | mvp | PBB (Denunciar serviços inadequados) |
+| **RF020** | denuncias, servicos, usuarios | denuncia | mvp | PBB (Denunciar serviços inadequados) |
 | **RF021** | usuarios | usuario | mvp | PBB (Visualizar usuários ativos e inativos no site) |
 | **RF022** | usuarios | usuario, log_acao | mvp | PBB (Gerenciamento de usuários) |
 | **RF023** | contratacoes | conversa, mensagem | pos-mvp | PDF de especificação, quadro é–não é–faz–não faz; PBB (Falar com o profissional) |
 | **RF024** | contratacoes | mensagem | pos-mvp | Tabela de requisitos do grupo (era o primeiro RF016 duplicado) |
+| **RF025** | servicos | servico, tag, servico_tag | mvp | PBB (Gerenciamento de serviços); docs/historias-usuario-administrador-servicos.md, HU 11 |
+| **RF026** | servicos | servico, log_acao | mvp | PBB (Gerenciamento de serviços); docs/historias-usuario-administrador-servicos.md, HU 12 |
+| **RF027** | servicos | tag, servico_tag, servico, log_acao | mvp | PBB (Gerenciamento de serviços); docs/historias-usuario-administrador-servicos.md, HU 13 |
+| **RF030** | servicos | servico, contratacao | mvp | Consenso da equipe em 2026-09-18, ao revisar a implementação de ativar/desativar/deletar em ServicoServiceImpl |
 | **RNF001** | autenticacao | usuario | mvp | ADR-0006 |
 | **RNF002** | autenticacao, usuarios | usuario, perfil | mvp | ADR-0006; CLAUDE.md, seção Nunca faça |
 | **RNF003** | transversal | — | mvp | Revisão de requisitos 2026-08-22 |
@@ -95,8 +99,9 @@ Leitura inversa. Antes de mexer num módulo, esta é a lista do que ele precisa 
 | `autenticacao` | 7 | RF001, RF002, RNF001, RNF002, RNF019, RNF020, RNF021 |
 | `avaliacoes` | 3 | RF006, RF007, RF019 |
 | `contratacoes` | 12 | RF008, RF012, RF013, RF014, RF015, RF016, RF017, RF018, RF023, RF024, RNF017, RNF018 |
+| `denuncias` | 1 | RF020 |
 | `profissionais` | 10 | RF003, RF004, RF005, RF009, RF013, RF019, RNF005, RNF014, RNF017, RNF018 |
-| `servicos` | 6 | RF004, RF009, RF010, RF011, RF020, RNF005 |
+| `servicos` | 10 | RF004, RF009, RF010, RF011, RF020, RF025, RF026, RF027, RF030, RNF005 |
 | `transversal` | 12 | RNF003, RNF004, RNF006, RNF007, RNF008, RNF009, RNF010, RNF011, RNF012, RNF013, RNF016, RNF022 |
 | `usuarios` | 8 | RF002, RF020, RF021, RF022, RNF002, RNF014, RNF015, RNF022 |
 
@@ -104,8 +109,21 @@ Leitura inversa. Antes de mexer num módulo, esta é a lista do que ele precisa 
 
 ## 3. Leitura da cobertura
 
-**Os seis módulos do ADR-0004 têm requisito.** Nenhum módulo foi inventado sem necessidade, e
-nenhum requisito ficou órfão. Contagem confere: 46 requisitos (24 RF + 22 RNF), 0 sem módulo.
+**Os módulos do ADR-0004 têm requisito.** Nenhum módulo foi inventado sem necessidade, e
+nenhum requisito ficou órfão. Contagem confere: 50 requisitos (28 RF + 22 RNF), 0 sem módulo,
+distribuídos em 8 módulos.
+
+**`servicos` saltou de 6 para 10 requisitos** em duas rodadas do mesmo dia: `RF025`–`RF027`
+(v1.2.0) registraram a primeira leva da feature "Gerenciamento de serviços" do administrador,
+detalhada em
+[`historias-usuario-administrador-servicos.md`](./historias-usuario-administrador-servicos.md);
+`RF030` (v1.3.0) veio de uma revisão de código que achou um `deletar()` sem requisito, sem
+contrato e sem implementação real — ver `requisitos.md` §4.6.
+
+**`denuncias` é o módulo mais novo da lista** — separado de `avaliacoes` na sessão de 2026-09-14
+porque o RF020 (denunciar serviço, perfil ou avaliação) não tem nada em comum com avaliar uma
+contratação além de ambos partirem de uma revisão de código enviada por um integrante fora da
+convenção vigente na época.
 
 **`autenticacao` saltou de 4 para 7 requisitos** com o [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md).
 Esse salto é a medida do que o Supabase estava fazendo pelo projeto de graça: ciclo de vida de
@@ -132,17 +150,47 @@ algum domínio. RNF transversal é garantido em `config/`, `comum/` e no CI, nã
 
 ## 4. Rastro para código
 
-Vazio por enquanto — **não existe código de aplicação no repositório**. Desde 2026-08-27 existe
-a *fundação* (`backend/` compila, `frontend/` builda, o compose sobe PostgreSQL e MinIO), mas
-fundação não implementa requisito: não há migration, entidade, endpoint nem tela.
+Liga cada requisito que já tem código ao arquivo que o implementa. Requisito sem código fica com
+`—` — a ausência é informação, não lacuna a preencher com promessa. O código de aplicação é
+**escrito pela equipe**, não pela LLM (`CLAUDE.md`, regra nº 3).
 
-Esta seção passa a ser preenchida quando as migrations e os módulos forem escritos, ligando cada
-requisito ao arquivo que o implementa e ao teste que o prova. Esse código é **escrito pela
-equipe**, não pela LLM (`CLAUDE.md`, regra nº 3).
+Caminhos relativos a `backend/src/main/` (migrations em `resources/db/migration/`, classes em
+`java/br/com/bicoemcasa/api/`) e a `frontend/src/`.
 
 | Código | Migration | Implementação | Teste |
 |---|---|---|---|
-| — | — | — | — |
+| **RF001** | `V1`, `V3` | `modulos/autenticacao/AutenticacaoController.java` | — |
+| **RF002** | `V2` | `modulos/usuarios/controller/PerfilController.java` | — |
+| **RF003** | `V20260914083923` | `modulos/profissionais/PortfolioController.java` | — |
+| **RF006** | `V20260914043758` | `modulos/avaliacoes/controller/AvaliacaoController.java` | — |
+| **RF007** | `V20260914043758` | `modulos/avaliacoes/service/AvaliacaoServiceImpl.java` | — |
+| **RF010** | `V20260913223500` | `modulos/servicos/controller/ServicoController.java` | — |
+| **RF016** | `V20260914025741` | `modulos/contratacoes/controller/ContratacaoController.java` | — |
+| **RF019** | `V20260914043758` | `modulos/avaliacoes/controller/AvaliacaoController.java` | — |
+| **RF020** | `V20260914050733` | `modulos/denuncias/controller/DenunciaController.java` | `modulos/denuncias/DenunciaServiceImplTest.java` |
+| **RF027** | `V20260918120000` | `modulos/servicos/controller/TagController.java` | — |
+| **RF030** | — | `modulos/servicos/controller/ServicoController.java` | — |
+
+Os demais requisitos continuam sem código.
+
+### Cobertura parcial — o que a linha não diz
+
+Três requisitos têm implementação que **não cobre a descrição inteira**:
+
+- **RF001** — cadastro, login e encerramento de sessão existem; **recuperação de senha por
+  e-mail não**. A entidade `token_recuperacao` não tem migration.
+- **RF003** — portfólio com foto de capa existe; a **galeria de imagens não**. A entidade
+  `portfolio_foto` não tem migration.
+- **RF019** — a nota média é calculada no frontend a partir da lista de avaliações. O endpoint
+  `GET /api/avaliacao/avaliado/{id}/media` existe mas **responde 500** (ver abaixo).
+
+### Defeito aberto
+
+`AvaliacaoRepository.calcularMediaPorAvaliado` declara `@Param("avaliadoId")` enquanto a
+`@Query` referencia `:avaliadoPerfilId`, e recebe `Long` onde a entidade usa `UUID`. O
+controller agrava com `@PathVariable Long avaliadoId` sob o template `{avaliadoPerfilId}`.
+Resultado verificado em 2026-09-20: `GET /api/avaliacao/avaliado/{uuid}/media` → **HTTP 500**.
+`GET /api/avaliacao/servico/{uuid}/media` responde 200 normalmente.
 
 ---
 

@@ -3,7 +3,9 @@ package br.com.bicoemcasa.api.modulos.servicos.contrato;
 import br.com.bicoemcasa.api.core.paginacao.PaginaResponse;
 import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoRequest;
 import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoResponse;
+import br.com.bicoemcasa.api.modulos.servicos.dto.TopListResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ServicoService {
@@ -14,4 +16,6 @@ public interface ServicoService {
     ServicoResponse editar(UUID id, ServicoRequest request, Long usuarioId);
     ServicoResponse ativar(UUID id, Long usuarioId);
     ServicoResponse desativar(UUID id, Long usuarioId);
+    void deletar(UUID id, Long usuarioId);
+    List<TopListResponse> listarTop5PorPerfilId(UUID perfilId);
 }

@@ -11,7 +11,9 @@ import {
 
 import { entrar, renovar, sair } from '@/api/autenticacao';
 import { LoginRequest } from '@/api/contratos/autenticacao';
+import { Perfil } from '@/api/contratos/perfil';
 import { Usuario } from '@/api/contratos/usuario';
+import { buscarMeuPerfil } from '@/api/perfil';
 import { buscarUsuarioPorId } from '@/api/usuario';
 
 export type StatusSessao = 'carregando' | 'autenticado' | 'anonimo';
@@ -21,45 +23,73 @@ export interface AcaoDeNavegacao {
   href?: string;
   acao?: 'logout';
   destaque?: boolean;
+  desabilitado?: boolean;
+  motivoDesabilitado?: string;
 }
 
 export interface ApresentacaoDaSessao {
-  acoes: readonly AcaoDeNavegacao[];
+  contaAnonima: readonly AcaoDeNavegacao[];
+  menuPrincipal: readonly AcaoDeNavegacao[];
   mostrarEsqueleto: boolean;
   saudacao: (usuario: Usuario | null) => string;
 }
 
-export const NAVEGACAO_POR_STATUS: Record<StatusSessao, ApresentacaoDaSessao> = {
-  carregando: {
-    acoes: [],
-    mostrarEsqueleto: true,
-    saudacao: () => 'Carregando sua sessão…',
-  },
-  anonimo: {
-    acoes: [
-      { rotulo: 'Entrar', href: '/login' },
-      { rotulo: 'Criar conta', href: '/cadastro', destaque: true },
-    ],
-    mostrarEsqueleto: false,
-    saudacao: () => 'Encontre um profissional para o seu bico',
-  },
-  autenticado: {
-    acoes: [
-      { rotulo: 'Minhas contratações', href: '/contratacoes' },
-      { rotulo: 'Meus serviços', href: '/servicos/meus' },
-      { rotulo: 'Meu portfólio', href: '/profissionais/meu' },
-      { rotulo: 'Meu perfil', href: '/perfil' },
-      { rotulo: 'Sair', acao: 'logout' },
-    ],
-    mostrarEsqueleto: false,
-    saudacao: (usuario) =>
-      usuario ? `Olá, ${usuario.nome.split(' ')[0]}` : 'Olá',
-  },
+const MENU_POR_TIPO: Record<Perfil['tipo'], AcaoDeNavegacao[]> = {
+  CLIENTE: [
+    { rotulo: 'Contratações', href: '/contratacoes' },
+    { rotulo: 'Avaliações', href: '/perfil/avaliacoes' },
+  ],
+  PROFISSIONAL: [
+    { rotulo: 'Serviços', href: '/servicos/meus' },
+    { rotulo: 'Portfólio', href: '/profissionais/meu' },
+    { rotulo: 'Contratações', href: '/contratacoes' },
+    { rotulo: 'Avaliações', href: '/perfil/avaliacoes' },
+  ],
+  ADMIN: [
+    { rotulo: 'Contratações', href: '/contratacoes' },
+    { rotulo: 'Avaliações', href: '/perfil/avaliacoes' },
+    {
+      rotulo: 'Denúncias',
+      desabilitado: true,
+      motivoDesabilitado: 'Módulo ainda não publicado',
+    },
+  ],
 };
+
+function montarApresentacao(
+  status: StatusSessao,
+  perfil: Perfil | null,
+): ApresentacaoDaSessao {
+  if (status === 'carregando') {
+    return {
+      contaAnonima: [],
+      menuPrincipal: [],
+      mostrarEsqueleto: true,
+      saudacao: () => 'Carregando sua sessão…',
+    };
+  }
+
+  if (status === 'anonimo') {
+    return {
+      contaAnonima: [{ rotulo: 'Entrar', href: '/login', destaque: true }],
+      menuPrincipal: [],
+      mostrarEsqueleto: false,
+      saudacao: () => 'Encontre um profissional para o seu bico',
+    };
+  }
+
+  return {
+    contaAnonima: [],
+    menuPrincipal: perfil ? MENU_POR_TIPO[perfil.tipo] : [],
+    mostrarEsqueleto: false,
+    saudacao: (usuario) => (usuario ? `Olá, ${usuario.nome.split(' ')[0]}` : 'Olá'),
+  };
+}
 
 interface SessaoContexto {
   accessToken: string | null;
   usuario: Usuario | null;
+  perfil: Perfil | null;
   status: StatusSessao;
   apresentacao: ApresentacaoDaSessao;
   login: (credenciais: LoginRequest) => Promise<void>;
@@ -104,6 +134,7 @@ function usuarioIdDoToken(token: string): number | null {
 export function SessaoProvider({ children }: { children: React.ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [status, setStatus] = useState<StatusSessao>('carregando');
 
   const timerRenovacao = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,6 +151,7 @@ export function SessaoProvider({ children }: { children: React.ReactNode }) {
     limparRenovacao();
     setAccessToken(null);
     setUsuario(null);
+    setPerfil(null);
     setStatus('anonimo');
   }, [limparRenovacao]);
 
@@ -153,6 +185,7 @@ export function SessaoProvider({ children }: { children: React.ReactNode }) {
       const id = usuarioIdDoToken(token);
       if (id === null) {
         setUsuario(null);
+        setPerfil(null);
         return;
       }
 
@@ -160,6 +193,12 @@ export function SessaoProvider({ children }: { children: React.ReactNode }) {
         setUsuario(await buscarUsuarioPorId(id, token));
       } catch {
         setUsuario(null);
+      }
+
+      try {
+        setPerfil(await buscarMeuPerfil(token));
+      } catch {
+        setPerfil(null);
       }
     },
     [agendarRenovacao],
@@ -200,8 +239,9 @@ export function SessaoProvider({ children }: { children: React.ReactNode }) {
       value={{
         accessToken,
         usuario,
+        perfil,
         status,
-        apresentacao: NAVEGACAO_POR_STATUS[status],
+        apresentacao: montarApresentacao(status, perfil),
         login,
         logout,
       }}

@@ -13,4 +13,6 @@ public interface AvaliacaoService {
     List<AvaliacaoResponse> buscarPorAutor(UUID autorPerfilId);
     AvaliacaoResponse alterar(UUID id, AvaliacaoRequest request, Long usuarioId);
     void deletar(UUID id, Long usuarioId);
+    Double calcularMediaPorProfissional(Long profissionalId);
+    Double calcularMediaPorServico(UUID servicoId);
 }
