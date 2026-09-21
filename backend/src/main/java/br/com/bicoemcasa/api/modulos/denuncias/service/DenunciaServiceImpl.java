@@ -3,6 +3,7 @@ package br.com.bicoemcasa.api.modulos.denuncias.service;
 import br.com.bicoemcasa.api.core.excecao.DenunciaNaoPendenteException;
 import br.com.bicoemcasa.api.core.excecao.DenunciaNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
+import br.com.bicoemcasa.api.core.paginacao.PaginaResponse;
 import br.com.bicoemcasa.api.modulos.denuncias.contrato.DenunciaService;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaAnaliseRequest;
 import br.com.bicoemcasa.api.modulos.denuncias.dto.DenunciaAtualizacaoRequest;
@@ -16,7 +17,9 @@ import br.com.bicoemcasa.api.modulos.usuarios.contrato.PerfilService;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilResponse;
 import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -142,11 +145,13 @@ public class DenunciaServiceImpl implements DenunciaService {
     
     @Override
     @Transactional(readOnly = true)
-    public Page<DenunciaContraMimResponse> listarContraMim(Long usuarioId, Pageable pageable) {
+    public PaginaResponse<DenunciaContraMimResponse> listarContraMim(Long usuarioId, int pagina , int tamanho) {
+        var paginacao = PageRequest.of(pagina,tamanho , Sort.by("criadoEm").descending());
         PerfilResponse autor = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.PROFISSIONAL);
-        return denunciaRepository.findByDenunciadoPerfilId(autor.id(), pageable).map(this::paraContraMimResponse);
+        return PaginaResponse.de(denunciaRepository.findByDenunciadoPerfilId(autor.id(), paginacao) , this::paraContraMimResponse);
     }
 
+    
     private DenunciaResponse paraResponse(Denuncia denuncia) {
         return new DenunciaResponse(
                 denuncia.getId(),
