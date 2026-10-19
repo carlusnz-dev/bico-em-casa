@@ -65,11 +65,6 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional
     public UsuarioResponse criar(UsuarioRequest request) {
-        // verificação da senha
-        if (request.senha().length() < 8) {
-            throw new RuntimeException("Senha possui menos de 8 caractéres");
-        }
-
         String hashSenha = encoder.encode(request.senha());
 
         // Setters

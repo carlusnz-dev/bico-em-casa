@@ -13,12 +13,16 @@ import br.com.bicoemcasa.api.core.excecao.SenhaNaoBateException;
 import br.com.bicoemcasa.api.core.excecao.ServicoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.TokenInvalidoException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.net.URI;
 import java.time.Instant;
@@ -227,6 +231,67 @@ public class ExcecoesGlobalHandler {
         );
 
         problemDetail.setTitle("Token inválido");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail tratarArgumentoTipoInvalido(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "O parâmetro " + ex.getName() + " recebeu um valor inválido"
+        );
+        problemDetail.setTitle("Parâmetro inválido");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    // erro de validação de @RequestParam / @PathVariable em controller com @Validated
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail tratarParametroInvalido(
+            ConstraintViolationException ex,
+            HttpServletRequest request
+    ) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Um ou mais parâmetros estão inválidos"
+        );
+        problemDetail.setTitle("Erro de validação");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+
+        // o caminho vem como "metodo.parametro"; fica só o nome do parâmetro
+        Map<String, String> erros = ex.getConstraintViolations().stream()
+                .collect(Collectors.toMap(
+                        violacao -> {
+                            String caminho = violacao.getPropertyPath().toString();
+                            return caminho.substring(caminho.lastIndexOf('.') + 1);
+                        },
+                        ConstraintViolation::getMessage,
+                        (primeira, segunda) -> primeira
+                ));
+
+        problemDetail.setProperty("erros", erros);
+        problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
+    // violação de constraint do banco, como e-mail, CPF ou nome de usuário já cadastrado
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail tratarViolacaoDeIntegridade(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request
+    ) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                "Já existe um registro com esses dados"
+        );
+        problemDetail.setTitle("Conflito");
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         problemDetail.setProperty("timestamp", Instant.now());
 

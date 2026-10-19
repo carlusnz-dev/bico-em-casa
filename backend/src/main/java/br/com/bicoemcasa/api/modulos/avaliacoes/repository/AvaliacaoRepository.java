@@ -24,6 +24,6 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, UUID> {
     boolean existsByContratacaoId(UUID contratacaoId);
 
     @Query("SELECT AVG(a.nota) FROM Avaliacao a WHERE a.avaliadoPerfilId = :avaliadoPerfilId")
-    Double calcularMediaPorAvaliado(@Param("avaliadoId") Long avaliadoId);
+    Double calcularMediaPorAvaliado(@Param("avaliadoPerfilId") UUID avaliadoPerfilId);
 
 }

@@ -6,10 +6,13 @@ import br.com.bicoemcasa.api.modulos.contratacoes.dto.ContratacaoResponse;
 import br.com.bicoemcasa.api.modulos.contratacoes.dto.ContratarServicoRequest;
 import br.com.bicoemcasa.api.modulos.contratacoes.dto.EditarContratacaoRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +27,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/contratacao")
+@Validated
 public class ContratacaoController {
     private final ContratacaoService contratacaoService;
 
@@ -42,8 +46,8 @@ public class ContratacaoController {
 
     @GetMapping("/minhas")
     public ResponseEntity<PaginaResponse<ContratacaoResponse>> listarMinhas(
-            @RequestParam(defaultValue = "0") int pagina,
-            @RequestParam(defaultValue = "20") int tamanho,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "A página não pode ser negativa") int pagina,
+            @RequestParam(defaultValue = "20") @Min(value = 1, message = "O tamanho mínimo da página é 1") @Max(value = 50, message = "O tamanho máximo da página é 50") int tamanho,
             @AuthenticationPrincipal Jwt jwt
     ) {
         var response = contratacaoService.listarMinhas(Long.valueOf(jwt.getSubject()), pagina, tamanho);
