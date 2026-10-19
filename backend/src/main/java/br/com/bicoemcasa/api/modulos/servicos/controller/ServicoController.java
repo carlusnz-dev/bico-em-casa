@@ -6,10 +6,13 @@ import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoRequest;
 import br.com.bicoemcasa.api.modulos.servicos.dto.ServicoResponse;
 import br.com.bicoemcasa.api.modulos.servicos.dto.TopListResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/servico")
+@Validated
 public class ServicoController {
     private final ServicoService servicoService;
 
@@ -35,8 +39,8 @@ public class ServicoController {
 
     @GetMapping("/meus")
     public ResponseEntity<PaginaResponse<ServicoResponse>> listarMeus(
-            @RequestParam(defaultValue = "0") int pagina,
-            @RequestParam(defaultValue = "20") int tamanho,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "A página não pode ser negativa") int pagina,
+            @RequestParam(defaultValue = "20") @Min(value = 1, message = "O tamanho mínimo da página é 1") @Max(value = 50, message = "O tamanho máximo da página é 50") int tamanho,
             @AuthenticationPrincipal Jwt jwt
     ) {
         var response = servicoService.listarMeus(Long.valueOf(jwt.getSubject()), pagina, tamanho);
@@ -50,8 +54,8 @@ public class ServicoController {
 
     @GetMapping
     public ResponseEntity<PaginaResponse<ServicoResponse>> listarAtivos(
-            @RequestParam(defaultValue = "0") int pagina,
-            @RequestParam(defaultValue = "20") int tamanho
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "A página não pode ser negativa") int pagina,
+            @RequestParam(defaultValue = "20") @Min(value = 1, message = "O tamanho mínimo da página é 1") @Max(value = 50, message = "O tamanho máximo da página é 50") int tamanho
     ) {
         return ResponseEntity.ok(servicoService.listarAtivos(pagina, tamanho));
     }

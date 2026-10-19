@@ -98,8 +98,8 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
     }
 
     @Override
-    public Double calcularMediaPorProfissional(Long profissionalId){
-        return avaliacaoRepository.calcularMediaPorAvaliado(profissionalId);
+    public Double calcularMediaPorProfissional(UUID avaliadoPerfilId){
+        return avaliacaoRepository.calcularMediaPorAvaliado(avaliadoPerfilId);
     }
 
     @Override

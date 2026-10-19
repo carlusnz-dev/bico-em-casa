@@ -1,18 +1,28 @@
 package br.com.bicoemcasa.api.modulos.autenticacao.dto;
 
 import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 public record CadastroRequest(
         @NotBlank String nomeCompleto,
+
         @NotBlank @Size(max = 50) String nomeUsuario,
-        @NotBlank String email,
+
+        @NotBlank
+        @Email(message = "E-mail inválido")
+        String email,
+
         @NotBlank String telefone,
+
         @NotBlank String nomeExibicao,
+
         @NotNull PerfilTipo cadastroTipo,
-        @NotBlank @Size(min = 11, max = 11) String cpf,
-        @NotBlank String senha,
+
+        @NotBlank @Pattern(regexp = "\\d{11}", message = "O CPF deve conter exatamente 11 dígitos") String cpf,
+
+        @NotBlank
+        @Size(min = 8, message = "A senha deve ter pelo menos 8 caracteres")
+        String senha,
+
         String bio
 ) { }

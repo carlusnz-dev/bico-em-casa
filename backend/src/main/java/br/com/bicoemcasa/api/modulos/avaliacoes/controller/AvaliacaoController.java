@@ -72,8 +72,8 @@ public class AvaliacaoController {
     }
 
     @GetMapping("/avaliado/{avaliadoPerfilId}/media")
-    public Double calcularMediaPorProfissional(@PathVariable Long avaliadoId){
-        return avaliacaoService.calcularMediaPorProfissional(avaliadoId);
+    public Double calcularMediaPorProfissional(@PathVariable UUID avaliadoPerfilId){
+        return avaliacaoService.calcularMediaPorProfissional(avaliadoPerfilId);
     }
 
     @GetMapping("/servico/{servicoId}/media")
