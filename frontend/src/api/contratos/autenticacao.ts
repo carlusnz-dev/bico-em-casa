@@ -21,6 +21,15 @@ export const renovarResponseSchema = z.object({
   accessToken: z.string(),
 });
 
+const enderecoCadastroSchema = z.object({
+  logradouro: z.string().trim().min(1, 'Informe o logradouro').max(200),
+  numero: z.string().max(20),
+  complemento: z.string().max(100),
+  bairro: z.string().trim().min(1, 'Informe o bairro').max(100),
+  cidade: z.string().trim().min(1, 'Informe a cidade').max(100),
+  uf: z.string().trim().length(2, 'Informe a UF com duas letras').toUpperCase(),
+});
+
 export const cadastroRequestSchema = z.object({
   nomeCompleto: z.string().min(3).max(150),
   nomeUsuario: z
@@ -35,6 +44,15 @@ export const cadastroRequestSchema = z.object({
   cpf: z.string().regex(/^\d{11}$/, 'O CPF precisa ter 11 dígitos, sem pontuação'),
   senha: z.string().min(8).max(50),
   bio: z.string().max(500).optional(),
+  endereco: enderecoCadastroSchema.optional(),
+}).superRefine((dados, contexto) => {
+  if (dados.cadastroTipo === 'PROFISSIONAL' && !dados.endereco) {
+    contexto.addIssue({
+      code: 'custom',
+      path: ['endereco'],
+      message: 'Informe seu endereço para cadastrar serviços na sua cidade',
+    });
+  }
 });
 
 export const cadastroResponseSchema = z.object({

@@ -51,9 +51,10 @@ public class ServicoController {
     @GetMapping
     public ResponseEntity<PaginaResponse<ServicoResponse>> listarAtivos(
             @RequestParam(defaultValue = "0") int pagina,
-            @RequestParam(defaultValue = "20") int tamanho
+            @RequestParam(defaultValue = "20") int tamanho,
+            @RequestParam(required = false) String cidade
     ) {
-        return ResponseEntity.ok(servicoService.listarAtivos(pagina, tamanho));
+        return ResponseEntity.ok(servicoService.listarAtivos(pagina, tamanho, cidade));
     }
 
     @GetMapping("/top/{perfilId}")

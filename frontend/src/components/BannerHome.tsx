@@ -1,8 +1,9 @@
 import Link from 'next/link';
 
+import { FiltroCidade } from '@/components/FiltroCidade';
 import { classesDoBotao } from '@/components/ui/Botao';
 
-export function BannerHome() {
+export function BannerHome({ cidade = '' }: { cidade?: string }) {
   return (
     <section className="relative overflow-hidden rounded-3xl border border-tertiary bg-superficie px-6 py-16 sm:px-12 sm:py-20">
       <div
@@ -20,9 +21,13 @@ export function BannerHome() {
         <p className="text-lg text-texto-suave">
           Encontre tudo em um só lugar: o profissional certo para o seu bico, sem burocracia.
         </p>
-        <Link href="/servicos" className={classesDoBotao('primario', 'grande', 'w-fit')}>
+        <Link
+          href={cidade ? `/servicos?cidade=${encodeURIComponent(cidade)}` : '/servicos'}
+          className={classesDoBotao('primario', 'grande', 'w-fit')}
+        >
           Explorar serviços
         </Link>
+        <FiltroCidade acao="/" cidade={cidade} />
       </div>
     </section>
   );
