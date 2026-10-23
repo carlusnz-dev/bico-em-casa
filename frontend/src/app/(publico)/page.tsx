@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import type { Perfil } from '@/api/contratos/perfil';
+import { buscarMediaPorServico } from '@/api/avaliacoes';
 import { buscarPerfilPorId } from '@/api/perfil';
 import { listarServicos } from '@/api/servicos';
 import { listarTags } from '@/api/tags';
@@ -16,14 +17,49 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ cidade?: string }>;
+  searchParams: Promise<{ cidade?: string; ordenar?: string }>;
 }) {
-  const { cidade: cidadeParam } = await searchParams;
+  const { cidade: cidadeParam, ordenar: ordenarParam } = await searchParams;
   const cidade = cidadeParam?.trim() ?? '';
-  const [{ conteudo: servicos }, tags] = await Promise.all([
-    listarServicos(0, QUANTIDADE_DESTAQUE, cidade),
+  const ordenar = ordenarParam === 'nota' ? ordenarParam : '';
+  const [paginaInicial, tags] = await Promise.all([
+    listarServicos(0, ordenar ? 100 : QUANTIDADE_DESTAQUE, cidade),
     listarTags(),
   ]);
+  let servicosDisponiveis = paginaInicial.conteudo;
+
+  if (ordenar && paginaInicial.totalPaginas > 1) {
+    const demaisPaginas = await Promise.all(
+      Array.from(
+        { length: paginaInicial.totalPaginas - 1 },
+        (_, indice) => listarServicos(indice + 1, 100, cidade),
+      ),
+    );
+    servicosDisponiveis = [
+      ...paginaInicial.conteudo,
+      ...demaisPaginas.flatMap((pagina) => pagina.conteudo),
+    ];
+  }
+
+  const notasPorServico = new Map<string, number>();
+  if (ordenar) {
+    const medias = await Promise.all(
+      servicosDisponiveis.map(async (servico) => [
+        servico.id,
+        await buscarMediaPorServico(servico.id),
+      ] as const),
+    );
+    for (const [servicoId, media] of medias) {
+      notasPorServico.set(servicoId, media);
+    }
+    servicosDisponiveis.sort(
+      (servicoA, servicoB) =>
+        (notasPorServico.get(servicoB.id) ?? 0) - (notasPorServico.get(servicoA.id) ?? 0),
+    );
+  }
+  const servicos = ordenar
+    ? servicosDisponiveis.slice(0, QUANTIDADE_DESTAQUE)
+    : servicosDisponiveis;
 
   const tagsPorId = new Map(tags.map((tag) => [tag.id, tag]));
 
@@ -37,7 +73,7 @@ export default async function HomePage({
 
   return (
     <div className="flex flex-col gap-14">
-      <BannerHome cidade={cidade} />
+      <BannerHome cidade={cidade} ordenar={ordenar} />
 
       <MiniMenuCategorias tags={tags} />
 
@@ -68,6 +104,7 @@ export default async function HomePage({
                   servico={servico}
                   tags={servico.tagIds.map((id) => tagsPorId.get(id)).filter((tag) => tag !== undefined)}
                   perfil={perfilPorId.get(servico.perfilId) ?? null}
+                  notaMedia={notasPorServico.get(servico.id)}
                 />
               </li>
             ))}

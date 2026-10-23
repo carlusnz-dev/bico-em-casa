@@ -1,9 +1,11 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { buscarMediaPorServico } from '@/api/avaliacoes';
 import type { Perfil } from '@/api/contratos/perfil';
 import type { Servico } from '@/api/contratos/servico';
 import type { Tag } from '@/api/contratos/tag';
@@ -14,30 +16,29 @@ import { FotoPlaceholder } from '@/components/FotoPlaceholder';
 import { ModalPerfilProfissional } from '@/components/ModalPerfilProfissional';
 import { Card } from '@/components/ui/Card';
 
-/**
- * Não existe endpoint de nota média por serviço (avaliação é vinculada à
- * contratação, não ao serviço) — placeholder determinístico até a equipe
- * expor esse dado. A nota média do PROFISSIONAL, no modal, já é real.
- */
-function notaMediaProvisoria(servicoId: string): number {
-  let hash = 0;
-  for (let indice = 0; indice < servicoId.length; indice += 1) {
-    hash = (hash * 31 + servicoId.charCodeAt(indice)) >>> 0;
-  }
-  return 3.6 + (hash % 15) / 10;
-}
-
 export function CardServico({
   servico,
   tags,
   perfil,
+  notaMedia: notaMediaRecebida,
 }: {
   servico: Servico;
   tags: Tag[];
   perfil: Perfil | null;
+  notaMedia?: number;
 }) {
   const [modalAberto, setModalAberto] = useState(false);
   const categoriaPrincipal = tags[0];
+  const {
+    data: notaMediaConsultada,
+    isError,
+    isPending,
+  } = useQuery({
+    queryKey: ['avaliacao-media-servico', servico.id],
+    queryFn: () => buscarMediaPorServico(servico.id),
+    enabled: notaMediaRecebida === undefined,
+  });
+  const notaMediaServico = notaMediaRecebida ?? notaMediaConsultada;
 
   return (
     <>
@@ -64,7 +65,15 @@ export function CardServico({
                   {categoriaPrincipal.nome}
                 </span>
               )}
-              <AvaliacaoMedia nota={notaMediaProvisoria(servico.id)} />
+              {notaMediaServico !== undefined && notaMediaServico > 0 ? (
+                <AvaliacaoMedia nota={notaMediaServico} />
+              ) : notaMediaServico === 0 ? (
+                <span className="text-xs text-texto-suave">Sem avaliações</span>
+              ) : (
+                <span className="text-xs text-texto-suave" role={isError ? 'alert' : 'status'}>
+                  {isError ? 'Nota indisponível' : isPending ? 'Carregando nota' : 'Sem avaliações'}
+                </span>
+              )}
             </div>
 
             <Link href={`/servicos/${servico.id}`} className="hover:text-primary">

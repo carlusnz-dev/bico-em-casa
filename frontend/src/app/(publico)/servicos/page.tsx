@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { buscarMediaPorServico } from '@/api/avaliacoes';
 import type { Perfil } from '@/api/contratos/perfil';
 import { buscarPerfilPorId } from '@/api/perfil';
 import { listarServicos } from '@/api/servicos';
@@ -21,26 +22,33 @@ function normalizarTexto(texto: string): string {
 export default async function ServicosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pagina?: string; busca?: string; cidade?: string }>;
+  searchParams: Promise<{
+    pagina?: string;
+    busca?: string;
+    cidade?: string;
+    ordenar?: string;
+  }>;
 }) {
   const {
     pagina: paginaParam,
     busca: buscaParam,
     cidade: cidadeParam,
+    ordenar: ordenarParam,
   } = await searchParams;
   const busca = buscaParam?.trim() ?? '';
   const cidade = cidadeParam?.trim() ?? '';
+  const ordenar = ordenarParam === 'nota' ? ordenarParam : '';
   const termoNormalizado = normalizarTexto(busca);
   const paginaSolicitada = Math.max(0, Number(paginaParam ?? '0') || 0);
 
   const [paginaConsultada, tags] = await Promise.all([
-    listarServicos(termoNormalizado ? 0 : paginaSolicitada, TAMANHO_PAGINA, cidade),
+    listarServicos(termoNormalizado || ordenar ? 0 : paginaSolicitada, TAMANHO_PAGINA, cidade),
     listarTags(),
   ]);
 
   let paginaInicial = paginaConsultada;
   if (
-    !termoNormalizado
+    !termoNormalizado && !ordenar
     && paginaInicial.totalPaginas > 0
     && paginaSolicitada >= paginaInicial.totalPaginas
   ) {
@@ -53,7 +61,7 @@ export default async function ServicosPage({
 
   let servicosDisponiveis = paginaInicial.conteudo;
 
-  if (termoNormalizado && paginaInicial.totalPaginas > 1) {
+  if ((termoNormalizado || ordenar) && paginaInicial.totalPaginas > 1) {
     const demaisPaginas = await Promise.all(
       Array.from(
         { length: paginaInicial.totalPaginas - 1 },
@@ -83,14 +91,31 @@ export default async function ServicosPage({
     })
     : servicosDisponiveis;
 
-  const totalPaginas = termoNormalizado
+  const notasPorServico = new Map<string, number>();
+  if (ordenar) {
+    const medias = await Promise.all(
+      servicosFiltrados.map(async (servico) => [
+        servico.id,
+        await buscarMediaPorServico(servico.id),
+      ] as const),
+    );
+    for (const [servicoId, media] of medias) {
+      notasPorServico.set(servicoId, media);
+    }
+    servicosFiltrados.sort(
+      (servicoA, servicoB) =>
+        (notasPorServico.get(servicoB.id) ?? 0) - (notasPorServico.get(servicoA.id) ?? 0),
+    );
+  }
+
+  const totalPaginas = termoNormalizado || ordenar
     ? Math.max(1, Math.ceil(servicosFiltrados.length / TAMANHO_PAGINA))
     : paginaInicial.totalPaginas;
-  const pagina = termoNormalizado
+  const pagina = termoNormalizado || ordenar
     ? Math.min(paginaSolicitada, totalPaginas - 1)
     : paginaInicial.pagina;
 
-  const servicos = termoNormalizado
+  const servicos = termoNormalizado || ordenar
     ? servicosFiltrados.slice(
       pagina * TAMANHO_PAGINA,
       (pagina + 1) * TAMANHO_PAGINA,
@@ -113,6 +138,7 @@ export default async function ServicosPage({
     const parametros = new URLSearchParams();
     if (busca) parametros.set('busca', busca);
     if (cidade) parametros.set('cidade', cidade);
+    if (ordenar) parametros.set('ordenar', ordenar);
     parametros.set('pagina', String(numeroPagina));
     return `/servicos?${parametros.toString()}`;
   }
@@ -136,7 +162,7 @@ export default async function ServicosPage({
               : 'Encontre um profissional para o que você precisa.'}
         </p>
 
-        {(busca || cidade) && (
+        {(busca || cidade || ordenar) && (
           <div>
             <Link href="/servicos" className={classesDoBotao('secundario')}>
               Limpar filtros
@@ -145,7 +171,7 @@ export default async function ServicosPage({
         )}
       </header>
 
-      <FiltroCidade acao="/servicos" cidade={cidade} busca={busca} />
+      <FiltroCidade acao="/servicos" cidade={cidade} busca={busca} ordenar={ordenar} />
 
       {servicos.length === 0 ? (
         <p className="text-texto-suave">
@@ -165,6 +191,7 @@ export default async function ServicosPage({
                   .map((id) => tagsPorId.get(id))
                   .filter((tag) => tag !== undefined)}
                 perfil={perfilPorId.get(servico.perfilId) ?? null}
+                notaMedia={notasPorServico.get(servico.id)}
               />
             </li>
           ))}

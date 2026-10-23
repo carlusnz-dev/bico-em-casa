@@ -58,7 +58,14 @@ export function Cabecalho() {
   function aoBuscar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     const termo = busca.trim();
-    router.push(termo ? `/servicos?busca=${encodeURIComponent(termo)}` : '/servicos');
+    const parametros = new URLSearchParams(window.location.search);
+    parametros.delete('pagina');
+    if (termo) {
+      parametros.set('busca', termo);
+    } else {
+      parametros.delete('busca');
+    }
+    router.push(parametros.size > 0 ? `/servicos?${parametros.toString()}` : '/servicos');
   }
 
   return (
