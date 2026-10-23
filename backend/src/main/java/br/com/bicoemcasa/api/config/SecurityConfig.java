@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
+                                "/error",
                                 "/api/autenticacao/**",
                                 "/api/usuario",
                                 "/v3/api-docs/**",
