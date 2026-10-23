@@ -142,7 +142,8 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
                 request.nomeUsuario(),
                 request.nomeExibicao(),
                 request.telefone(),
-                request.bio()
+                request.bio(),
+                request.endereco()
         );
 
         UsuarioRequest usuarioRequest = new UsuarioRequest(

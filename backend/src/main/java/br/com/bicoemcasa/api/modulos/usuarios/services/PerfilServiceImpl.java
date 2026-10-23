@@ -2,24 +2,35 @@ package br.com.bicoemcasa.api.modulos.usuarios.services;
 
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.PerfilService;
+import br.com.bicoemcasa.api.modulos.usuarios.dto.EnderecoRequest;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilRequest;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilResponse;
+import br.com.bicoemcasa.api.modulos.usuarios.models.Endereco;
 import br.com.bicoemcasa.api.modulos.usuarios.models.Perfil;
 import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
+import br.com.bicoemcasa.api.modulos.usuarios.repository.EnderecoRepository;
 import br.com.bicoemcasa.api.modulos.usuarios.repository.PerfilRepository;
 import br.com.bicoemcasa.api.modulos.usuarios.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class PerfilServiceImpl implements PerfilService {
     private final PerfilRepository repository;
     private final UsuarioRepository usuarioRepository;
+    private final EnderecoRepository enderecoRepository;
 
-    public PerfilServiceImpl(PerfilRepository repository, UsuarioRepository usuarioRepository) {
+    public PerfilServiceImpl(
+            PerfilRepository repository,
+            UsuarioRepository usuarioRepository,
+            EnderecoRepository enderecoRepository
+    ) {
         this.repository = repository;
         this.usuarioRepository = usuarioRepository;
+        this.enderecoRepository = enderecoRepository;
     }
 
     @Override
@@ -55,6 +66,12 @@ public class PerfilServiceImpl implements PerfilService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<UUID> buscarIdsProfissionaisPorCidade(String cidade) {
+        return repository.buscarIdsPorTipoECidadeContendo(PerfilTipo.PROFISSIONAL, cidade.trim());
+    }
+
+    @Override
     public PerfilResponse criar(Long usuarioId, PerfilRequest request) {
         Perfil perfilNovo = new Perfil();
         perfilNovo.setTipo(request.tipo());
@@ -63,6 +80,18 @@ public class PerfilServiceImpl implements PerfilService {
         perfilNovo.setUsuario(usuarioRepository.getReferenceById(usuarioId));
         perfilNovo.setTelefone(request.telefone());
         perfilNovo.setBio(request.bio());
+
+        EnderecoRequest enderecoRequest = request.endereco();
+        if (enderecoRequest != null) {
+            Endereco endereco = new Endereco();
+            endereco.setLogradouro(enderecoRequest.logradouro());
+            endereco.setNumero(enderecoRequest.numero());
+            endereco.setComplemento(enderecoRequest.complemento());
+            endereco.setBairro(enderecoRequest.bairro());
+            endereco.setCidade(enderecoRequest.cidade());
+            endereco.setUf(enderecoRequest.uf());
+            perfilNovo.setEndereco(enderecoRepository.save(endereco));
+        }
 
         repository.save(perfilNovo);
 

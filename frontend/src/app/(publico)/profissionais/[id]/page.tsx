@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { listarAvaliacoesRecebidas } from '@/api/avaliacoes';
+import { buscarMediaPorProfissional, listarAvaliacoesRecebidas } from '@/api/avaliacoes';
 import { ErroApi } from '@/api/erros';
 import { buscarPerfilPorId } from '@/api/perfil';
 import { buscarPortfolioPorId } from '@/api/portfolio';
@@ -30,19 +30,16 @@ export default async function PortfolioDetalhePage({
     throw erro;
   });
 
-  const [perfil, avaliacoes, { conteudo: todosServicos }] = await Promise.all([
+  const [perfil, avaliacoes, notaMediaProfissional, { conteudo: todosServicos }] = await Promise.all([
     buscarPerfilPorId(portfolio.perfilId).catch(() => null),
     listarAvaliacoesRecebidas(portfolio.perfilId).catch(() => []),
+    buscarMediaPorProfissional(portfolio.perfilId).catch(() => null),
     listarServicos(0, TAMANHO_PAGINA_PARA_FILTRAR).catch(() => ({ conteudo: [] })),
   ]);
 
   const servicosDoProfissional = todosServicos
     .filter((servico) => servico.perfilId === portfolio.perfilId && servico.ativo)
     .slice(0, QUANTIDADE_SERVICOS_PRINCIPAIS);
-
-  const notaMedia = avaliacoes.length
-    ? avaliacoes.reduce((soma, avaliacao) => soma + avaliacao.nota, 0) / avaliacoes.length
-    : null;
 
   const comentarios = avaliacoes.filter((avaliacao) => avaliacao.comentario);
 
@@ -70,8 +67,19 @@ export default async function PortfolioDetalhePage({
                 Desde <DataFormatada dataIso={perfil.criadoEm} />
               </p>
             )}
-            {notaMedia !== null && (
-              <AvaliacaoMedia nota={notaMedia} quantidade={avaliacoes.length} />
+            {notaMediaProfissional !== null && notaMediaProfissional > 0 && (
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-texto-suave">Nota média do profissional</span>
+                <AvaliacaoMedia nota={notaMediaProfissional} quantidade={avaliacoes.length} />
+              </div>
+            )}
+            {notaMediaProfissional === 0 && (
+              <span className="text-xs text-texto-suave">Profissional sem avaliações</span>
+            )}
+            {notaMediaProfissional === null && (
+              <span className="text-xs text-texto-suave" role="alert">
+                Nota do profissional indisponível
+              </span>
             )}
           </div>
         </div>

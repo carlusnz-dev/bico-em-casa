@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { Dialog } from 'radix-ui';
 
-import { listarAvaliacoesRecebidas } from '@/api/avaliacoes';
+import { buscarMediaPorProfissional, listarAvaliacoesRecebidas } from '@/api/avaliacoes';
 import type { Perfil } from '@/api/contratos/perfil';
 import { listarPortfolios } from '@/api/portfolio';
 import { AvaliacaoMedia } from '@/components/AvaliacaoMedia';
@@ -28,6 +28,15 @@ export function ModalPerfilProfissional({
     enabled: aberto,
   });
 
+  const {
+    data: notaMedia,
+    isError: erroAoBuscarNotaMedia,
+  } = useQuery({
+    queryKey: ['avaliacao-media-profissional', perfil.id],
+    queryFn: () => buscarMediaPorProfissional(perfil.id),
+    enabled: aberto,
+  });
+
   // Não existe endpoint de "portfólio por perfil" — filtramos a listagem
   // pública, que já é dado real (não mock), só não indexado por perfilId.
   const { data: portfolios } = useQuery({
@@ -37,9 +46,6 @@ export function ModalPerfilProfissional({
   });
 
   const portfolio = portfolios?.find((item) => item.perfilId === perfil.id);
-  const notaMedia = avaliacoes?.length
-    ? avaliacoes.reduce((soma, avaliacao) => soma + avaliacao.nota, 0) / avaliacoes.length
-    : null;
 
   return (
     <Dialog.Root open={aberto} onOpenChange={(proximoAberto) => !proximoAberto && aoFechar()}>
@@ -86,8 +92,19 @@ export function ModalPerfilProfissional({
                     <p className="text-sm text-texto-suave">
                       No Bico em Casa desde <DataFormatada dataIso={perfil.criadoEm} />
                     </p>
-                    {notaMedia !== null && (
-                      <AvaliacaoMedia nota={notaMedia} quantidade={avaliacoes?.length} />
+                    {notaMedia !== undefined && notaMedia > 0 && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-texto-suave">Nota média do profissional</span>
+                        <AvaliacaoMedia nota={notaMedia} quantidade={avaliacoes?.length} />
+                      </div>
+                    )}
+                    {notaMedia === 0 && (
+                      <span className="text-xs text-texto-suave">Profissional sem avaliações</span>
+                    )}
+                    {erroAoBuscarNotaMedia && (
+                      <span className="text-xs text-texto-suave" role="alert">
+                        Nota do profissional indisponível
+                      </span>
                     )}
                   </div>
 

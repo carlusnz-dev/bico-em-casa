@@ -14,6 +14,7 @@ import br.com.bicoemcasa.api.modulos.servicos.repository.TagRepository;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.PerfilService;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilResponse;
 import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -70,9 +71,17 @@ public class ServicoServiceImpl implements ServicoService {
 
     @Override
     @Transactional(readOnly = true)
-    public PaginaResponse<ServicoResponse> listarAtivos(int pagina, int tamanho) {
+    public PaginaResponse<ServicoResponse> listarAtivos(int pagina, int tamanho, String cidade) {
         var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
-        return PaginaResponse.de(servicoRepository.findByAtivoTrue(paginacao), this::paraResponse);
+        if (cidade == null || cidade.isBlank()) {
+            return PaginaResponse.de(servicoRepository.findByAtivoTrue(paginacao), this::paraResponse);
+        }
+
+        List<UUID> perfilIds = perfilService.buscarIdsProfissionaisPorCidade(cidade);
+        Page<Servico> servicos = perfilIds.isEmpty()
+                ? Page.empty(paginacao)
+                : servicoRepository.findByAtivoTrueAndPerfilIdIn(perfilIds, paginacao);
+        return PaginaResponse.de(servicos, this::paraResponse);
     }
 
     @Override

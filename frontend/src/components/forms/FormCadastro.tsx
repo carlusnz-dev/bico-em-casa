@@ -25,11 +25,14 @@ export default function FormCadastro() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CadastroRequest>({
     resolver: zodResolver(cadastroRequestSchema),
     defaultValues: { cadastroTipo: 'CLIENTE' },
+    shouldUnregister: true,
   });
+  const cadastroTipo = watch('cadastroTipo');
 
   async function aoEnviar(dados: CadastroRequest) {
     setErroGeral(null);
@@ -158,6 +161,110 @@ export default function FormCadastro() {
           {errors.telefone && <p className="text-sm text-erro">{errors.telefone.message}</p>}
         </div>
       </div>
+
+      {cadastroTipo === 'PROFISSIONAL' && (
+        <fieldset className="flex flex-col gap-4 rounded-xl border border-borda p-4">
+          <legend className="px-1 text-sm font-semibold text-texto">
+            Endereço de atendimento
+          </legend>
+
+          {errors.endereco?.message && (
+            <p role="alert" className="text-sm text-erro">
+              {errors.endereco.message}
+            </p>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="endereco.logradouro" obrigatorio>
+              Endereço
+            </Label>
+            <Input
+              id="endereco.logradouro"
+              autoComplete="address-line1"
+              erro={Boolean(errors.endereco?.logradouro)}
+              {...register('endereco.logradouro')}
+            />
+            {errors.endereco?.logradouro && (
+              <p className="text-sm text-erro">{errors.endereco.logradouro.message}</p>
+            )}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="endereco.numero">Número</Label>
+              <Input
+                id="endereco.numero"
+                autoComplete="address-line2"
+                erro={Boolean(errors.endereco?.numero)}
+                {...register('endereco.numero')}
+              />
+              {errors.endereco?.numero && (
+                <p className="text-sm text-erro">{errors.endereco.numero.message}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="endereco.complemento">Complemento</Label>
+              <Input
+                id="endereco.complemento"
+                erro={Boolean(errors.endereco?.complemento)}
+                {...register('endereco.complemento')}
+              />
+              {errors.endereco?.complemento && (
+                <p className="text-sm text-erro">{errors.endereco.complemento.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="endereco.bairro" obrigatorio>
+                Bairro
+              </Label>
+              <Input
+                id="endereco.bairro"
+                autoComplete="address-level3"
+                erro={Boolean(errors.endereco?.bairro)}
+                {...register('endereco.bairro')}
+              />
+              {errors.endereco?.bairro && (
+                <p className="text-sm text-erro">{errors.endereco.bairro.message}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="endereco.cidade" obrigatorio>
+                Cidade
+              </Label>
+              <Input
+                id="endereco.cidade"
+                autoComplete="address-level2"
+                erro={Boolean(errors.endereco?.cidade)}
+                {...register('endereco.cidade')}
+              />
+              {errors.endereco?.cidade && (
+                <p className="text-sm text-erro">{errors.endereco.cidade.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5 sm:max-w-36">
+            <Label htmlFor="endereco.uf" obrigatorio>
+              UF
+            </Label>
+            <Input
+              id="endereco.uf"
+              autoComplete="address-level1"
+              maxLength={2}
+              erro={Boolean(errors.endereco?.uf)}
+              {...register('endereco.uf')}
+            />
+            {errors.endereco?.uf && (
+              <p className="text-sm text-erro">{errors.endereco.uf.message}</p>
+            )}
+          </div>
+        </fieldset>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="senha" obrigatorio>

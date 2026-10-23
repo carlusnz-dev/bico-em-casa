@@ -1,8 +1,20 @@
 import Link from 'next/link';
 
+import { FiltroCidade } from '@/components/FiltroCidade';
 import { classesDoBotao } from '@/components/ui/Botao';
 
-export function BannerHome() {
+export function BannerHome({
+  cidade = '',
+  ordenar = '',
+}: {
+  cidade?: string;
+  ordenar?: string;
+}) {
+  const parametros = new URLSearchParams();
+  if (cidade) parametros.set('cidade', cidade);
+  if (ordenar) parametros.set('ordenar', ordenar);
+  const hrefServicos = parametros.size > 0 ? `/servicos?${parametros.toString()}` : '/servicos';
+
   return (
     <section className="relative overflow-hidden rounded-3xl border border-tertiary bg-superficie px-6 py-16 sm:px-12 sm:py-20">
       <div
@@ -20,9 +32,13 @@ export function BannerHome() {
         <p className="text-lg text-texto-suave">
           Encontre tudo em um só lugar: o profissional certo para o seu bico, sem burocracia.
         </p>
-        <Link href="/servicos" className={classesDoBotao('primario', 'grande', 'w-fit')}>
+        <Link
+          href={hrefServicos}
+          className={classesDoBotao('primario', 'grande', 'w-fit')}
+        >
           Explorar serviços
         </Link>
+        <FiltroCidade acao="/" cidade={cidade} ordenar={ordenar} />
       </div>
     </section>
   );

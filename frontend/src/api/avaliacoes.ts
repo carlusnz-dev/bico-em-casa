@@ -26,6 +26,16 @@ export async function listarAvaliacoesRecebidas(avaliadoPerfilId: string): Promi
   return z.array(avaliacaoSchema).parse(resposta);
 }
 
+export async function buscarMediaPorServico(servicoId: string): Promise<number> {
+  const resposta = await request(`/avaliacao/servico/${servicoId}/media`);
+  return z.number().parse(resposta);
+}
+
+export async function buscarMediaPorProfissional(avaliadoPerfilId: string): Promise<number> {
+  const resposta = await request(`/avaliacao/avaliado/${avaliadoPerfilId}/media`);
+  return z.number().parse(resposta);
+}
+
 export async function listarAvaliacoesFeitas(autorPerfilId: string): Promise<Avaliacao[]> {
   const resposta = await request(`/avaliacao/autor/${autorPerfilId}`);
   return z.array(avaliacaoSchema).parse(resposta);
