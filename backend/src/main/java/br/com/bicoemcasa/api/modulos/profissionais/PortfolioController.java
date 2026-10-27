@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/portfolio")
 @Validated
@@ -50,6 +52,11 @@ public class PortfolioController {
     @GetMapping("/{id}")
     public ResponseEntity<PortfolioResponse> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(portfolioService.buscarPorId(id));
+    }
+
+    @GetMapping("/perfil/{perfilId}")
+    public ResponseEntity<PortfolioResponse> buscarPorPerfilId(@PathVariable UUID perfilId) {
+        return ResponseEntity.ok(portfolioService.buscarPorPerfilId(perfilId));
     }
 
     @GetMapping
