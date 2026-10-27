@@ -18,6 +18,11 @@ export async function buscarPortfolioPorId(id: number): Promise<Portfolio> {
   return portfolioSchema.parse(resposta);
 }
 
+export async function buscarPortfolioPorPerfil(perfilId: string): Promise<Portfolio> {
+  const resposta = await request(`/portfolio/perfil/${perfilId}`);
+  return portfolioSchema.parse(resposta);
+}
+
 export async function buscarMeuPortfolio(accessToken: string): Promise<Portfolio> {
   const resposta = await request('/portfolio/meu', {}, accessToken);
   return portfolioSchema.parse(resposta);

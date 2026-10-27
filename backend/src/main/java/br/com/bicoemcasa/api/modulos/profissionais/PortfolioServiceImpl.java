@@ -67,6 +67,14 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     @Override
     @Transactional(readOnly = true)
+    public PortfolioResponse buscarPorPerfilId(UUID perfilId) {
+        Portfolio portfolio = portfolioRepository.findByPerfilId(perfilId)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Este profissional não tem portfólio"));
+        return paraResponse(portfolio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PortfolioResponse buscarMeu(Long usuarioId) {
         PerfilResponse perfil = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.PROFISSIONAL);
         Portfolio portfolio = portfolioRepository.findByPerfilId(perfil.id())
