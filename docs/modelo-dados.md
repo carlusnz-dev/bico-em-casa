@@ -159,7 +159,7 @@ A regra é condicional, e o `NOT NULL` não sabe expressar condição. Quem sabe
 
 ```sql
 ALTER TABLE contratacao ADD CONSTRAINT ck_contratacao_cancelamento_coerente
-  CHECK (status <> 'CANCELADA' OR cancelado_por_perfil_id IS NOT NULL);
+  CHECK (status <> 'CANCELADO' OR cancelado_por_perfil_id IS NOT NULL);
 ```
 
 Agora o banco aceita a contratação nova **e** recusa marcá-la como cancelada sem dizer por quem.
@@ -193,7 +193,7 @@ São entidades diferentes com nomes parecidos.
 | Exemplo | "Instalação de chuveiro — R$ 120" | "João contratou Pedro em 20/08 por R$ 100" |
 | Dono | O profissional | Cliente **e** profissional |
 | Existe sem o outro? | Sim, mesmo sem ninguém contratar | Não, sempre tem as duas pontas |
-| Tem status? | Só `ativo` | Sim: `SOLICITADA` → … → `CONCLUIDA` |
+| Tem status? | Só `ativo` | Sim: `SOLICITADA` → … → `CONCLUIDO` |
 
 **Por que não podem ser uma tabela só:**
 

@@ -26,8 +26,8 @@ enum status_contratacao {
   ACEITA
   RECUSADA
   EM_ANDAMENTO
-  CONCLUIDA
-  CANCELADA
+  CONCLUIDO
+  CANCELADO
 }
 
 enum tipo_alvo_denuncia {
@@ -268,11 +268,12 @@ Table contratacao {
   titulo varchar(120) [not null]
   descricao varchar(2000) [not null]
   status status_contratacao [not null, default: 'SOLICITADA']
+  arquivada boolean [not null, default: false]
   valor_orcado numeric(10,2)
   valor_final numeric(10,2) [note: 'Congelado na aceitacao']
   distancia_km numeric(6,2)
   motivo_cancelamento varchar(500)
-  cancelado_por_perfil_id uuid [note: 'ck_contratacao_cancelamento_coerente: status <> CANCELADA OR NOT NULL']
+  cancelado_por_perfil_id uuid [note: 'ck_contratacao_cancelamento_coerente: status <> CANCELADO OR NOT NULL']
   concluida_em timestamptz
   criado_em timestamptz [not null, default: `now()`]
   atualizado_em timestamptz [not null, default: `now()`]
