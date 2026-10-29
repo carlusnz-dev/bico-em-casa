@@ -9,7 +9,7 @@ import {
   buscarContratacaoPorId,
   desarquivarContratacao,
 } from '@/api/contratacoes';
-import type { Contratacao } from '@/api/contratos/contratacao';
+import type { Contratacao, StatusContratacao } from '@/api/contratos/contratacao';
 import type { Perfil } from '@/api/contratos/perfil';
 import { ErroApi } from '@/api/erros';
 import { buscarPerfilPorId } from '@/api/perfil';
@@ -37,6 +37,30 @@ function formatarData(data: string): string {
 
 function formatarPreco(preco: number): string {
   return preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+const CONFIG_STATUS: Record<StatusContratacao, { rotulo: string; classes: string }> = {
+  EM_ANDAMENTO: {
+    rotulo: 'Em andamento',
+    classes: 'bg-blue-500/10 text-blue-600',
+  },
+  CONCLUIDO: {
+    rotulo: 'Concluído',
+    classes: 'bg-green-600/10 text-green-700',
+  },
+  CANCELADO: {
+    rotulo: 'Cancelado',
+    classes: 'bg-erro/10 text-erro',
+  },
+};
+
+function obterInfoStatus(status: StatusContratacao) {
+  return (
+    CONFIG_STATUS[status] ?? {
+      rotulo: status,
+      classes: 'bg-borda/40 text-texto-suave',
+    }
+  );
 }
 
 export default function DetalheContratacaoPage() {
@@ -70,17 +94,16 @@ export default function DetalheContratacaoPage() {
       .catch(() => setProfissional(null));
   }, [contratacao]);
 
-  async function alternarStatus() {
+  async function alternarArquivamento() {
     if (!accessToken || !contratacao) return;
 
     setCarregandoAcao(true);
     setErro(null);
 
     try {
-      const atualizada =
-        contratacao.status === 'ATIVA'
-          ? await arquivarContratacao(contratacao.id, accessToken)
-          : await desarquivarContratacao(contratacao.id, accessToken);
+      const atualizada = contratacao.arquivada
+        ? await desarquivarContratacao(contratacao.id, accessToken)
+        : await arquivarContratacao(contratacao.id, accessToken);
       setContratacao(atualizada);
     } catch (causa) {
       setErro(mensagemDeErro(causa, 'Não foi possível atualizar esta contratação.'));
@@ -101,6 +124,8 @@ export default function DetalheContratacaoPage() {
     return <p className="text-texto-suave">Carregando…</p>;
   }
 
+  const infoStatus = obterInfoStatus(contratacao.status);
+
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <Card className="flex flex-col gap-4">
@@ -109,15 +134,16 @@ export default function DetalheContratacaoPage() {
             <h1 className="font-heading text-2xl font-bold">{contratacao.tituloServico}</h1>
             <p className="text-sm text-texto-suave">Contratado em {formatarData(contratacao.criadoEm)}</p>
           </div>
-          <span
-            className={
-              contratacao.status === 'ATIVA'
-                ? 'rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary'
-                : 'rounded-full bg-borda/40 px-3 py-1 text-xs font-medium text-texto-suave'
-            }
-          >
-            {contratacao.status === 'ATIVA' ? 'Ativa' : 'Arquivada'}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`rounded-full px-3 py-1 text-xs font-medium ${infoStatus.classes}`}>
+              {infoStatus.rotulo}
+            </span>
+            {contratacao.arquivada && (
+              <span className="rounded-full bg-borda/40 px-3 py-1 text-xs font-medium text-texto-suave">
+                Arquivada
+              </span>
+            )}
+          </div>
         </header>
 
         <p className="text-lg font-medium text-primary">{formatarPreco(contratacao.precoServico)}</p>
@@ -169,8 +195,8 @@ export default function DetalheContratacaoPage() {
         <Link href={`/contratacoes/${contratacao.id}/denunciar`} className={classesDoBotao('fantasma')}>
           Denunciar
         </Link>
-        <Botao variante="fantasma" carregando={carregandoAcao} onClick={alternarStatus}>
-          {contratacao.status === 'ATIVA' ? 'Arquivar' : 'Desarquivar'}
+        <Botao variante="fantasma" carregando={carregandoAcao} onClick={alternarArquivamento}>
+          {contratacao.arquivada ? 'Desarquivar' : 'Arquivar'}
         </Botao>
       </div>
     </div>

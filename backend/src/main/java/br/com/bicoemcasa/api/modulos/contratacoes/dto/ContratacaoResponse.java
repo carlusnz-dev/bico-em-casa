@@ -15,6 +15,7 @@ public record ContratacaoResponse(
         BigDecimal precoServico,
         String observacao,
         StatusContratacao status,
+        boolean arquivada,
         OffsetDateTime criadoEm
 ) {
 }

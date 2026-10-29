@@ -12,6 +12,7 @@ import br.com.bicoemcasa.api.core.excecao.PortfolioNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.SenhaNaoBateException;
 import br.com.bicoemcasa.api.core.excecao.ServicoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.TokenInvalidoException;
+import br.com.bicoemcasa.api.core.excecao.TransicaoStatusInvalidaException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -210,6 +211,21 @@ public class ExcecoesGlobalHandler {
                 ex.getMessage()
         );
         problemDetail.setTitle("Denúncia não está pendente");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(TransicaoStatusInvalidaException.class)
+    public ProblemDetail transicaoStatusInvalida(
+            TransicaoStatusInvalidaException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Transição de status inválida");
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         problemDetail.setProperty("timestamp", Instant.now());
 

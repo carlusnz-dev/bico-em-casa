@@ -1,5 +1,6 @@
 import { request } from './cliente';
 import {
+  AlterarStatusContratacaoRequest,
   Contratacao,
   ContratarServicoRequest,
   contratacaoSchema,
@@ -26,6 +27,19 @@ export async function listarMinhasContratacoes(
 ): Promise<Pagina<Contratacao>> {
   const resposta = await request(
     `/contratacao/minhas?pagina=${pagina}&tamanho=${tamanho}`,
+    {},
+    accessToken,
+  );
+  return paginaSchema(contratacaoSchema).parse(resposta);
+}
+
+export async function listarContratacoesRecebidas(
+  accessToken: string,
+  pagina = 0,
+  tamanho = 20,
+): Promise<Pagina<Contratacao>> {
+  const resposta = await request(
+    `/contratacao/recebidas?pagina=${pagina}&tamanho=${tamanho}`,
     {},
     accessToken,
   );
@@ -62,6 +76,19 @@ export async function desarquivarContratacao(id: string, accessToken: string): P
   const resposta = await request(
     `/contratacao/${id}/desarquivar`,
     { method: 'PATCH' },
+    accessToken,
+  );
+  return contratacaoSchema.parse(resposta);
+}
+
+export async function alterarStatusContratacao(
+  id: string,
+  dados: AlterarStatusContratacaoRequest,
+  accessToken: string,
+): Promise<Contratacao> {
+  const resposta = await request(
+    `/contratacao/${id}/status`,
+    { method: 'PATCH', body: JSON.stringify(dados) },
     accessToken,
   );
   return contratacaoSchema.parse(resposta);

@@ -55,7 +55,8 @@ public class ContratacaoServiceImpl implements ContratacaoService {
         contratacao.setTituloServico(servico.titulo());
         contratacao.setPrecoServico(servico.precoPrevio());
         contratacao.setObservacao(request.observacao());
-        contratacao.setStatus(StatusContratacao.ATIVA);
+        contratacao.setStatus(StatusContratacao.EM_ANDAMENTO);
+        contratacao.setArquivada(false);
 
         contratacaoRepository.save(contratacao);
 
@@ -87,7 +88,7 @@ public class ContratacaoServiceImpl implements ContratacaoService {
     @Override
     public ContratacaoResponse arquivar(UUID id, Long usuarioId) {
         Contratacao contratacao = buscarContratacaoDoCliente(id, usuarioId);
-        contratacao.setStatus(StatusContratacao.ARQUIVADA);
+        contratacao.setArquivada(true);
         contratacaoRepository.save(contratacao);
         return paraResponse(contratacao);
     }
@@ -95,7 +96,7 @@ public class ContratacaoServiceImpl implements ContratacaoService {
     @Override
     public ContratacaoResponse desarquivar(UUID id, Long usuarioId) {
         Contratacao contratacao = buscarContratacaoDoCliente(id, usuarioId);
-        contratacao.setStatus(StatusContratacao.ATIVA);
+        contratacao.setArquivada(false);
         contratacaoRepository.save(contratacao);
         return paraResponse(contratacao);
     }
@@ -127,6 +128,7 @@ public class ContratacaoServiceImpl implements ContratacaoService {
                 contratacao.getPrecoServico(),
                 contratacao.getObservacao(),
                 contratacao.getStatus(),
+                contratacao.isArquivada(),
                 contratacao.getCriadoEm()
         );
     }

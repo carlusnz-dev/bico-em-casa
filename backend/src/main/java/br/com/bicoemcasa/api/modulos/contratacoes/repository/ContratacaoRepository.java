@@ -12,5 +12,6 @@ import java.util.UUID;
 @Repository
 public interface ContratacaoRepository extends JpaRepository<Contratacao, UUID> {
     Page<Contratacao> findByClienteId(UUID clienteId, Pageable pageable);
+    Page<Contratacao> findByProfissionalId(UUID profissionalId, Pageable pageable);
     List<Contratacao> findByServicoId(UUID servicoId);
 }

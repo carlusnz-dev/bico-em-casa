@@ -49,6 +49,9 @@ public class Contratacao {
     @Column(nullable = false, length = 20)
     private StatusContratacao status;
 
+    @Column(nullable = false)
+    private boolean arquivada;
+
     @Column(name = "criado_em")
     private OffsetDateTime criadoEm;
 
