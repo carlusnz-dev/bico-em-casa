@@ -12,4 +12,7 @@ public interface PerfilService {
     PerfilResponse buscarPorUsuarioId(Long usuarioId);
     PerfilResponse buscarPorUsuarioIdETipo(Long usuarioId, PerfilTipo tipo);
     PerfilResponse buscarPorSlug(String slugUrl);
+    String buscarTelefonePorId(UUID id);
 }
+
+

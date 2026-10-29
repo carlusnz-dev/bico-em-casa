@@ -74,4 +74,11 @@ public class PerfilServiceImpl implements PerfilService {
                 perfil.getTipo(), perfil.getNomeUsuario(), perfil.getNomeExibicao(),
                 perfil.getFotoUrl(), perfil.getBio(), perfil.getCriadoEm());
     }
+
+    public String buscarTelefonePorId(UUID id){
+        Perfil perfil = repository.findById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Perfil não econtrado"));
+
+        return perfil.getTelefone();
+    }
 }

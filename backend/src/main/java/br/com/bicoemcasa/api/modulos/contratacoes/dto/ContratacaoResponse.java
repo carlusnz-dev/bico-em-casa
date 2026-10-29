@@ -11,6 +11,7 @@ public record ContratacaoResponse(
         UUID servicoId,
         UUID clienteId,
         UUID profissionalId,
+        String telefoneProfissional,
         String tituloServico,
         BigDecimal precoServico,
         String observacao,

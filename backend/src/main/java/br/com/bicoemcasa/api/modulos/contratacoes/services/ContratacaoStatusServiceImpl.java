@@ -76,6 +76,7 @@ public class ContratacaoStatusServiceImpl implements ContratacaoStatusService {
                 contratacao.getServicoId(),
                 contratacao.getClienteId(),
                 contratacao.getProfissionalId(),
+                perfilService.buscarTelefonePorId(contratacao.getProfissionalId()),
                 contratacao.getTituloServico(),
                 contratacao.getPrecoServico(),
                 contratacao.getObservacao(),
