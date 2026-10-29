@@ -11,6 +11,7 @@ import { formatarPreco } from '@/components/formatarPreco';
 import { Botao, classesDoBotao } from '@/components/ui/Botao';
 import { Card } from '@/components/ui/Card';
 import { useSessao } from '@/hooks/useSessao';
+import clsx from 'clsx';
 
 function mensagemDeErro(causa: unknown, padrao: string): string {
   if (causa instanceof ErroApi) {
@@ -36,8 +37,8 @@ export default function MeusServicosPage() {
     if (!accessToken) return;
 
     listarMeusServicos(accessToken)
-      .then((pagina) => setServicos(pagina.conteudo))
-      .catch((causa) => setErro(mensagemDeErro(causa, 'Não foi possível carregar seus serviços.')));
+        .then((pagina) => setServicos(pagina.conteudo))
+        .catch((causa) => setErro(mensagemDeErro(causa, 'Não foi possível carregar seus serviços.')));
   }, [accessToken]);
 
   async function alternarStatus(servico: Servico) {
@@ -48,11 +49,11 @@ export default function MeusServicosPage() {
 
     try {
       const atualizado = servico.ativo
-        ? await desativarServico(servico.id, accessToken)
-        : await ativarServico(servico.id, accessToken);
+          ? await desativarServico(servico.id, accessToken)
+          : await ativarServico(servico.id, accessToken);
 
       setServicos((atual) =>
-        atual ? atual.map((item) => (item.id === atualizado.id ? atualizado : item)) : atual,
+          atual ? atual.map((item) => (item.id === atualizado.id ? atualizado : item)) : atual,
       );
     } catch (causa) {
       setErro(mensagemDeErro(causa, 'Não foi possível atualizar o serviço.'));
@@ -73,75 +74,80 @@ export default function MeusServicosPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="font-heading text-3xl font-bold">Meus serviços</h1>
-        <Link href="/servicos/novo" className={classesDoBotao('primario')}>
-          Anunciar serviço
-        </Link>
-      </div>
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="font-heading text-3xl font-bold">Meus serviços</h1>
+          <Link href="/servicos/novo" className={classesDoBotao('primario')}>
+            Anunciar serviço
+          </Link>
+        </div>
 
-      {erro && (
-        <p role="alert" className="bg-erro/10 text-erro rounded-lg px-3 py-2 text-sm">
-          {erro}
-        </p>
-      )}
+        {erro && (
+            <p role="alert" className="bg-erro/10 text-erro rounded-lg px-3 py-2 text-sm">
+              {erro}
+            </p>
+        )}
 
-      {servicos === null ? (
-        <p className="text-texto-suave">Carregando…</p>
-      ) : servicos.length === 0 ? (
-        <p className="text-texto-suave">Você ainda não anunciou nenhum serviço.</p>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {servicos.map((servico) => (
-            <li key={servico.id}>
-              <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold">{servico.titulo}</h2>
-                    <span
-                      className={
+        {servicos === null ? (
+            <p className="text-texto-suave">Carregando…</p>
+        ) : servicos.length === 0 ? (
+            <p className="text-texto-suave">Você ainda não anunciou nenhum serviço.</p>
+        ) : (
+            <ul className="flex flex-col gap-3">
+              {servicos.map((servico) => (
+                  <li key={servico.id}>
+                    <Card className={clsx("flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between transition-colors",
                         servico.ativo
-                          ? 'bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium'
-                          : 'bg-borda/40 text-texto-suave rounded-full px-2 py-0.5 text-xs font-medium'
-                      }
+                            ? 'bg-green-300! border-green-300!'
+                            : 'bg-white! border-borda!',
+                    )}
                     >
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-lg font-semibold">{servico.titulo}</h2>
+                          <span
+                              className={
+                                servico.ativo
+                                    ? 'bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium'
+                                    : 'bg-borda/40 text-texto-suave rounded-full px-2 py-0.5 text-xs font-medium'
+                              }
+                          >
                       {servico.ativo ? 'Ativo' : 'Inativo'}
                     </span>
-                  </div>
-                  <p className="text-texto-suave text-sm">
-                    {formatarPreco(servico.precoPrevio, servico.unidadePreco)}
-                  </p>
-                </div>
+                        </div>
+                        <p className="text-texto-suave text-sm">
+                          {formatarPreco(servico.precoPrevio, servico.unidadePreco)}
+                        </p>
+                      </div>
 
-                <div className="flex gap-2">
-                  <Link
-                    href={`/servicos/${servico.id}/editar`}
-                    className={classesDoBotao('secundario')}
-                  >
-                    Editar
-                  </Link>
-                  <Botao
-                    variante={servico.ativo ? 'fantasma' : 'primario'}
-                    carregando={idEmAcao === servico.id}
-                    onClick={() => alternarStatus(servico)}
-                  >
-                    {servico.ativo ? 'Desativar' : 'Ativar'}
-                  </Botao>
-                  <Botao
-                    variante="fantasma"
-                    tamanho="medio"
-                    className="text-erro hover:bg-erro/10"
-                    onClick={() => handleDeletar(servico.id)}
-                  >
-                    Excluir
-                  </Botao>
-                </div>
-              </Card>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+                      <div className="flex gap-2">
+                        <Link
+                            href={`/servicos/${servico.id}/editar`}
+                            className={classesDoBotao('secundario')}
+                        >
+                          Editar
+                        </Link>
+                        <Botao
+                            variante={servico.ativo ? 'fantasma' : 'primario'}
+                            carregando={idEmAcao === servico.id}
+                            onClick={() => alternarStatus(servico)}
+                        >
+                          {servico.ativo ? 'Desativar' : 'Ativar'}
+                        </Botao>
+                        <Botao
+                            variante="fantasma"
+                            tamanho="medio"
+                            className="text-erro hover:bg-erro/10"
+                            onClick={() => handleDeletar(servico.id)}
+                        >
+                          Excluir
+                        </Botao>
+                      </div>
+                    </Card>
+                  </li>
+              ))}
+            </ul>
+        )}
+      </div>
   );
 }
