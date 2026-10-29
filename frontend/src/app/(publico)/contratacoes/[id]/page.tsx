@@ -9,7 +9,7 @@ import {
   buscarContratacaoPorId,
   desarquivarContratacao,
 } from '@/api/contratacoes';
-import type { Contratacao, StatusContratacao } from '@/api/contratos/contratacao';
+import {type Contratacao,gerarUrlWhatsappPrestador, type StatusContratacao} from "@/api/contratos/contratacao";
 import type { Perfil } from '@/api/contratos/perfil';
 import { ErroApi } from '@/api/erros';
 import { buscarPerfilPorId } from '@/api/perfil';
@@ -125,6 +125,10 @@ export default function DetalheContratacaoPage() {
   }
 
   const infoStatus = obterInfoStatus(contratacao.status);
+  const urlWhatsapp = gerarUrlWhatsappPrestador(
+      contratacao.telefoneProfissional,
+      contratacao.tituloServico,
+  )
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
@@ -186,6 +190,11 @@ export default function DetalheContratacaoPage() {
       )}
 
       <div className="flex gap-2">
+        {urlWhatsapp && contratacao.status == 'EM_ANDAMENTO' && (
+            <a href={urlWhatsapp} target="_blank" rel="noopener noreferrer" className={classesDoBotao('primario')}>
+              Avisar prestador no whatsApp
+            </a>
+        )}
         <Link href={`/contratacoes/${contratacao.id}/editar`} className={classesDoBotao('secundario')}>
           Editar
         </Link>
