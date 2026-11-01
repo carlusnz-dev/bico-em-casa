@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useAvisosModeracao } from '@/api/admin-servicos';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -22,6 +23,7 @@ function mensagemDeErro(causa: unknown, padrao: string): string {
 export default function MeusServicosPage() {
   const { accessToken, status } = useSessao();
   const router = useRouter();
+  const avisos = useAvisosModeracao(accessToken);
   const [servicos, setServicos] = useState<Servico[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [idEmAcao, setIdEmAcao] = useState<string | null>(null);
@@ -81,6 +83,10 @@ export default function MeusServicosPage() {
         </Link>
       </div>
 
+      {avisos.data && avisos.data.length > 0 && <section aria-label="Avisos da moderação">
+        <h2 className="text-lg font-semibold">Avisos da moderação</h2>
+        <ul>{avisos.data.map(a => <li key={a.id}><Link href={`/servicos/${a.alvoId}`}>Serviço editado pela moderação</Link>: {a.mensagem}</li>)}</ul>
+      </section>}
       {erro && (
         <p role="alert" className="bg-erro/10 text-erro rounded-lg px-3 py-2 text-sm">
           {erro}
@@ -106,11 +112,12 @@ export default function MeusServicosPage() {
                           : 'bg-borda/40 text-texto-suave rounded-full px-2 py-0.5 text-xs font-medium'
                       }
                     >
-                      {servico.ativo ? 'Ativo' : 'Inativo'}
+                      {servico.motivoModeracao ? 'Desativado pela moderação' : servico.ativo ? 'Ativo' : 'Inativo'}
                     </span>
                   </div>
                   <p className="text-texto-suave text-sm">
                     {formatarPreco(servico.precoPrevio, servico.unidadePreco)}
+                    {servico.motivoModeracao && <span className="block">Motivo: {servico.motivoModeracao}</span>}
                   </p>
                 </div>
 
@@ -123,6 +130,7 @@ export default function MeusServicosPage() {
                   </Link>
                   <Botao
                     variante={servico.ativo ? 'fantasma' : 'primario'}
+                    disabled={Boolean(servico.motivoModeracao)}
                     carregando={idEmAcao === servico.id}
                     onClick={() => alternarStatus(servico)}
                   >
