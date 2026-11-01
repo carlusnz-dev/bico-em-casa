@@ -32,6 +32,19 @@ export async function listarMinhasContratacoes(
   return paginaSchema(contratacaoSchema).parse(resposta);
 }
 
+export async function listarContratacoesRecebidas(
+  accessToken: string,
+  pagina = 0,
+  tamanho = 20,
+): Promise<Pagina<Contratacao>> {
+  const resposta = await request(
+    `/contratacao/recebidas?pagina=${pagina}&tamanho=${tamanho}`,
+    {},
+    accessToken,
+  );
+  return paginaSchema(contratacaoSchema).parse(resposta);
+}
+
 export async function buscarContratacaoPorId(
   id: string,
   accessToken: string,
