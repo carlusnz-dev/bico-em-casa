@@ -76,6 +76,15 @@ public class ContratacaoServiceImpl implements ContratacaoService {
         return PaginaResponse.de(contratacaoRepository.findByClienteId(cliente.id(), paginacao), this::paraResponse);
     }
 
+    @Override 
+    @Transactional(readOnly = true)
+    public PaginaResponse<ContratacaoResponse> listarRecebidas(Long usuarioId, int pagina, int tamanho) {
+        PerfilResponse profissional = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.PROFISSIONAL);
+        var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
+        return PaginaResponse.de(contratacaoRepository.findByProfissionalId(profissional.id(), paginacao),
+        this::paraResponse);
+    }
+
     @Override
     public ContratacaoResponse editar(UUID id, EditarContratacaoRequest request, Long usuarioId) {
         Contratacao contratacao = buscarContratacaoDoCliente(id, usuarioId);
