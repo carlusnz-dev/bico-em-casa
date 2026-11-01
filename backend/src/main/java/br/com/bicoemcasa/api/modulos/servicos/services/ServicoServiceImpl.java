@@ -1,5 +1,7 @@
 package br.com.bicoemcasa.api.modulos.servicos.services;
 
+import br.com.bicoemcasa.api.core.RegistroAuditoria;
+import br.com.bicoemcasa.api.core.excecao.ModeracaoConflitoException;
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.core.excecao.ServicoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.paginacao.PaginaResponse;
@@ -26,19 +28,23 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class ServicoServiceImpl implements ServicoService {
     private final ServicoRepository servicoRepository;
     private final TagRepository tagRepository;
     private final PerfilService perfilService;
+    private final RegistroAuditoria auditoria;
 
     public ServicoServiceImpl(
             ServicoRepository servicoRepository,
             TagRepository tagRepository,
-            PerfilService perfilService
+            PerfilService perfilService,
+            RegistroAuditoria auditoria
     ) {
         this.servicoRepository = servicoRepository;
         this.tagRepository = tagRepository;
         this.perfilService = perfilService;
+        this.auditoria = auditoria;
     }
 
     @Override
@@ -80,7 +86,10 @@ public class ServicoServiceImpl implements ServicoService {
     public PaginaResponse<ServicoResponse> listarMeus(Long usuarioId, int pagina, int tamanho) {
         PerfilResponse perfil = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.PROFISSIONAL);
         var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
-        return PaginaResponse.de(servicoRepository.findByPerfilId(perfil.id(), paginacao), this::paraResponse);
+        return PaginaResponse.de(servicoRepository.findByPerfilId(perfil.id(), paginacao), servico -> {
+            var resposta=paraResponse(servico);
+            return resposta.comMotivo(auditoria.motivoDesativacao(servico.getId().toString()));
+        });
     }
 
     @Override
@@ -103,6 +112,9 @@ public class ServicoServiceImpl implements ServicoService {
     @Transactional
     public ServicoResponse ativar(UUID id, Long usuarioId) {
         Servico servico = buscarServicoDoPerfil(id, usuarioId);
+        if (auditoria.motivoDesativacao(id.toString()) != null)
+            throw new ModeracaoConflitoException(
+                "Serviço desativado pela moderação; somente o administrador pode reativá-lo");
         servico.setAtivo(true);
         servicoRepository.save(servico);
         return paraResponse(servico);
@@ -124,7 +136,7 @@ public class ServicoServiceImpl implements ServicoService {
     }
 
     private Servico buscarServicoDoPerfil(UUID id, Long usuarioId) {
-        Servico servico = servicoRepository.findById(id)
+        Servico servico = servicoRepository.buscarParaAtualizar(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Serviço não encontrado"));
 
         PerfilResponse perfil = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.PROFISSIONAL);
@@ -136,7 +148,7 @@ public class ServicoServiceImpl implements ServicoService {
     }
 
     private Set<Tag> buscarTags(Set<UUID> tagIds) {
-        List<Tag> tags = tagRepository.findAllById(tagIds);
+        List<Tag> tags = tagRepository.buscarParaVincular(tagIds);
         if (tags.size() != tagIds.size()) {
             throw new EntidadeNaoEncontradaException("Uma ou mais categorias informadas não existem");
         }
