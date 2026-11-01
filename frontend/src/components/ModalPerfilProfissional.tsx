@@ -127,15 +127,13 @@ export function ModalPerfilProfissional({
 
                 {perfil.bio && <p className="text-sm text-texto-suave">{perfil.bio}</p>}
 
-                {portfolio && (
-                  <Link
-                    href={`/profissionais/${portfolio.id}`}
-                    onClick={aoFechar}
-                    className={classesDoBotao('primario', 'medio', 'self-start')}
-                  >
-                    Ver perfil completo
-                  </Link>
-                )}
+                <Link
+                  href={portfolio ? `/profissionais/${portfolio.id}` : `/perfil/${perfil.id}`}
+                  onClick={aoFechar}
+                  className={classesDoBotao('primario', 'medio', 'self-start')}
+                >
+                  Ver perfil completo
+                </Link>
               </motion.div>
             </Dialog.Content>
           </Dialog.Portal>
