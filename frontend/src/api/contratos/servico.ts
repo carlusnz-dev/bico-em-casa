@@ -12,6 +12,7 @@ export const servicoSchema = z.object({
   precoPrevio: z.number(),
   unidadePreco: unidadePrecoSchema,
   ativo: z.boolean(),
+  motivoModeracao: z.string().nullable().optional(),
   tagIds: z.array(z.uuid()),
   criadoEm: z.string(),
 });

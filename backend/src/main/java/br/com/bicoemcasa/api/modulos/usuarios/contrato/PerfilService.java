@@ -9,6 +9,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PerfilService {
+    java.util.List<UUID> buscarProfissionais(String termo);
+    void notificarModeracao(UUID destinatario, UUID servico, String mensagem);
+    java.util.List<br.com.bicoemcasa.api.modulos.usuarios.dto.AvisoModeracaoResponse> listarAvisos(Long usuario);
     PerfilResponse criar(Long usuarioId, PerfilRequest request);
     PerfilResponse buscarPorId(UUID id);
     PerfilResponse buscarPorUsuarioId(Long usuarioId);

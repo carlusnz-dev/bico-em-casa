@@ -31,6 +31,21 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ExcecoesGlobalHandler {
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ProblemDetail conflitoIntegridade(org.springframework.dao.DataIntegrityViolationException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+            "A operação conflita com um registro existente ou um vínculo em uso");
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ProblemDetail acessoNegado(org.springframework.security.access.AccessDeniedException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Acesso restrito ao administrador");
+    }
+    @ExceptionHandler(br.com.bicoemcasa.api.core.excecao.ModeracaoConflitoException.class)
+    public ProblemDetail conflitoModeracao(RuntimeException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     // 404
     @ExceptionHandler(EntidadeNaoEncontradaException.class)
     public ProblemDetail tratarEntidadeNaoEncontrada(

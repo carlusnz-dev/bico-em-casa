@@ -195,3 +195,12 @@ Este plano altera `docs/arquitetura-sistema.json`?
 - [ ] Migration de `log_acao` — quem escreve e quando, já que bloqueia `RF022`, `RF026` e `RF027`
 - [ ] Resolver a divergência `core/` (código) vs. `comum/` (ADR-0004 e `CLAUDE.md`) — nome errado
       em algum dos dois lados
+
+## Resolução das pendências em 2026-11-01
+
+Implementação autorizada pelo responsável nesta sessão: endpoint dedicado em
+`/api/admin/servicos/{id}/moderar`, slug imutável e motivo obrigatório (HU13 sem mínimo adicional;
+HU12 com 10 caracteres). Auditoria em `core/RegistroAuditoria`, localização real do núcleo,
+e notificações persistidas em usuarios, conforme ADR-0013. O frontend passa a integrar este
+contrato; a exclusão de frontend acima descrevia a divisão do plano original, não do PBI completo.
+A migration `V20261101120000` implementa os pré-requisitos de persistência.

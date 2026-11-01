@@ -318,7 +318,7 @@ Table notificacao {
   destinatario_perfil_id uuid [not null]
   tipo varchar(60) [not null]
   titulo varchar(150) [not null]
-  mensagem varchar(500)
+  mensagem varchar(1000)
   alvo_tipo varchar(40)
   alvo_id varchar(64) [note: 'Polimorfico, sem FK']
   lida_em timestamptz

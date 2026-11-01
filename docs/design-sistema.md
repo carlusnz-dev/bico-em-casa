@@ -734,6 +734,28 @@ pertence a `api/`.
 
 ---
 
+## 12. Administração de serviços (RF025–RF027)
+
+A tela `/admin/servicos` usa `/api/admin` para listar, corrigir e moderar serviços e manter
+categorias predefinidas. O papel ADMIN é consultado no banco via `PerfilService`; o JWT informa
+somente o usuário. As respostas paginadas usam `PaginaResponse`, com até 50 itens, ordenação por
+`criadoEm` e `id` decrescentes, filtros de situação/categoria e busca sem acentos.
+
+`RegistroAuditoria`, na raiz de `core`, persiste em `log_acao` usando `JdbcClient`: autor, ação,
+alvo, motivo, snapshots anteriores/novos e IP remoto da conexão. O módulo `usuarios` persiste
+notificações via `PerfilService` e `NotificacaoRepository`, com leitura autenticada em
+`GET /api/perfil/me/avisos`. Alteração, auditoria e notificação participam da mesma transação.
+
+Serviços são bloqueados durante moderação e alterações do dono. A última ação de desativar ou
+reativar registrada no log determina o bloqueio de moderação e seu motivo; o profissional não
+pode reativar um serviço bloqueado. Contratações existentes são preservadas.
+
+Categorias permanecem predefinidas pelo seed existente. Renomear preserva o slug; remover exige
+ausência de vínculos. Um índice único em `lower(trim(nome))` também protege contra duplicidade
+concorrente. Ver [ADR-0013](./adr/0013-auditoria-e-moderacao-de-servicos.md).
+
+---
+
 ## Referências
 
 - [`arquitetura-sistema.json`](./arquitetura-sistema.json) — fonte da verdade
