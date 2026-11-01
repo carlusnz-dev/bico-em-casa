@@ -289,3 +289,11 @@ dado dela.
 - [`requisitos.md`](./requisitos.md) · [`matriz-rastreabilidade.md`](./matriz-rastreabilidade.md)
 - [ADR-0006](./adr/0006-remover-supabase-infraestrutura-propria.md) — por que a credencial mora aqui
 - [ADR-0007](./adr/0007-chave-primaria-mista.md) — por que há `bigint` e `uuid` na mesma base
+
+### Moderação de serviços (2026-11-01)
+
+A migration `V20261101120000` materializa `log_acao` e `notificacao` já previstos no modelo.
+A mensagem da notificação aceita até 1000 caracteres, alinhada ao motivo da correção.
+O índice único `uq_tag_nome_normalizado` impede nomes duplicados por caixa/espaços nas pontas.
+O estado de bloqueio pela moderação deriva da última ação de situação em `log_acao`, sem nova
+coluna em serviço. As ações preservam o histórico de contratações. Ver ADR-0013.

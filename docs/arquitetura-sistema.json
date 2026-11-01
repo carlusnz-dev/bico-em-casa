@@ -507,11 +507,10 @@
       "src": {
         "app/": {
           "descricao": "App Router do Next.js. Apenas roteamento, layout e composicao. Sem regra de negocio.",
-          "(publico)/": "Landing page, busca de profissionais e paginas abertas",
+          "(publico)/": "Rotas abertas. Hoje: page.tsx (home) e layout.tsx com Cabecalho e Rodape",
           "(auth)/": "Login, cadastro e recuperacao de senha",
           "(app)/": "Area autenticada: painel do cliente e do profissional",
           "layout.tsx": "Root layout com providers globais (React Query, tema, sessao)",
-          "(publico)/": "Rotas abertas. Hoje: page.tsx (home) e layout.tsx com Cabecalho e Rodape",
           "not-found.tsx": "404 da aplicacao, na raiz de app/",
           "middleware.ts": "Nao implementado nesta fase (na raiz de src/). Sessao 100% client-side - decisao de 2026-09-10 (ver docs/relatorios/2026-09-10-revisao-autenticacao-e-planejamento-tela-login.md): o cookie do refresh token e host-only, emitido pela API, e nunca alcanca o middleware do front. Protecao de rota e refresh ficam a cargo de guard client-side em hooks/useSessao e nos layouts da area autenticada."
         },
@@ -548,5 +547,22 @@
         "utils/": "Nao definida nesta versao. Ver docs/adr/ antes de criar."
       }
     }
+  },
+  "moderacao_servicos": {
+    "requisitos": [
+      "RF025",
+      "RF026",
+      "RF027"
+    ],
+    "rota_frontend": "/admin/servicos",
+    "rota_backend": "/api/admin",
+    "autorizacao": "Perfil ADMIN consultado no banco via PerfilService; JWT fornece somente usuarioId",
+    "auditoria": "RegistroAuditoria na raiz de core, JdbcClient, log_acao com snapshots anterior/novo, motivo e IP remoto",
+    "notificacoes": "Persistencia em usuarios via PerfilService e NotificacaoRepository; leitura autenticada em /api/perfil/me/avisos",
+    "transacao": "Alteracao, auditoria e notificacao na mesma transacao; bloqueio de servico na moderacao e nas alteracoes do dono",
+    "categorias": "Seed existente; renomear preserva slug; exclusao somente sem vinculos; unicidade por lower(trim(nome))",
+    "bloqueio_moderacao": "Ultima acao DESATIVAR_SERVICO/REATIVAR_SERVICO no log determina bloqueio e motivo; profissional nao pode reativar",
+    "listagem": "PaginaResponse, limite 50, ordenacao criadoEm/id decrescente, filtros de situacao/categoria e busca sem acentos",
+    "adr": "0013-auditoria-e-moderacao-de-servicos.md"
   }
 }

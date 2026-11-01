@@ -16,12 +16,24 @@ import java.util.UUID;
 public class PerfilServiceImpl implements PerfilService {
     private final PerfilRepository repository;
     private final UsuarioRepository usuarioRepository;
+    private final br.com.bicoemcasa.api.modulos.usuarios.repository.NotificacaoRepository notificacoes;
 
-    public PerfilServiceImpl(PerfilRepository repository, UsuarioRepository usuarioRepository) {
+    public PerfilServiceImpl(PerfilRepository repository, UsuarioRepository usuarioRepository, br.com.bicoemcasa.api.modulos.usuarios.repository.NotificacaoRepository notificacoes) {
         this.repository = repository;
+        this.notificacoes = notificacoes;
         this.usuarioRepository = usuarioRepository;
     }
 
+    @Override
+    public java.util.List<UUID> buscarProfissionais(String termo) { return repository.buscarProfissionais(termo); }
+    @Override
+    public void notificarModeracao(UUID destinatario, UUID servico, String mensagem) {
+        notificacoes.criar(destinatario, servico, mensagem);
+    }
+    @Override
+    public java.util.List<br.com.bicoemcasa.api.modulos.usuarios.dto.AvisoModeracaoResponse> listarAvisos(Long usuario) {
+        return notificacoes.listar(buscarPorUsuarioId(usuario).id());
+    }
     @Override
     public PerfilResponse buscarPorId(UUID id) {
         Perfil perfil = repository.findById(id)

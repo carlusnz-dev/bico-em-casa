@@ -56,3 +56,5 @@ campos num DTO, escolha de ícone.
 > Um ADR **nunca é apagado nem reescrito** depois de aceito. Mudou de ideia? Escreva um novo
 > ADR e marque o antigo como *Substituído*. O histórico das decisões é justamente o que dá
 > valor à pasta.
+
+- [ADR-0013 — Auditoria e moderação de serviços](./0013-auditoria-e-moderacao-de-servicos.md) — Aceito

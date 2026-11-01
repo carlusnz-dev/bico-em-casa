@@ -21,6 +21,10 @@ public class PerfilController {
         this.perfilService = perfilService;
     }
 
+    @GetMapping("/me/avisos")
+    public java.util.List<br.com.bicoemcasa.api.modulos.usuarios.dto.AvisoModeracaoResponse> avisos(@AuthenticationPrincipal Jwt jwt) {
+        return perfilService.listarAvisos(Long.valueOf(jwt.getSubject()));
+    }
     @GetMapping("/me")
     public ResponseEntity<PerfilResponse> buscarMeuPerfil(@AuthenticationPrincipal Jwt jwt) {
         var response = perfilService.buscarPorUsuarioId(Long.valueOf(jwt.getSubject()));

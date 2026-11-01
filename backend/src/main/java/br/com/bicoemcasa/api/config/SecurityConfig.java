@@ -63,7 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/servico/meus").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/servico", "/api/servico/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tag").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/perfil/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/perfil/me", "/api/perfil/me/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/perfil/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/avaliacao/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/portfolio/meu").authenticated()
