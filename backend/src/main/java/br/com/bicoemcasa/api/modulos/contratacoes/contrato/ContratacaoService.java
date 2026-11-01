@@ -17,4 +17,5 @@ public interface ContratacaoService {
     ContratacaoResponse arquivar(UUID id, Long usuarioId);
     ContratacaoResponse desarquivar(UUID id, Long usuarioId);
     List<Contratacao> buscarPorServico(UUID servicoId);
+    PaginaResponse<ContratacaoResponse> listarRecebidas(Long usuarioId, int pagina, int tamanho);
 }

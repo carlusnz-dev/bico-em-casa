@@ -13,6 +13,7 @@ import br.com.bicoemcasa.api.modulos.usuarios.repository.PerfilRepository;
 import br.com.bicoemcasa.api.modulos.usuarios.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
 
 import java.util.List;
 import java.util.UUID;
@@ -102,5 +103,11 @@ public class PerfilServiceImpl implements PerfilService {
         return new PerfilResponse(perfil.getId(), perfil.getUsuario().getId(),
                 perfil.getTipo(), perfil.getNomeUsuario(), perfil.getNomeExibicao(),
                 perfil.getFotoUrl(), perfil.getBio(), perfil.getCriadoEm());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<PerfilResponse> encontrarPorUsuarioETipo(Long usuarioId, PerfilTipo tipo) {
+        return repository.findByUsuarioIdAndTipo(usuarioId, tipo).map(this::paraResponse);
     }
 }

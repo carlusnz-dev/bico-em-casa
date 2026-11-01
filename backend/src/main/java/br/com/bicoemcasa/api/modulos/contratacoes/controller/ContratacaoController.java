@@ -54,6 +54,16 @@ public class ContratacaoController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/recebidas")
+    public ResponseEntity<PaginaResponse<ContratacaoResponse>> listarRecebidas(
+        @RequestParam(defaultValue = "0") @Min(value = 0, message = "A página não pode ser negativa") int pagina,
+        @RequestParam(defaultValue = "20") @Min(value = 1, message = "O tamanho mínimo da página é 1") @Max(value = 50, message = "O tamanho máximo da página é 50") int tamanho,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        var response = contratacaoService.listarRecebidas(Long.valueOf(jwt.getSubject()), pagina, tamanho);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ContratacaoResponse> buscarPorId(
             @PathVariable UUID id,
