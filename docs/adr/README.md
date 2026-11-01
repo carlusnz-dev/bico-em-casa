@@ -20,7 +20,7 @@ alguém, seis meses depois, refazer uma discussão já encerrada.
 | [0010](./0010-versionamento-migration-por-timestamp.md) | Versionamento de migration Flyway por timestamp em vez de sequencial | Processo · Banco | Aceito | 2026-09-01 |
 | [0011](./0011-rotacao-de-refresh-token.md) | Refresh token opaco, rotacionado a cada uso, renovado por endpoint próprio | Backend | Aceito | 2026-09-13 |
 | [0012](./0012-paginacao-com-tipo-de-resposta-proprio.md) | Paginação com tipo de resposta próprio: `PaginaResponse<T>` em vez de `Page<T>` exposto | Backend | Aceito | 2026-09-14 |
-| [0014](./0014-acesso-a-contratacao-por-participante-e-perfil-publico.md) | Acesso à contratação por participante e perfil público para os dois papéis | Backend · Frontend | Proposto | 2026-11-01 |
+| [0014](./0014-acesso-a-contratacao-por-participante-e-perfil-publico.md) | Acesso à contratação por participante e perfil público para os dois papéis | Backend · Frontend | Aceito | 2026-11-01 |
 
 ## Como criar um ADR
 

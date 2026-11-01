@@ -8,7 +8,7 @@
 | **Duração aproximada** | não medida |
 | **LLM utilizada** | `Claude Sonnet 5.5 (Claude Code)` |
 | **Branch** | `feat/perfil-cliente-profissional` (de `origin/develop` + merge de `origin/main`) |
-| **Commits** | Nenhum — alterações no working tree, aguardando revisão e autorização |
+| **Commits** | `49f9b3a`, `37bd471`, `2f20a59`, `2ff1d77`, `a463f89`, `f84b7b2`, `d4c9895`, `5226603`, `22977c6`, `fae293f`, `32ee569`, `dfec374` — PR [#20](https://github.com/carlusnz-dev/bico-em-casa/pull/20) contra `develop` |
 | **Plano relacionado** | Nenhum |
 
 ---
@@ -71,7 +71,7 @@ código de aplicação e o autor confirmou. Isso muda o peso da revisão — ver
 | `frontend/src/app/(publico)/contratacoes/[id]/page.tsx` | Alterado — card do cliente, links de perfil, ações só para o cliente |
 | `frontend/src/app/(publico)/perfil/[id]/page.tsx` | Criado — perfil público por papel |
 | `frontend/src/app/(publico)/contratacoes/recebidas/page.tsx` | Criado — lista do profissional |
-| `docs/adr/0014-acesso-a-contratacao-por-participante-e-perfil-publico.md` | Criado — ADR (Proposto) |
+| `docs/adr/0014-acesso-a-contratacao-por-participante-e-perfil-publico.md` | Criado — ADR (Aceito) |
 | `docs/adr/README.md` | Alterado — linha do ADR-0014 no índice |
 | `docs/relatorios/2026-11-01-perfil-cliente-e-profissional.md` | Criado — este relatório |
 
@@ -110,14 +110,14 @@ rotas de tela e nenhuma pasta ou fronteira mudou (justificativa no ADR-0014).
 - [ ] **Testes do backend são da equipe** (Regra nº 3). Mínimo: profissional dono lista e abre;
   cliente continua abrindo; terceiro recebe a exceção; usuário sem perfil `PROFISSIONAL` recebe 404
   em `/recebidas`.
-- [ ] **ADR-0014 está `Proposto`**: passa a `Aceito` depois da revisão.
+- [x] **ADR-0014** passou de `Proposto` para `Aceito` antes do merge, a pedido do autor.
 - [ ] **Perfil de cliente público:** decisão aceita por omissão da restrição; reavaliar se o projeto
   tiver requisito de privacidade.
 - [ ] Nenhum requisito de `requisitos.json` foi mapeado a esta entrega; `/revisar-matriz` não foi
   executado.
 - [ ] Teste manual no navegador dos três fluxos (cliente → profissional, profissional → cliente,
   modal sem portfólio).
-- [ ] Nada foi commitado nem enviado ao remoto.
+- [x] Os 12 commits foram feitos pelo autor, enviados ao remoto e o PR #20 foi aberto contra `develop`. O merge ainda não foi feito.
 
 ## Próximos passos
 

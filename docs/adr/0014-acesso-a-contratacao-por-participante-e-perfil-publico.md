@@ -7,7 +7,7 @@
 | **Autor** | Lucas Maiorquin |
 | **Data** | `2026-11-01` |
 | **Tópico** | Backend · Frontend |
-| **Status** | Proposto |
+| **Status** | Aceito |
 | **LLM utilizada** | `Claude Sonnet 5.5 (Claude Code)` |
 
 ---
