@@ -16,6 +16,7 @@ public interface ServicoRepository extends JpaRepository<Servico, UUID>, org.spr
     @Query("select s from Servico s where s.id = :id")
     java.util.Optional<Servico> buscarParaAtualizar(UUID id);
     Page<Servico> findByAtivoTrue(Pageable pageable);
+    Page<Servico> findByAtivoTrueAndPerfilIdIn(List<UUID> perfilIds, Pageable pageable);
     Page<Servico> findByPerfilId(UUID perfilId, Pageable pageable);
 
     @Query("SELECT s" +

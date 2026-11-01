@@ -1,9 +1,12 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { buscarPortfolioPorPerfil } from '@/api/portfolio';
 import { buscarServicoPorId } from '@/api/servicos';
 import { ErroApi } from '@/api/erros';
 import { BotaoContratar } from '@/components/BotaoContratar';
 import { formatarPreco } from '@/components/formatarPreco';
+import { classesDoBotao } from '@/components/ui/Botao';
 import { Card } from '@/components/ui/Card';
 
 export default async function ServicoDetalhePage({
@@ -19,6 +22,9 @@ export default async function ServicoDetalhePage({
     }
     throw erro;
   });
+
+  // Portfólio é opcional: se o profissional não tiver um, o link simplesmente não aparece.
+  const portfolio = await buscarPortfolioPorPerfil(servico.perfilId).catch(() => null);
 
   return (
     <div className="flex flex-col gap-6">
@@ -36,6 +42,15 @@ export default async function ServicoDetalhePage({
           <p className="text-sm font-medium text-erro">Este serviço não está mais ativo.</p>
         )}
       </Card>
+
+      {portfolio && (
+        <Link
+          href={`/profissionais/${portfolio.id}`}
+          className={classesDoBotao('secundario', 'grande')}
+        >
+          Ver portfólio do profissional
+        </Link>
+      )}
 
       {servico.ativo && <BotaoContratar servicoId={servico.id} />}
     </div>

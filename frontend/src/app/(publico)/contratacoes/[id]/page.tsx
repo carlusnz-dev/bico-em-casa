@@ -41,10 +41,11 @@ function formatarPreco(preco: number): string {
 
 export default function DetalheContratacaoPage() {
   const { id } = useParams<{ id: string }>();
-  const { accessToken, status } = useSessao();
+  const { accessToken, perfil, status } = useSessao();
   const router = useRouter();
   const [contratacao, setContratacao] = useState<Contratacao | null>(null);
   const [profissional, setProfissional] = useState<Perfil | null>(null);
+  const [cliente, setCliente] = useState<Perfil | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregandoAcao, setCarregandoAcao] = useState(false);
 
@@ -68,6 +69,10 @@ export default function DetalheContratacaoPage() {
     buscarPerfilPorId(contratacao.profissionalId)
       .then(setProfissional)
       .catch(() => setProfissional(null));
+
+    buscarPerfilPorId(contratacao.clienteId)
+      .then(setCliente)
+      .catch(() => setCliente(null));
   }, [contratacao]);
 
   async function alternarStatus() {
@@ -100,6 +105,9 @@ export default function DetalheContratacaoPage() {
   if (!contratacao) {
     return <p className="text-texto-suave">Carregando…</p>;
   }
+
+  // O backend só deixa o cliente editar, avaliar, denunciar e arquivar.
+  const ehCliente = perfil?.id === contratacao.clienteId;
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
@@ -141,15 +149,40 @@ export default function DetalheContratacaoPage() {
                 {profissional.bio && <span className="text-sm text-texto-suave">{profissional.bio}</span>}
               </div>
             </div>
-            <Link
-              href={`/perfil/${profissional.id}/avaliacoes`}
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              Ver avaliações
-            </Link>
+            <div className="flex flex-col items-end gap-1">
+              <Link href={`/perfil/${profissional.id}`} className="text-sm font-medium text-primary hover:underline">
+                Ver perfil
+              </Link>
+              <Link
+                href={`/perfil/${profissional.id}/avaliacoes`}
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Ver avaliações
+              </Link>
+            </div>
           </div>
         ) : (
           <p className="text-sm text-texto-suave">Não foi possível carregar os dados do profissional.</p>
+        )}
+      </Card>
+
+      <Card className="flex flex-col gap-2">
+        <h2 className="text-sm font-medium text-texto">Cliente</h2>
+        {cliente ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <AvatarIniciais nome={cliente.nomeExibicao} />
+              <div className="flex flex-col">
+                <span className="font-medium">{cliente.nomeExibicao}</span>
+                {cliente.bio && <span className="text-sm text-texto-suave">{cliente.bio}</span>}
+              </div>
+            </div>
+            <Link href={`/perfil/${cliente.id}`} className="text-sm font-medium text-primary hover:underline">
+              Ver perfil
+            </Link>
+          </div>
+        ) : (
+          <p className="text-sm text-texto-suave">Não foi possível carregar os dados do cliente.</p>
         )}
       </Card>
 
@@ -159,20 +192,22 @@ export default function DetalheContratacaoPage() {
         </p>
       )}
 
-      <div className="flex gap-2">
-        <Link href={`/contratacoes/${contratacao.id}/editar`} className={classesDoBotao('secundario')}>
-          Editar
-        </Link>
-        <Link href={`/contratacoes/${contratacao.id}/avaliar`} className={classesDoBotao('secundario')}>
-          Avaliar
-        </Link>
-        <Link href={`/contratacoes/${contratacao.id}/denunciar`} className={classesDoBotao('fantasma')}>
-          Denunciar
-        </Link>
-        <Botao variante="fantasma" carregando={carregandoAcao} onClick={alternarStatus}>
-          {contratacao.status === 'ATIVA' ? 'Arquivar' : 'Desarquivar'}
-        </Botao>
-      </div>
+      {ehCliente && (
+        <div className="flex gap-2">
+          <Link href={`/contratacoes/${contratacao.id}/editar`} className={classesDoBotao('secundario')}>
+            Editar
+          </Link>
+          <Link href={`/contratacoes/${contratacao.id}/avaliar`} className={classesDoBotao('secundario')}>
+            Avaliar
+          </Link>
+          <Link href={`/contratacoes/${contratacao.id}/denunciar`} className={classesDoBotao('fantasma')}>
+            Denunciar
+          </Link>
+          <Botao variante="fantasma" carregando={carregandoAcao} onClick={alternarStatus}>
+            {contratacao.status === 'ATIVA' ? 'Arquivar' : 'Desarquivar'}
+          </Botao>
+        </div>
+      )}
     </div>
   );
 }

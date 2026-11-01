@@ -42,7 +42,7 @@ const MENU_POR_TIPO: Record<Perfil['tipo'], AcaoDeNavegacao[]> = {
   PROFISSIONAL: [
     { rotulo: 'Serviços', href: '/servicos/meus' },
     { rotulo: 'Portfólio', href: '/profissionais/meu' },
-    { rotulo: 'Contratações', href: '/contratacoes' },
+    { rotulo: 'Contratações', href: '/contratacoes/recebidas' },
     { rotulo: 'Avaliações', href: '/perfil/avaliacoes' },
   ],
   ADMIN: [

@@ -2,8 +2,20 @@ import { request } from './cliente';
 import { paginaSchema, type Pagina } from './contratos/pagina';
 import { Servico, ServicoRequest, servicoSchema } from './contratos/servico';
 
-export async function listarServicos(pagina = 0, tamanho = 20): Promise<Pagina<Servico>> {
-  const resposta = await request(`/servico?pagina=${pagina}&tamanho=${tamanho}`);
+export async function listarServicos(
+  pagina = 0,
+  tamanho = 20,
+  cidade?: string,
+): Promise<Pagina<Servico>> {
+  const parametros = new URLSearchParams({
+    pagina: String(pagina),
+    tamanho: String(tamanho),
+  });
+  if (cidade?.trim()) {
+    parametros.set('cidade', cidade.trim());
+  }
+
+  const resposta = await request(`/servico?${parametros.toString()}`);
   return paginaSchema(servicoSchema).parse(resposta);
 }
 
