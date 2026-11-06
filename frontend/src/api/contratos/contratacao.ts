@@ -9,7 +9,6 @@ export const contratacaoSchema = z.object({
   servicoId: z.uuid(),
   clienteId: z.uuid(),
   profissionalId: z.uuid(),
-  telefoneProfissional: z.string().nullable().optional(),
   tituloServico: z.string(),
   precoServico: z.number(),
   observacao: z.string().nullable(),
@@ -39,18 +38,20 @@ export const alterarStatusContratacaoRequestSchema = z.object({
 
 export type AlterarStatusContratacaoRequest = z.infer<typeof alterarStatusContratacaoRequestSchema>;
 
-export function gerarUrlWhatsappPrestador(
-    telefone: string | null | undefined,
-    tituloServico: string,
-): string | null {
-  if (!telefone) return null;
+export const mensagemContratacaoSchema = z.object({
+  id: z.uuid(),
+  contratacaoId: z.uuid(),
+  autorPerfilId: z.uuid(),
+  autorNome: z.string(),
+  conteudo: z.string(),
+  criadoEm: z.string(),
+});
 
-  const digitos = telefone.replace(/\D/g,``);
-  if (!digitos) return null;
+export type MensagemContratacao = z.infer<typeof mensagemContratacaoSchema>;
 
-  const numeroComDdi = digitos.startsWith(`55`) ? digitos : `55${digitos}`;
-  const mensagem = `Olá! Acabei de contratar o seu serviço "${tituloServico}" pelo Bico em Casa.
-  Por favor, acesse suas contratações para ver os detalhes do serviço na plataforma para realizar o serviço ou cancelar a contratação. `;
+export const enviarMensagemRequestSchema = z.object({
+  conteudo: z.string().trim().min(1, 'Digite uma mensagem').max(1000, 'Máximo de 1000 caracteres'),
+  autorPerfilId: z.uuid().optional(),
+});
 
-  return `https://wa.me/${numeroComDdi}?text=${encodeURIComponent(mensagem)}`;
-}
+export type EnviarMensagemRequest = z.infer<typeof enviarMensagemRequestSchema>;

@@ -1,3 +1,5 @@
+import * as z from 'zod';
+
 import { request } from './cliente';
 import {
   AlterarStatusContratacaoRequest,
@@ -5,6 +7,9 @@ import {
   ContratarServicoRequest,
   contratacaoSchema,
   EditarContratacaoRequest,
+  EnviarMensagemRequest,
+  MensagemContratacao,
+  mensagemContratacaoSchema,
 } from './contratos/contratacao';
 import { paginaSchema, type Pagina } from './contratos/pagina';
 
@@ -92,4 +97,25 @@ export async function alterarStatusContratacao(
     accessToken,
   );
   return contratacaoSchema.parse(resposta);
+}
+
+export async function listarMensagensContratacao(
+  contratacaoId: string,
+  accessToken: string,
+): Promise<MensagemContratacao[]> {
+  const resposta = await request(`/contratacao/${contratacaoId}/mensagens`, {}, accessToken);
+  return z.array(mensagemContratacaoSchema).parse(resposta);
+}
+
+export async function enviarMensagemContratacao(
+  contratacaoId: string,
+  dados: EnviarMensagemRequest,
+  accessToken: string,
+): Promise<MensagemContratacao> {
+  const resposta = await request(
+    `/contratacao/${contratacaoId}/mensagens`,
+    { method: 'POST', body: JSON.stringify(dados) },
+    accessToken,
+  );
+  return mensagemContratacaoSchema.parse(resposta);
 }

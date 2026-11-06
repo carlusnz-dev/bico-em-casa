@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { contratarServico } from '@/api/contratacoes';
-import {gerarUrlWhatsappPrestador} from '@/api/contratos/contratacao';
 import { ErroApi } from '@/api/erros';
 import { Botao, classesDoBotao } from '@/components/ui/Botao';
 import { useSessao } from '@/hooks/useSessao';
@@ -39,14 +38,7 @@ export function BotaoContratar({ servicoId }: { servicoId: string }) {
 
     try {
       const contratacao = await contratarServico({ servicoId }, accessToken);
-      const urlWhatsaap = gerarUrlWhatsappPrestador(
-        contratacao.telefoneProfissional,
-        contratacao.tituloServico,
-      );
-      if (urlWhatsaap){
-        window.open(urlWhatsaap, '_blank', 'noopener,noreferrer');
-      }
-      router.push(`/contratacoes/${contratacao.id}`)
+      router.push(`/contratacoes/${contratacao.id}`);
     } catch (causa) {
       setErro(mensagemDeErro(causa, 'Não foi possível contratar este serviço.'));
       setCarregando(false);
