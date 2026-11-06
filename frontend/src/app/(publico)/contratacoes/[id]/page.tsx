@@ -9,11 +9,12 @@ import {
   buscarContratacaoPorId,
   desarquivarContratacao,
 } from '@/api/contratacoes';
-import {type Contratacao,gerarUrlWhatsappPrestador, type StatusContratacao} from "@/api/contratos/contratacao";
+import type { Contratacao, StatusContratacao } from '@/api/contratos/contratacao';
 import type { Perfil } from '@/api/contratos/perfil';
 import { ErroApi } from '@/api/erros';
 import { buscarPerfilPorId } from '@/api/perfil';
 import { AvatarIniciais } from '@/components/AvatarIniciais';
+import { ChatContratacao } from '@/components/ChatContratacao';
 import { Botao, classesDoBotao } from '@/components/ui/Botao';
 import { Card } from '@/components/ui/Card';
 import { useSessao } from '@/hooks/useSessao';
@@ -69,6 +70,7 @@ export default function DetalheContratacaoPage() {
   const router = useRouter();
   const [contratacao, setContratacao] = useState<Contratacao | null>(null);
   const [profissional, setProfissional] = useState<Perfil | null>(null);
+  const [cliente, setCliente] = useState<Perfil | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregandoAcao, setCarregandoAcao] = useState(false);
 
@@ -92,6 +94,10 @@ export default function DetalheContratacaoPage() {
     buscarPerfilPorId(contratacao.profissionalId)
       .then(setProfissional)
       .catch(() => setProfissional(null));
+
+    buscarPerfilPorId(contratacao.clienteId)
+      .then(setCliente)
+      .catch(() => setCliente(null));
   }, [contratacao]);
 
   async function alternarArquivamento() {
@@ -125,10 +131,6 @@ export default function DetalheContratacaoPage() {
   }
 
   const infoStatus = obterInfoStatus(contratacao.status);
-  const urlWhatsapp = gerarUrlWhatsappPrestador(
-      contratacao.telefoneProfissional,
-      contratacao.tituloServico,
-  )
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
@@ -183,18 +185,21 @@ export default function DetalheContratacaoPage() {
         )}
       </Card>
 
+      <ChatContratacao
+        contratacaoId={contratacao.id}
+        meuPerfilId={contratacao.clienteId}
+        meuNome={cliente?.nomeExibicao}
+        outroNome={profissional?.nomeExibicao}
+        criadoEm={contratacao.criadoEm}
+      />
+
       {erro && (
         <p role="alert" className="rounded-lg bg-erro/10 px-3 py-2 text-sm text-erro">
           {erro}
         </p>
       )}
 
-      <div className="flex gap-2">
-        {urlWhatsapp && contratacao.status == 'EM_ANDAMENTO' && (
-            <a href={urlWhatsapp} target="_blank" rel="noopener noreferrer" className={classesDoBotao('primario')}>
-              Avisar prestador no whatsApp
-            </a>
-        )}
+      <div className="flex flex-wrap gap-2">
         <Link href={`/contratacoes/${contratacao.id}/editar`} className={classesDoBotao('secundario')}>
           Editar
         </Link>
