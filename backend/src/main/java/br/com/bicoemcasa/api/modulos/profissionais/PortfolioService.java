@@ -7,9 +7,12 @@ import br.com.bicoemcasa.api.modulos.profissionais.dto.PortfolioResponse;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.SolicitarUploadFotoCapaRequest;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.UrlUploadResponse;
 
+import java.util.UUID;
+
 public interface PortfolioService {
     PortfolioResponse criar(PortfolioRequest request, Long usuarioId);
     PortfolioResponse buscarPorId(Long id);
+    PortfolioResponse buscarPorPerfilId(UUID perfilId);
     PortfolioResponse buscarMeu(Long usuarioId);
     PaginaResponse<PortfolioResponse> listarTodos(int pagina, int tamanho);
     PortfolioResponse editar(Long id, PortfolioRequest request, Long usuarioId);

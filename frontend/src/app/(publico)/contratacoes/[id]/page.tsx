@@ -173,12 +173,17 @@ export default function DetalheContratacaoPage() {
                 {profissional.bio && <span className="text-sm text-texto-suave">{profissional.bio}</span>}
               </div>
             </div>
-            <Link
-              href={`/perfil/${profissional.id}/avaliacoes`}
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              Ver avaliações
-            </Link>
+            <div className="flex flex-col items-end gap-1">
+              <Link href={`/perfil/${profissional.id}`} className="text-sm font-medium text-primary hover:underline">
+                Ver perfil
+              </Link>
+              <Link
+                href={`/perfil/${profissional.id}/avaliacoes`}
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Ver avaliações
+              </Link>
+            </div>
           </div>
         ) : (
           <p className="text-sm text-texto-suave">Não foi possível carregar os dados do profissional.</p>

@@ -65,7 +65,7 @@ function obterInfoStatus(status: StatusContratacao) {
 }
 
 export default function ContratacoesRecebidasPage() {
-  const { accessToken, status } = useSessao();
+  const { accessToken, status, perfil } = useSessao();
   const router = useRouter();
   const [contratacoes, setContratacoes] = useState<Contratacao[] | null>(null);
   const [perfisClientes, setPerfisClientes] = useState<Record<string, Perfil>>({});
@@ -149,7 +149,7 @@ export default function ContratacoesRecebidasPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-heading text-3xl font-bold">Contratações recebidas</h1>
+      <h1 className="font-heading text-3xl font-bold">Minhas contratações</h1>
 
       {erro && (
         <p role="alert" className="rounded-lg bg-erro/10 px-3 py-2 text-sm text-erro">
@@ -274,12 +274,20 @@ export default function ContratacoesRecebidasPage() {
                           )}
                         </div>
                       </div>
-                      <Link
-                        href={`/perfil/${clienteAberto.id}/avaliacoes`}
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        Ver avaliações
-                      </Link>
+                      <div className="flex flex-col items-end gap-1">
+                        <Link
+                          href={`/perfil/${clienteAberto.id}`}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Ver perfil
+                        </Link>
+                        <Link
+                          href={`/perfil/${clienteAberto.id}/avaliacoes`}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Ver avaliações
+                        </Link>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-sm text-texto-suave">Carregando dados do cliente…</p>
@@ -289,6 +297,7 @@ export default function ContratacoesRecebidasPage() {
                 <ChatContratacao
                   contratacaoId={contratacaoAberta.id}
                   meuPerfilId={contratacaoAberta.profissionalId}
+                  meuNome={perfil?.nomeExibicao}
                   outroNome={clienteAberto?.nomeExibicao}
                   criadoEm={contratacaoAberta.criadoEm}
                 />

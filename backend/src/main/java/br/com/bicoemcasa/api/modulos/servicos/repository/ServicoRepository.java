@@ -13,6 +13,7 @@ import java.util.UUID;
 @Repository
 public interface ServicoRepository extends JpaRepository<Servico, UUID> {
     Page<Servico> findByAtivoTrue(Pageable pageable);
+    Page<Servico> findByAtivoTrueAndPerfilIdIn(List<UUID> perfilIds, Pageable pageable);
     Page<Servico> findByPerfilId(UUID perfilId, Pageable pageable);
 
     @Query("SELECT s" +

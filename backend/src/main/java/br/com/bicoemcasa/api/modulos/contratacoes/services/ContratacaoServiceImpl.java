@@ -68,12 +68,10 @@ public class ContratacaoServiceImpl implements ContratacaoService {
     public ContratacaoResponse buscarPorId(UUID id, Long usuarioId) {
         Contratacao contratacao = contratacaoRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Contratação não encontrada"));
+        boolean ehDoCliente = ehParticipante(contratacao.getClienteId(), usuarioId, PerfilTipo.CLIENTE);
+        boolean ehDoProfissional = ehParticipante(contratacao.getProfissionalId(), usuarioId, PerfilTipo.PROFISSIONAL);
 
-        PerfilResponse perfil = perfilService.buscarPorUsuarioId(usuarioId);
-        boolean ehCliente = contratacao.getClienteId().equals(perfil.id());
-        boolean ehProfissional = contratacao.getProfissionalId().equals(perfil.id());
-
-        if (!ehCliente && !ehProfissional) {
+        if (!ehDoCliente && !ehDoProfissional) {
             throw new ContratacaoNaoPertenceAoPerfilException("Esta contratação não pertence ao seu perfil");
         }
 
@@ -91,6 +89,14 @@ public class ContratacaoServiceImpl implements ContratacaoService {
         }
 
         return PaginaResponse.de(contratacaoRepository.findByClienteId(perfil.id(), paginacao), this::paraResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginaResponse<ContratacaoResponse> listarRecebidas(Long usuarioId, int pagina, int tamanho) {
+        PerfilResponse profissional = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.PROFISSIONAL);
+        var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
+        return PaginaResponse.de(contratacaoRepository.findByProfissionalId(profissional.id(), paginacao), this::paraResponse);
     }
 
     @Override
@@ -147,5 +153,11 @@ public class ContratacaoServiceImpl implements ContratacaoService {
                 contratacao.isArquivada(),
                 contratacao.getCriadoEm()
         );
+    }
+
+    private boolean ehParticipante(UUID perfilIdDaContratacao, Long usuarioId, PerfilTipo tipo) {
+        return perfilService.encontrarPorUsuarioETipo(usuarioId, tipo)
+                .map(perfil -> perfil.id().equals(perfilIdDaContratacao))
+                .orElse(false);
     }
 }

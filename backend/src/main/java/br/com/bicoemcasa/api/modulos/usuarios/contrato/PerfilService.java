@@ -4,6 +4,8 @@ import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilRequest;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilResponse;
 import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface PerfilService {
@@ -12,4 +14,6 @@ public interface PerfilService {
     PerfilResponse buscarPorUsuarioId(Long usuarioId);
     PerfilResponse buscarPorUsuarioIdETipo(Long usuarioId, PerfilTipo tipo);
     PerfilResponse buscarPorSlug(String slugUrl);
+    List<UUID> buscarIdsProfissionaisPorCidade(String cidade);
+    Optional<PerfilResponse> encontrarPorUsuarioETipo(Long usuarioId, PerfilTipo tipo);
 }
