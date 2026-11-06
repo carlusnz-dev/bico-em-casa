@@ -66,15 +66,31 @@ public class ContratacaoServiceImpl implements ContratacaoService {
     @Override
     @Transactional(readOnly = true)
     public ContratacaoResponse buscarPorId(UUID id, Long usuarioId) {
-        return paraResponse(buscarContratacaoDoCliente(id, usuarioId));
+        Contratacao contratacao = contratacaoRepository.findById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Contratação não encontrada"));
+
+        PerfilResponse perfil = perfilService.buscarPorUsuarioId(usuarioId);
+        boolean ehCliente = contratacao.getClienteId().equals(perfil.id());
+        boolean ehProfissional = contratacao.getProfissionalId().equals(perfil.id());
+
+        if (!ehCliente && !ehProfissional) {
+            throw new ContratacaoNaoPertenceAoPerfilException("Esta contratação não pertence ao seu perfil");
+        }
+
+        return paraResponse(contratacao);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PaginaResponse<ContratacaoResponse> listarMinhas(Long usuarioId, int pagina, int tamanho) {
-        PerfilResponse cliente = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.CLIENTE);
+        PerfilResponse perfil = perfilService.buscarPorUsuarioId(usuarioId);
         var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
-        return PaginaResponse.de(contratacaoRepository.findByClienteId(cliente.id(), paginacao), this::paraResponse);
+
+        if (perfil.tipo() == PerfilTipo.PROFISSIONAL) {
+            return PaginaResponse.de(contratacaoRepository.findByProfissionalId(perfil.id(), paginacao), this::paraResponse);
+        }
+
+        return PaginaResponse.de(contratacaoRepository.findByClienteId(perfil.id(), paginacao), this::paraResponse);
     }
 
     @Override
@@ -102,7 +118,7 @@ public class ContratacaoServiceImpl implements ContratacaoService {
     }
 
     @Override
-    public List<Contratacao> buscarPorServico(UUID servicoId){
+    public List<Contratacao> buscarPorServico(UUID servicoId) {
         return contratacaoRepository.findByServicoId(servicoId);
     }
 
@@ -124,7 +140,6 @@ public class ContratacaoServiceImpl implements ContratacaoService {
                 contratacao.getServicoId(),
                 contratacao.getClienteId(),
                 contratacao.getProfissionalId(),
-                perfilService.buscarTelefonePorId(contratacao.getProfissionalId()),
                 contratacao.getTituloServico(),
                 contratacao.getPrecoServico(),
                 contratacao.getObservacao(),
