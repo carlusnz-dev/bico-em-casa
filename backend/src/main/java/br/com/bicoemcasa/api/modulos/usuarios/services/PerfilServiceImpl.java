@@ -22,9 +22,10 @@ import java.util.UUID;
 public class PerfilServiceImpl implements PerfilService {
     private final PerfilRepository repository;
     private final UsuarioRepository usuarioRepository;
+    private final EnderecoRepository enderecoRepository;
     private final br.com.bicoemcasa.api.modulos.usuarios.repository.NotificacaoRepository notificacoes;
 
-    public PerfilServiceImpl(PerfilRepository repository, UsuarioRepository usuarioRepository, br.com.bicoemcasa.api.modulos.usuarios.repository.NotificacaoRepository notificacoes) {
+    public PerfilServiceImpl(PerfilRepository repository, UsuarioRepository usuarioRepository, EnderecoRepository enderecoRepository, br.com.bicoemcasa.api.modulos.usuarios.repository.NotificacaoRepository notificacoes) {
         this.repository = repository;
         this.notificacoes = notificacoes;
         this.usuarioRepository = usuarioRepository;

@@ -1,5 +1,6 @@
 'use client';
 
+import clsx from 'clsx';
 import Link from 'next/link';
 import { useAvisosModeracao } from '@/api/admin-servicos';
 import { useRouter } from 'next/navigation';
@@ -101,7 +102,10 @@ export default function MeusServicosPage() {
         <ul className="flex flex-col gap-3">
           {servicos.map((servico) => (
             <li key={servico.id}>
-              <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Card className={clsx(
+                'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between transition-colors',
+                servico.ativo ? 'bg-green-300! border-green-300!' : 'bg-white! border-borda!',
+              )}>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <h2 className="text-lg font-semibold">{servico.titulo}</h2>

@@ -146,7 +146,7 @@ export default function PerfilPage() {
                     <li key={contratacao.id} className="flex items-center justify-between text-sm">
                       <span>{contratacao.tituloServico}</span>
                       <span className="text-texto-suave">
-                        {contratacao.status === 'ATIVA' ? 'Ativa' : 'Arquivada'}
+                        {contratacao.status === 'EM_ANDAMENTO' ? 'Em andamento' : contratacao.status === 'CONCLUIDO' ? 'Concluído' : 'Cancelado'}
                       </span>
                     </li>
                   ))}

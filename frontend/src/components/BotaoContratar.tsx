@@ -37,8 +37,8 @@ export function BotaoContratar({ servicoId }: { servicoId: string }) {
     setErro(null);
 
     try {
-      await contratarServico({ servicoId }, accessToken);
-      router.push('/contratacoes');
+      const contratacao = await contratarServico({ servicoId }, accessToken);
+      router.push(`/contratacoes/${contratacao.id}`);
     } catch (causa) {
       setErro(mensagemDeErro(causa, 'Não foi possível contratar este serviço.'));
       setCarregando(false);
