@@ -47,6 +47,9 @@ public class Usuario {
     @Column(nullable = false)
     private boolean ativo;
 
+    @Column(name = "versao_sessao", nullable = false)
+    private long versaoSessao;
+
     @Column(name = "ultimo_login")
     private OffsetDateTime ultimoLogin;
 

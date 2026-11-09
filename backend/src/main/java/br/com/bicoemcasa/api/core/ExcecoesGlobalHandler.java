@@ -71,7 +71,8 @@ public class ExcecoesGlobalHandler {
 
         // coletar os campos e a mensagem de erro correspondente
         Map<String, String> erros = ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
+                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage,
+                        (primeira, seguinte) -> primeira));
 
         problemDetail.setProperty("erros", erros);
         problemDetail.setProperty("timestamp", Instant.now());

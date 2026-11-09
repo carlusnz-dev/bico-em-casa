@@ -7,6 +7,7 @@ import br.com.bicoemcasa.api.modulos.autenticacao.RefreshTokenRepository;
 import br.com.bicoemcasa.api.modulos.autenticacao.contrato.RefreshTokenService;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.RefreshTokenRequest;
 import br.com.bicoemcasa.api.modulos.autenticacao.dto.RefreshTokenResponse;
+import br.com.bicoemcasa.api.modulos.usuarios.contrato.UsuarioService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +19,11 @@ import java.util.UUID;
 @Service
 public class RefreshTokenServiceImpl implements RefreshTokenService {
     private final RefreshTokenRepository repository;
+    private final UsuarioService usuarios;
 
-    public RefreshTokenServiceImpl(RefreshTokenRepository repository) {
+    public RefreshTokenServiceImpl(RefreshTokenRepository repository, UsuarioService usuarios) {
         this.repository = repository;
+        this.usuarios = usuarios;
     }
 
     private RefreshTokenResponse paraResponse(RefreshToken token) {
@@ -100,7 +103,19 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     @Override
     @Transactional
-    public RefreshTokenResponse substituir(String hashTokenAntigo, String hashTokenNovo, OffsetDateTime expiraEm) {
+    public void revogarPorUsuario(Long usuarioId) {
+        repository.revogarPorUsuario(usuarioId, OffsetDateTime.now());
+    }
+
+    @Override
+    @Transactional
+    public SessaoRenovada substituir(String hashTokenAntigo, String hashTokenNovo, OffsetDateTime expiraEm) {
+        Long usuarioId = repository.buscarUsuarioIdPorHashToken(hashTokenAntigo)
+                .orElseThrow(() -> new TokenInvalidoException("Refresh token não reconhecido"));
+        long versao = usuarios.buscarVersaoAtivaParaRenovacao(usuarioId)
+                .orElseThrow(() -> new TokenInvalidoException("Refresh token não reconhecido"));
+
+        // O lock da conta serializa renovação e suspensão. Só então carregamos o estado do token.
         RefreshToken antigo = repository.findByHashToken(hashTokenAntigo)
                 .orElseThrow(() -> new TokenInvalidoException("Refresh token não reconhecido"));
 
@@ -117,6 +132,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         antigo.setRevogadoEm(OffsetDateTime.now());
         repository.save(antigo);
 
-        return novo;
+        return new SessaoRenovada(usuarioId, versao);
     }
 }

@@ -20,6 +20,22 @@ public class ServicoAdminController {
         @RequestParam(defaultValue="") String busca) {
         return service.listar(Long.valueOf(jwt.getSubject()),pagina,tamanho,ativo,categoria,busca);
     }
+    @GetMapping("/servicos/revisao")
+    public PaginaResponse<ServicoAdminResponse> listarPendentes(@AuthenticationPrincipal Jwt jwt,
+        @RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "20") int tamanho) {
+        return service.listarPendentes(Long.valueOf(jwt.getSubject()), pagina, tamanho);
+    }
+    @PatchMapping("/servicos/{id}/aprovar")
+    @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+    public void aprovar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, HttpServletRequest request) {
+        service.revisar(Long.valueOf(jwt.getSubject()), id, true, "Aprovação na fila de revisão", request.getRemoteAddr());
+    }
+    @PatchMapping("/servicos/{id}/reprovar")
+    @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+    public void reprovar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+        @Valid @RequestBody DesativacaoRequest dados, HttpServletRequest request) {
+        service.revisar(Long.valueOf(jwt.getSubject()), id, false, dados.motivo(), request.getRemoteAddr());
+    }
     @PutMapping("/servicos/{id}/moderar")
     @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
     public void editar(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id,

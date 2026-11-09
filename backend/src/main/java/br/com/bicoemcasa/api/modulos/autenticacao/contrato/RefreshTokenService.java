@@ -20,5 +20,8 @@ public interface RefreshTokenService {
 
     void revogarPorHashToken(String hashToken);
 
-    RefreshTokenResponse substituir(String hashTokenAntigo, String hashTokenNovo, OffsetDateTime expiraEm);
+    void revogarPorUsuario(Long usuarioId);
+    SessaoRenovada substituir(String hashTokenAntigo, String hashTokenNovo, OffsetDateTime expiraEm);
+
+    record SessaoRenovada(Long usuarioId, long versaoSessao) {}
 }
