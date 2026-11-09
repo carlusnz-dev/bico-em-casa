@@ -51,6 +51,9 @@ public class Servico {
     @Column(nullable = false)
     private boolean ativo;
 
+    @Column(name = "motivo_reprovacao", length = 1000)
+    private String motivoReprovacao;
+
     @ManyToMany
     @JoinTable(
             name = "servico_tag",

@@ -2,11 +2,15 @@ package br.com.bicoemcasa.api.modulos.profissionais;
 
 import br.com.bicoemcasa.api.core.paginacao.PaginaResponse;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.ConfirmarFotoCapaRequest;
+import br.com.bicoemcasa.api.modulos.profissionais.dto.ConfirmarMidiaRequest;
+import br.com.bicoemcasa.api.modulos.profissionais.dto.PortfolioMidiaResponse;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.PortfolioRequest;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.PortfolioResponse;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.SolicitarUploadFotoCapaRequest;
+import br.com.bicoemcasa.api.modulos.profissionais.dto.SolicitarUploadMidiaRequest;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.UrlUploadResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface PortfolioService {
@@ -14,8 +18,12 @@ public interface PortfolioService {
     PortfolioResponse buscarPorId(Long id);
     PortfolioResponse buscarPorPerfilId(UUID perfilId);
     PortfolioResponse buscarMeu(Long usuarioId);
-    PaginaResponse<PortfolioResponse> listarTodos(int pagina, int tamanho);
+    PaginaResponse<PortfolioResponse> listarTodos(int pagina, int tamanho, String cidade);
     PortfolioResponse editar(Long id, PortfolioRequest request, Long usuarioId);
     UrlUploadResponse solicitarUploadFotoCapa(Long id, SolicitarUploadFotoCapaRequest request, Long usuarioId);
     PortfolioResponse confirmarFotoCapa(Long id, ConfirmarFotoCapaRequest request, Long usuarioId);
+    List<PortfolioMidiaResponse> listarMidias(Long id);
+    UrlUploadResponse solicitarUploadMidia(Long id, SolicitarUploadMidiaRequest request, Long usuarioId);
+    PortfolioMidiaResponse confirmarMidia(Long id, ConfirmarMidiaRequest request, Long usuarioId);
+    void removerMidia(Long id, UUID midiaId, Long usuarioId);
 }

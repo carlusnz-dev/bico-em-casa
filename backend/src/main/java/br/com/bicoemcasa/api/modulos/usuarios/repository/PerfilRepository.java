@@ -29,6 +29,17 @@ public interface PerfilRepository extends JpaRepository<Perfil, UUID> {
 
     boolean existsByNomeUsuario(String nomeUsuario);
 
+    interface PapelUsuario {
+        Long getUsuarioId();
+        PerfilTipo getTipo();
+    }
+
+    @Query("""
+            SELECT p.usuario.id AS usuarioId, p.tipo AS tipo
+            FROM Perfil p WHERE p.usuario.id IN :usuarios ORDER BY p.tipo
+            """)
+    List<PapelUsuario> buscarPapeisDosUsuarios(List<Long> usuarios);
+
     @Query("""
             SELECT perfil.id
             FROM Perfil perfil

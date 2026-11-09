@@ -69,10 +69,11 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
         }
     }
 
-    private String emitirAccessToken(Long usuarioId) {
+    private String emitirAccessToken(Long usuarioId, long versaoSessao) {
         Instant agora = Instant.now();
         JwtClaimsSet claimsSet = JwtClaimsSet.builder()
                 .subject(usuarioId.toString())
+                .claim(CLAIM_VERSAO_SESSAO, versaoSessao)
                 .issuedAt(agora)
                 .expiresAt(agora.plus(VALIDADE_ACCESS_TOKEN_MINUTOS, ChronoUnit.MINUTES))
                 .build();
@@ -85,8 +86,9 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
     }
 
     @Override
+    @Transactional
     public LoginResponse entrar(LoginRequest request) {
-        CredenciaisUsuario credencial = usuarioService.buscarCredenciaisPorEmail(request.email())
+        CredenciaisUsuario credencial = usuarioService.buscarCredenciaisAtivasParaLogin(request.email())
                 .filter(c -> passwordEncoder.matches(request.senha(), c.hashSenha()))
                 .orElseThrow(() -> new SenhaNaoBateException("Credenciais inválidas"));
 
@@ -99,7 +101,7 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
                 expiracaoDoRefreshToken()
         ));
 
-        return new LoginResponse(true, emitirAccessToken(credencial.id()), tokenBruto);
+        return new LoginResponse(true, emitirAccessToken(credencial.id(), credencial.versaoSessao()), tokenBruto);
     }
 
     @Override
@@ -107,13 +109,13 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
     public RenovarResponse renovar(String tokenBruto) {
         String tokenBrutoNovo = geracaoToken(TAMANHO_TOKEN_BYTES);
 
-        RefreshTokenResponse novo = refreshTokenService.substituir(
+        var novo = refreshTokenService.substituir(
                 hashToken(tokenBruto),
                 hashToken(tokenBrutoNovo),
                 expiracaoDoRefreshToken()
         );
 
-        return new RenovarResponse(emitirAccessToken(novo.usuarioId()), tokenBrutoNovo);
+        return new RenovarResponse(emitirAccessToken(novo.usuarioId(), novo.versaoSessao()), tokenBrutoNovo);
     }
 
     @Override

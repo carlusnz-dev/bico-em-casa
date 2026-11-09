@@ -58,9 +58,19 @@ public class ServicoAdminServiceImpl implements ServicoAdminService {
         };
         var resultado = servicos.findAll(filtro, PageRequest.of(Math.max(0,pagina), Math.min(50,Math.max(1,tamanho)),
             Sort.by(Sort.Order.desc("criadoEm"),Sort.Order.desc("id"))));
-        var nomes = new HashMap<UUID,String>();
-        return PaginaResponse.de(resultado, s -> new ServicoAdminResponse(resposta(s),
-            nomes.computeIfAbsent(s.getPerfilId(), id -> perfis.buscarPorId(id).nomeUsuario())));
+        return paraPagina(resultado);
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public PaginaResponse<ServicoAdminResponse> listarPendentes(Long usuario, int pagina, int tamanho) {
+        exigirAdmin(usuario);
+        return paraPagina(servicos.buscarPendentesDeRevisao(
+                PageRequest.of(Math.max(0, pagina), Math.min(50, Math.max(1, tamanho)))));
+    }
+    private PaginaResponse<ServicoAdminResponse> paraPagina(Page<Servico> resultado) {
+        var nomes = new HashMap<UUID, String>();
+        return PaginaResponse.de(resultado, servico -> new ServicoAdminResponse(resposta(servico),
+                nomes.computeIfAbsent(servico.getPerfilId(), id -> perfis.buscarPorId(id).nomeUsuario())));
     }
     private Servico buscar(UUID id) {
         return servicos.buscarParaAtualizar(id).orElseThrow(() -> new EntidadeNaoEncontradaException("Serviço não encontrado"));
@@ -84,8 +94,32 @@ public class ServicoAdminServiceImpl implements ServicoAdminService {
     public void situacao(Long usuario, UUID id, boolean ativo, String motivo, String ip) {
         exigirAdmin(usuario);
         Servico s=buscar(id);
+        if (ativo && s.getMotivoReprovacao() != null) {
+            throw new ModeracaoConflitoException("Aprove o serviço na fila antes de reativá-lo");
+        }
         var anterior=campos(s); s.setAtivo(ativo);
         auditoria.registrar(usuario,ativo ? "REATIVAR_SERVICO" : "DESATIVAR_SERVICO", "servico",id.toString(),ip,motivo,anterior,campos(s));
+    }
+    @Override
+    public void revisar(Long usuario, UUID id, boolean aprovado, String motivo, String ip) {
+        exigirAdmin(usuario);
+        Servico servico = buscar(id);
+        if (!"PENDENTE".equals(servicos.buscarStatusRevisao(id))) {
+            throw new ModeracaoConflitoException("O serviço não está na fila de revisão");
+        }
+        var anterior = campos(servico);
+        if (aprovado) {
+            if (servico.getMotivoReprovacao() != null && auditoria.motivoDesativacao(id.toString()) == null) {
+                servico.setAtivo(true);
+            }
+            servico.setMotivoReprovacao(null);
+        } else {
+            servico.setAtivo(false);
+            servico.setMotivoReprovacao(motivo);
+            perfis.notificarReprovacao(servico.getPerfilId(), id, motivo);
+        }
+        auditoria.registrar(usuario, aprovado ? "APROVAR_SERVICO" : "REPROVAR_SERVICO",
+                "servico", id.toString(), ip, motivo, anterior, campos(servico));
     }
     @Override
     public TagResponse renomear(Long usuario, UUID id, TagRequest dados, String ip) {
@@ -107,6 +141,8 @@ public class ServicoAdminServiceImpl implements ServicoAdminService {
         auditoria.registrar(usuario,"REMOVER_CATEGORIA","tag",id.toString(),ip,"Categoria sem vínculos",Map.of("nome",t.getNome()),Map.of());
     }
     private ServicoResponse resposta(Servico s) {
-        return new ServicoResponse(s.getId(),s.getPerfilId(),s.getTitulo(),s.getDescricao(),s.getPrecoPrevio(),s.getUnidadePreco(),s.isAtivo(),s.getTags().stream().map(Tag::getId).collect(Collectors.toSet()),s.getCriadoEm());
+        var resposta = new ServicoResponse(s.getId(),s.getPerfilId(),s.getTitulo(),s.getDescricao(),
+                s.getPrecoPrevio(),s.getUnidadePreco(),s.isAtivo(),s.getTags().stream().map(Tag::getId).collect(Collectors.toSet()),s.getCriadoEm());
+        return resposta.comModeracao(null, servicos.buscarStatusRevisao(s.getId()), s.getMotivoReprovacao());
     }
 }

@@ -75,6 +75,33 @@ task, fora do escopo desta fundação.
   do Postgres exatamente nos pontos que costumam importar (tipos, constraints, comportamento de
   transação).
 
+## Provisionar o primeiro administrador
+
+O cadastro público cria contas de cliente e profissional. Depois que existe um administrador,
+uma sessão desse papel pode provisionar outra conta pelo painel de usuários.
+
+O primeiro provisionamento é feito pelo operador do PostgreSQL, depois de aplicar as migrations.
+
+1. Cadastre uma conta de cliente dedicada à administração e confirme que você controla o e-mail
+   e a senha. Use o ID numérico da conta (tabela `usuario`) e o e-mail exato do cadastro.
+2. Na raiz do repositório, conecte-se à base correta com uma identidade autorizada a atualizar
+   `usuario`, `perfil` e `refresh_token`, bloquear `perfil` e inserir em `log_acao`.
+
+   ```sh
+   psql -h localhost -U bicoemcasa -d bicoemcasa -f backend/scripts/provisionar-primeiro-admin.sql
+   ```
+
+3. Informe o ID e o e-mail ao script e faça um novo login. O script promove o perfil dedicado,
+   invalida a sessão anterior e registra a operação. A transação aborta se o ID e o e-mail não
+   identificarem uma única conta ativa de cliente ou se já existir um perfil ADMIN.
+
+Antes de atualizar uma base usada com o cadastro legado, confira os perfis ADMIN existentes
+e a titularidade dessas contas. O fluxo público antigo de usuários aceitava o papel ADMIN.
+Se a equipe marcou contas como inativas manualmente, registre esses IDs antes da migration
+`V20261109120000` para suspender as contas com o fluxo auditado após a atualização. A migration
+ativa os cadastros legados porque antes o cadastro deixava esse campo falso e a autenticação
+permitia o acesso.
+
 ## Testes
 
 `BicoEmCasaApplicationTests` é um teste de fumaça: sobe o contexto do Spring contra um

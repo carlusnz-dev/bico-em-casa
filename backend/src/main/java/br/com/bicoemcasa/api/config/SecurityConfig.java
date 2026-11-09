@@ -1,5 +1,6 @@
 package br.com.bicoemcasa.api.config;
 
+import br.com.bicoemcasa.api.modulos.usuarios.contrato.UsuarioService;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -17,8 +18,13 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.converter.RsaKeyConverters;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -32,6 +38,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+
+import static br.com.bicoemcasa.api.modulos.autenticacao.contrato.AutenticacaoService.CLAIM_VERSAO_SESSAO;
 
 @Configuration
 @EnableWebSecurity
@@ -61,7 +69,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/actuator/health"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/servico/meus").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/servico/meus", "/api/servico/meus/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/servico", "/api/servico/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tag").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/perfil/me", "/api/perfil/me/**").authenticated()
@@ -80,12 +88,34 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder(RsaKeyProperties rsaKeyProperties) throws Exception {
+    public JwtDecoder jwtDecoder(RsaKeyProperties rsaKeyProperties, UsuarioService usuarios) throws Exception {
         byte[] bytes = Files.readAllBytes(Path.of(rsaKeyProperties.getPublicKeyPath()));
         RSAPublicKey publicKey = RsaKeyConverters.x509()
                 .convert(new ByteArrayInputStream(bytes));
 
-        return NimbusJwtDecoder.withPublicKey(publicKey).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefault(), jwt -> validarSessao(jwt, usuarios)));
+        return decoder;
+    }
+
+    private OAuth2TokenValidatorResult validarSessao(Jwt jwt, UsuarioService usuarios) {
+        var falha = OAuth2TokenValidatorResult.failure(
+                new OAuth2Error("invalid_token", "Sessão inválida", null));
+        Long usuarioId;
+        try {
+            usuarioId = Long.valueOf(jwt.getSubject());
+        } catch (NumberFormatException e) {
+            return falha;
+        }
+        Object claim = jwt.getClaims().get(CLAIM_VERSAO_SESSAO);
+        long versao = 0L;
+        if (claim instanceof Number numero) {
+            versao = numero.longValue();
+        } else if (claim != null) {
+            return falha;
+        }
+        return usuarios.sessaoValida(usuarioId, versao) ? OAuth2TokenValidatorResult.success() : falha;
     }
 
     @Bean

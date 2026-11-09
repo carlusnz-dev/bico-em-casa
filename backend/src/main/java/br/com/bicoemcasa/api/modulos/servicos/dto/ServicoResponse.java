@@ -17,13 +17,16 @@ public record ServicoResponse(
         boolean ativo,
         Set<UUID> tagIds,
         OffsetDateTime criadoEm,
-        String motivoModeracao
+        String motivoModeracao,
+        String statusRevisao,
+        String motivoReprovacao
 ) {
     public ServicoResponse(UUID id, UUID perfilId, String titulo, String descricao, BigDecimal precoPrevio,
         UnidadePreco unidadePreco, boolean ativo, Set<UUID> tagIds, OffsetDateTime criadoEm) {
-        this(id,perfilId,titulo,descricao,precoPrevio,unidadePreco,ativo,tagIds,criadoEm,null);
+        this(id, perfilId, titulo, descricao, precoPrevio, unidadePreco, ativo, tagIds, criadoEm, null, null, null);
     }
-    public ServicoResponse comMotivo(String motivo) {
-        return new ServicoResponse(id,perfilId,titulo,descricao,precoPrevio,unidadePreco,ativo,tagIds,criadoEm,motivo);
+    public ServicoResponse comModeracao(String motivo, String status, String reprovacao) {
+        return new ServicoResponse(id, perfilId, titulo, descricao, precoPrevio, unidadePreco, ativo, tagIds,
+                criadoEm, motivo, status, reprovacao);
     }
 }

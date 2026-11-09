@@ -36,7 +36,11 @@ public class PerfilServiceImpl implements PerfilService {
     public java.util.List<UUID> buscarProfissionais(String termo) { return repository.buscarProfissionais(termo); }
     @Override
     public void notificarModeracao(UUID destinatario, UUID servico, String mensagem) {
-        notificacoes.criar(destinatario, servico, mensagem);
+        notificacoes.criar(destinatario, servico, "Serviço editado pela moderação", mensagem);
+    }
+    @Override
+    public void notificarReprovacao(UUID destinatario, UUID servico, String motivo) {
+        notificacoes.criar(destinatario, servico, "Serviço reprovado na revisão", motivo);
     }
     @Override
     public java.util.List<br.com.bicoemcasa.api.modulos.usuarios.dto.AvisoModeracaoResponse> listarAvisos(Long usuario) {

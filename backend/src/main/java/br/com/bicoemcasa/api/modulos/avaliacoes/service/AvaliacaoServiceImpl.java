@@ -3,6 +3,7 @@ package br.com.bicoemcasa.api.modulos.avaliacoes.service;
 import br.com.bicoemcasa.api.core.excecao.AvaliacaoJaExisteException;
 import br.com.bicoemcasa.api.core.excecao.AvaliacaoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
+import br.com.bicoemcasa.api.core.excecao.TransicaoStatusInvalidaException;
 import br.com.bicoemcasa.api.modulos.avaliacoes.contrato.AvaliacaoService;
 import br.com.bicoemcasa.api.modulos.avaliacoes.dto.AvaliacaoRequest;
 import br.com.bicoemcasa.api.modulos.avaliacoes.dto.AvaliacaoResponse;
@@ -11,6 +12,7 @@ import br.com.bicoemcasa.api.modulos.avaliacoes.repository.AvaliacaoRepository;
 import br.com.bicoemcasa.api.modulos.contratacoes.contrato.ContratacaoService;
 import br.com.bicoemcasa.api.modulos.contratacoes.dto.ContratacaoResponse;
 import br.com.bicoemcasa.api.modulos.contratacoes.models.Contratacao;
+import br.com.bicoemcasa.api.modulos.contratacoes.models.StatusContratacao;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.PerfilService;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.PerfilResponse;
 import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
@@ -38,13 +40,21 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
     }
 
     @Override
+    @Transactional
     public AvaliacaoResponse criar(UUID contratacaoId, AvaliacaoRequest request, Long usuarioId) {
+        ContratacaoResponse contratacao = contratacaoService.buscarPorId(contratacaoId, usuarioId);
+        boolean clienteTitular = perfilService.encontrarPorUsuarioETipo(usuarioId, PerfilTipo.CLIENTE)
+                .filter(perfil -> perfil.id().equals(contratacao.clienteId()))
+                .isPresent();
+        if (!clienteTitular) {
+            throw new AvaliacaoNaoPertenceAoPerfilException("Só o cliente da contratação pode avaliá-la");
+        }
+        if (contratacao.status() != StatusContratacao.CONCLUIDO) {
+            throw new TransicaoStatusInvalidaException("Só é possível avaliar uma contratação concluída");
+        }
         if (avaliacaoRepository.existsByContratacaoId(contratacaoId)) {
             throw new AvaliacaoJaExisteException("Esta contratação já foi avaliada");
         }
-
-        // buscarPorId já garante que a contratação pertence ao cliente autenticado
-        ContratacaoResponse contratacao = contratacaoService.buscarPorId(contratacaoId, usuarioId);
 
         Avaliacao avaliacao = new Avaliacao();
         avaliacao.setContratacaoId(contratacaoId);

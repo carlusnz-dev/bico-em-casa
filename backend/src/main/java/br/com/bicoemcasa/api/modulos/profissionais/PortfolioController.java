@@ -2,27 +2,34 @@ package br.com.bicoemcasa.api.modulos.profissionais;
 
 import br.com.bicoemcasa.api.core.paginacao.PaginaResponse;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.ConfirmarFotoCapaRequest;
+import br.com.bicoemcasa.api.modulos.profissionais.dto.ConfirmarMidiaRequest;
+import br.com.bicoemcasa.api.modulos.profissionais.dto.PortfolioMidiaResponse;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.PortfolioRequest;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.PortfolioResponse;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.SolicitarUploadFotoCapaRequest;
+import br.com.bicoemcasa.api.modulos.profissionais.dto.SolicitarUploadMidiaRequest;
 import br.com.bicoemcasa.api.modulos.profissionais.dto.UrlUploadResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -62,9 +69,10 @@ public class PortfolioController {
     @GetMapping
     public ResponseEntity<PaginaResponse<PortfolioResponse>> listarTodos(
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "A página não pode ser negativa") int pagina,
-            @RequestParam(defaultValue = "20") @Min(value = 1, message = "O tamanho mínimo da página é 1") @Max(value = 50, message = "O tamanho máximo da página é 50") int tamanho
+            @RequestParam(defaultValue = "20") @Min(value = 1, message = "O tamanho mínimo da página é 1") @Max(value = 50, message = "O tamanho máximo da página é 50") int tamanho,
+            @RequestParam(required = false) @Size(max = 120) String cidade
     ) {
-        return ResponseEntity.ok(portfolioService.listarTodos(pagina, tamanho));
+        return ResponseEntity.ok(portfolioService.listarTodos(pagina, tamanho, cidade));
     }
 
     @PutMapping("/{id}")
@@ -95,5 +103,38 @@ public class PortfolioController {
     ) {
         var response = portfolioService.confirmarFotoCapa(id, request, Long.valueOf(jwt.getSubject()));
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/midias")
+    public List<PortfolioMidiaResponse> listarMidias(@PathVariable Long id) {
+        return portfolioService.listarMidias(id);
+    }
+
+    @PostMapping("/{id}/midias/upload")
+    public UrlUploadResponse solicitarUploadMidia(
+            @PathVariable Long id,
+            @Valid @RequestBody SolicitarUploadMidiaRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return portfolioService.solicitarUploadMidia(id, request, Long.valueOf(jwt.getSubject()));
+    }
+
+    @PostMapping("/{id}/midias/confirmar")
+    public PortfolioMidiaResponse confirmarMidia(
+            @PathVariable Long id,
+            @Valid @RequestBody ConfirmarMidiaRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return portfolioService.confirmarMidia(id, request, Long.valueOf(jwt.getSubject()));
+    }
+
+    @DeleteMapping("/{id}/midias/{midiaId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removerMidia(
+            @PathVariable Long id,
+            @PathVariable UUID midiaId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        portfolioService.removerMidia(id, midiaId, Long.valueOf(jwt.getSubject()));
     }
 }

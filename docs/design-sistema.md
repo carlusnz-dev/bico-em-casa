@@ -756,6 +756,35 @@ concorrente. Ver [ADR-0013](./adr/0013-auditoria-e-moderacao-de-servicos.md).
 
 ---
 
+## 13. Administração de contas
+
+A tela `/admin/usuarios` consome `/api/admin/usuarios`. Um administrador ativo lista as contas,
+cria outro administrador e suspende ou reativa uma conta com motivo. Para criar o primeiro
+administrador, um operador autorizado usa o script SQL documentado no
+[README do back-end](../backend/README.md).
+
+Suspender muda a conta para inativa, incrementa a versão de sessão, revoga os refresh tokens e
+grava motivo e autor em `log_acao`. O back-end verifica a conta ativa e a versão persistida
+ao aceitar um JWT. Tokens da versão anterior à implantação valem como versão zero. Reativar
+permite novo login. Ver [ADR-0016](./adr/0016-provisionamento-e-suspensao-de-contas.md).
+
+## 14. Revisão de ofertas, estimativas e galeria
+
+Ofertas novas aparecem no catálogo e na fila de revisão posterior, da mais antiga à mais recente.
+Reprovar exige motivo, desativa a oferta e avisa o profissional. Um reenvio mantém a oferta
+inativa até aprovação. A revisão reaproveita `log_acao` e as notificações da moderação.
+
+Busca textual, cidade, categoria e faixa de preço são filtros no banco antes da paginação.
+A vitrine de profissionais também filtra por cidade. O catálogo calcula a média dos preços de
+referência ativos por categoria e unidade. A estimativa do profissional usa suas próprias
+ofertas ativas, agrupadas por unidade.
+
+`portfolio_midia` liga cada foto ou vídeo ao portfólio. O upload reaproveita as URLs assinadas
+do MinIO e a mídia confirmada aparece no portfólio público. Ver
+[ADR-0017](./adr/0017-revisao-de-ofertas-e-galeria.md).
+
+---
+
 ## Referências
 
 - [`arquitetura-sistema.json`](./arquitetura-sistema.json) — fonte da verdade
