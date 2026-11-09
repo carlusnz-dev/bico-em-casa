@@ -74,12 +74,12 @@ class ServicoAdminIntegrationTest {
         assertThat(admin.listar(administrador,0,20,false,categoria,"").totalElementos()).isZero();
     }
     @Test void desativacaoPreservaContratacaoEBloqueiaReativacaoPeloDono() {
-        var contrato=jdbc.sql("insert into contratacao(id,servico_id,cliente_id,profissional_id,titulo_servico,preco_servico,status,criado_em,atualizado_em) values(gen_random_uuid(),:servico,:cliente,:profissional,'Instalação',100,'ATIVA',now(),now()) returning id")
+        var contrato=jdbc.sql("insert into contratacao(id,servico_id,cliente_id,profissional_id,titulo_servico,preco_servico,status,criado_em,atualizado_em) values(gen_random_uuid(),:servico,:cliente,:profissional,'Instalação',100,'EM_ANDAMENTO',now(),now()) returning id")
             .param("servico",servico).param("cliente",perfis.buscarPorUsuarioId(cliente).id()).param("profissional",profissional).query(UUID.class).single();
         admin.situacao(administrador,servico,false,"Oferta em desacordo com as regras","127.0.0.1");
         em.flush();
         assertThat(servicos.listarAtivos(0,20,null).conteudo()).isEmpty();
-        assertThat(jdbc.sql("select status from contratacao where id=:id").param("id",contrato).query(String.class).single()).isEqualTo("ATIVA");
+        assertThat(jdbc.sql("select status from contratacao where id=:id").param("id",contrato).query(String.class).single()).isEqualTo("EM_ANDAMENTO");
         assertThat(servicos.listarMeus(dono,0,20).conteudo().getFirst().motivoModeracao()).contains("desacordo");
         assertThatThrownBy(() -> servicos.ativar(servico,dono)).isInstanceOf(ModeracaoConflitoException.class);
     }
