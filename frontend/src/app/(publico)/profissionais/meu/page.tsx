@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { buscarMeuPortfolio } from '@/api/portfolio';
 import type { Portfolio } from '@/api/contratos/portfolio';
 import { ErroApi } from '@/api/erros';
+import { EditarGaleriaPortfolio } from '@/components/EditarGaleriaPortfolio';
 import { FormPortfolio } from '@/components/forms/FormPortfolio';
 import { UploadFotoCapa } from '@/components/UploadFotoCapa';
 import { classesDoBotao } from '@/components/ui/Botao';
@@ -68,6 +69,7 @@ export default function MeuPortfolioPage() {
       <h1 className="font-heading text-3xl font-bold">Meu portfólio</h1>
 
       <UploadFotoCapa portfolio={portfolio} />
+      {accessToken && <EditarGaleriaPortfolio id={portfolio.id} token={accessToken} />}
 
       <Card>
         <FormPortfolio portfolio={portfolio} />

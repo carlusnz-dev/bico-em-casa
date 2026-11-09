@@ -1,6 +1,10 @@
 import { request } from './cliente';
 import { paginaSchema, type Pagina } from './contratos/pagina';
 import {
+  midiaPortfolioSchema,
+  midiasPortfolioSchema,
+  tipoMidiaPortfolioSchema,
+  type MidiaPortfolio,
   Portfolio,
   PortfolioRequest,
   portfolioSchema,
@@ -8,8 +12,10 @@ import {
   urlUploadSchema,
 } from './contratos/portfolio';
 
-export async function listarPortfolios(pagina = 0, tamanho = 20): Promise<Pagina<Portfolio>> {
-  const resposta = await request(`/portfolio?pagina=${pagina}&tamanho=${tamanho}`);
+export async function listarPortfolios(pagina = 0, tamanho = 20, cidade = ''): Promise<Pagina<Portfolio>> {
+  const parametros = new URLSearchParams({ pagina: String(pagina), tamanho: String(tamanho) });
+  if (cidade.trim()) parametros.set('cidade', cidade.trim());
+  const resposta = await request(`/portfolio?${parametros}`);
   return paginaSchema(portfolioSchema).parse(resposta);
 }
 
@@ -97,4 +103,48 @@ export async function enviarFotoCapa(
   }
 
   return confirmarFotoCapa(id, chave, accessToken);
+}
+
+export async function listarMidiasPortfolio(id: number): Promise<MidiaPortfolio[]> {
+  return midiasPortfolioSchema.parse(await request(`/portfolio/${id}/midias`));
+}
+
+export async function enviarMidiaPortfolio(
+  id: number,
+  arquivo: File,
+  accessToken: string,
+): Promise<MidiaPortfolio> {
+  const contentType = tipoMidiaPortfolioSchema.parse(arquivo.type);
+  const limite = contentType.startsWith('video/') ? 25 * 1024 * 1024 : 5 * 1024 * 1024;
+  if (arquivo.size === 0 || arquivo.size > limite) {
+    throw new Error('Selecione uma imagem de até 5 MB ou um vídeo de até 25 MB.');
+  }
+
+  const base = `/portfolio/${id}/midias`;
+  const { url, chave } = urlUploadSchema.parse(await request(
+    `${base}/upload`,
+    { method: 'POST', body: JSON.stringify({ contentType }) },
+    accessToken,
+  ));
+
+  const upload = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': contentType },
+    body: arquivo,
+  });
+  if (!upload.ok) throw new Error('Não foi possível enviar o arquivo para o armazenamento.');
+
+  return midiaPortfolioSchema.parse(await request(
+    `${base}/confirmar`,
+    { method: 'POST', body: JSON.stringify({ chave, contentType }) },
+    accessToken,
+  ));
+}
+
+export async function removerMidiaPortfolio(
+  id: number,
+  midiaId: string,
+  accessToken: string,
+): Promise<void> {
+  await request(`/portfolio/${id}/midias/${midiaId}`, { method: 'DELETE' }, accessToken);
 }

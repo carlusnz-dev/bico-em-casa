@@ -5,9 +5,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import {
   alterarSituacaoAdmin,
+  aprovarServico,
   moderarServico,
   renomearCategoria,
   removerCategoria,
+  reprovarServico,
   useServicosAdmin,
 } from '@/api/admin-servicos';
 import { type FiltrosAdmin, type ServicoAdmin } from '@/api/contratos/admin-servicos';
@@ -20,17 +22,24 @@ import { Textarea } from './ui/Textarea';
 import { formatarPreco } from './formatarPreco';
 
 const iniciais: FiltrosAdmin = { busca: '', ativo: '', categoria: '' };
+const ROTULOS_ACAO = {
+  editar: { verbo: 'Editar', nome: 'correção' },
+  desativar: { verbo: 'Desativar', nome: 'desativação' },
+  reprovar: { verbo: 'Reprovar', nome: 'reprovação' },
+};
+
 export function PainelServicosAdmin() {
   const { accessToken, perfil, status } = useSessao();
   const cache = useQueryClient();
   const [filtros, setFiltros] = useState(iniciais);
   const [pagina, setPagina] = useState(0);
   const [selecionado, setSelecionado] = useState<ServicoAdmin | null>(null);
-  const [acao, setAcao] = useState<'editar' | 'desativar'>('editar');
+  const [acao, setAcao] = useState<keyof typeof ROTULOS_ACAO>('editar');
+  const [emRevisao, setEmRevisao] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [mensagem, setMensagem] = useState('');
   const autorizado = perfil?.tipo === 'ADMIN';
-  const listagem = useServicosAdmin(accessToken, autorizado, pagina, filtros);
+  const listagem = useServicosAdmin(accessToken, autorizado, pagina, filtros, emRevisao);
   const categorias = useCategorias(autorizado);
   const dados = listagem.data;
   useEffect(() => {
@@ -71,7 +80,22 @@ export function PainelServicosAdmin() {
       <p className="text-texto-suave">
         Revise o catálogo, corrija informações e modere ofertas inadequadas.
       </p>
-      <form
+      <div className="flex flex-wrap gap-2" aria-label="Exibição de serviços">
+        <Botao variante={emRevisao ? 'secundario' : 'primario'} aria-pressed={!emRevisao}
+          disabled={ocupado} onClick={() => {
+            setEmRevisao(false);
+            setPagina(0);
+            setSelecionado(null);
+          }}>Todos os serviços</Botao>
+        <Botao variante={emRevisao ? 'primario' : 'secundario'} aria-pressed={emRevisao}
+          disabled={ocupado} onClick={() => {
+            setEmRevisao(true);
+            setPagina(0);
+            setSelecionado(null);
+          }}>Aguardando revisão</Botao>
+      </div>
+      {emRevisao && <p>A fila mostra primeiro os serviços que aguardam revisão há mais tempo.</p>}
+      {!emRevisao && <form
         className="flex flex-wrap items-end gap-3"
         onSubmit={(e) => {
           e.preventDefault();
@@ -87,11 +111,11 @@ export function PainelServicosAdmin() {
       >
         <label>
           Buscar título ou profissional
-          <Input name="busca" placeholder="Nome, e-mail ou título" />
+          <Input name="busca" defaultValue={filtros.busca} placeholder="Nome, e-mail ou título" />
         </label>
         <label>
           Situação
-          <select name="ativo" className="block rounded border p-2">
+          <select name="ativo" defaultValue={filtros.ativo} className="block rounded border p-2">
             <option value="">Todos</option>
             <option value="true">Somente ativos</option>
             <option value="false">Somente inativos</option>
@@ -99,7 +123,7 @@ export function PainelServicosAdmin() {
         </label>
         <label>
           Categoria
-          <select name="categoria" className="block rounded border p-2">
+          <select name="categoria" defaultValue={filtros.categoria} className="block rounded border p-2">
             <option value="">Todas</option>
             {categorias.data?.map((t) => (
               <option key={t.id} value={t.id}>
@@ -111,7 +135,7 @@ export function PainelServicosAdmin() {
         <Botao type="submit" disabled={ocupado}>
           Buscar / Aplicar filtro
         </Botao>
-      </form>
+      </form>}
       {mensagem && <p role="status">{mensagem}</p>}
       {listagem.isError && (
         <p role="alert">
@@ -156,7 +180,14 @@ export function PainelServicosAdmin() {
                     const s = item.servico;
                     return (
                       <tr key={s.id} className="border-borda border-t">
-                        <td className="p-3">{s.titulo}</td>
+                        <td className="p-3">
+                          {emRevisao ? (
+                            <details>
+                              <summary className="cursor-pointer font-medium">{s.titulo}</summary>
+                              <p className="mt-2 max-w-md whitespace-pre-line">{s.descricao}</p>
+                            </details>
+                          ) : s.titulo}
+                        </td>
                         <td className="p-3">{item.profissional}</td>
                         <td className="p-3">
                           {s.tagIds
@@ -166,7 +197,22 @@ export function PainelServicosAdmin() {
                         <td className="p-3">{formatarPreco(s.precoPrevio, s.unidadePreco)}</td>
                         <td className="p-3">{s.ativo ? 'Ativo' : 'Inativo'}</td>
                         <td className="p-3">{new Date(s.criadoEm).toLocaleDateString('pt-BR')}</td>
-                        <td className="flex gap-2 p-3">
+                        <td className="flex flex-wrap gap-2 p-3">
+                          {emRevisao ? (
+                            <>
+                              <Botao disabled={ocupado} onClick={() => {
+                                if (window.confirm('Aprovar este serviço?')) {
+                                  void executar(() => aprovarServico(s.id, accessToken));
+                                }
+                              }}>Aprovar</Botao>
+                              <Botao variante="secundario" disabled={ocupado} onClick={() => {
+                                setSelecionado(item);
+                                setAcao('reprovar');
+                                setMensagem('');
+                              }}>Reprovar</Botao>
+                            </>
+                          ) : (
+                            <>
                           <Botao
                             variante="secundario"
                             disabled={ocupado}
@@ -193,6 +239,8 @@ export function PainelServicosAdmin() {
                           >
                             {s.ativo ? 'Desativar' : 'Reativar'}
                           </Botao>
+                            </>
+                          )}
                         </td>
                       </tr>
                     );
@@ -200,7 +248,9 @@ export function PainelServicosAdmin() {
                 </tbody>
               </table>
             </div>
-            {dados.conteudo.length === 0 && <p>Nenhum serviço encontrado para estes filtros.</p>}
+            {dados.conteudo.length === 0 && (
+              <p>{emRevisao ? 'Nenhum serviço aguardando revisão.' : 'Nenhum serviço encontrado para estes filtros.'}</p>
+            )}
             <nav aria-label="Paginação dos serviços" className="flex items-center gap-4">
               <Botao
                 disabled={pagina === 0 || ocupado}
@@ -230,7 +280,7 @@ export function PainelServicosAdmin() {
       {selecionado && (
         <section aria-label="Moderação do serviço" className="border-borda rounded-xl border p-5">
           <h2 className="text-xl font-semibold">
-            {acao === 'editar' ? 'Editar' : 'Desativar'}: {selecionado.servico.titulo}
+            {ROTULOS_ACAO[acao].verbo}: {selecionado.servico.titulo}
           </h2>
           <form
             key={`${selecionado.servico.id}-${acao}`}
@@ -241,9 +291,11 @@ export function PainelServicosAdmin() {
               const id = selecionado.servico.id;
               const motivo = String(form.get('motivo'));
               void executar(() =>
-                acao === 'desativar'
-                  ? alterarSituacaoAdmin(id, false, motivo, accessToken)
-                  : moderarServico(
+                acao === 'reprovar'
+                  ? reprovarServico(id, motivo, accessToken)
+                  : acao === 'desativar'
+                    ? alterarSituacaoAdmin(id, false, motivo, accessToken)
+                    : moderarServico(
                       id,
                       {
                         titulo: String(form.get('titulo')),
@@ -293,18 +345,18 @@ export function PainelServicosAdmin() {
               </>
             )}
             <label>
-              Motivo {acao === 'desativar' && '(mínimo de 10 caracteres)'}
+              Motivo {acao !== 'editar' && '(mínimo de 10 caracteres)'}
               <Textarea
                 name="motivo"
                 required
-                minLength={acao === 'desativar' ? 10 : 1}
+                minLength={acao === 'editar' ? 1 : 10}
                 maxLength={1000}
               />
             </label>
             <p>Esta ação será registrada na auditoria.</p>
             <div className="flex gap-3">
               <Botao type="submit" carregando={ocupado}>
-                Confirmar {acao === 'editar' ? 'correção' : 'desativação'}
+                Confirmar {ROTULOS_ACAO[acao].nome}
               </Botao>
               <Botao disabled={ocupado} variante="secundario" onClick={() => setSelecionado(null)}>
                 Cancelar

@@ -3,10 +3,11 @@ import { notFound } from 'next/navigation';
 import { buscarMediaPorProfissional, listarAvaliacoesRecebidas } from '@/api/avaliacoes';
 import { ErroApi } from '@/api/erros';
 import { buscarPerfilPorId } from '@/api/perfil';
-import { buscarPortfolioPorId } from '@/api/portfolio';
+import { buscarPortfolioPorId, listarMidiasPortfolio } from '@/api/portfolio';
 import { listarServicos } from '@/api/servicos';
 import { AvaliacaoMedia } from '@/components/AvaliacaoMedia';
 import { AvatarIniciais } from '@/components/AvatarIniciais';
+import { GaleriaPortfolio } from '@/components/GaleriaPortfolio';
 import { formatarPreco } from '@/components/formatarPreco';
 import { DataFormatada } from '@/components/DataFormatada';
 import { Card } from '@/components/ui/Card';
@@ -30,11 +31,12 @@ export default async function PortfolioDetalhePage({
     throw erro;
   });
 
-  const [perfil, avaliacoes, notaMediaProfissional, { conteudo: todosServicos }] = await Promise.all([
+  const [perfil, avaliacoes, notaMediaProfissional, { conteudo: todosServicos }, midias] = await Promise.all([
     buscarPerfilPorId(portfolio.perfilId).catch(() => null),
     listarAvaliacoesRecebidas(portfolio.perfilId).catch(() => []),
     buscarMediaPorProfissional(portfolio.perfilId).catch(() => null),
     listarServicos(0, TAMANHO_PAGINA_PARA_FILTRAR).catch(() => ({ conteudo: [] })),
+    listarMidiasPortfolio(portfolio.id).catch(() => null),
   ]);
 
   const servicosDoProfissional = todosServicos
@@ -106,6 +108,14 @@ export default async function PortfolioDetalhePage({
           )}
         </div>
       </Card>
+
+      {midias === null && <p role="alert">Não foi possível carregar a galeria.</p>}
+      {midias && midias.length > 0 && (
+        <Card className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold">Fotos e vídeos dos trabalhos</h2>
+          <GaleriaPortfolio midias={midias} />
+        </Card>
+      )}
 
       {servicosDoProfissional.length > 0 && (
         <Card className="flex flex-col gap-3">

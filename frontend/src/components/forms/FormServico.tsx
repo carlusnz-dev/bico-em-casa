@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { criarServico, editarServico } from '@/api/servicos';
+import { criarServico, editarServico, reenviarServico } from '@/api/servicos';
 import {
   Servico,
   ServicoRequest,
@@ -31,6 +31,7 @@ export function FormServico({ tags, servico }: { tags: Tag[]; servico?: Servico 
   const { accessToken, status } = useSessao();
   const router = useRouter();
   const [erroGeral, setErroGeral] = useState<string | null>(null);
+  const reprovado = servico?.statusRevisao === 'REPROVADO';
 
   useEffect(() => {
     if (status === 'anonimo') {
@@ -64,7 +65,9 @@ export function FormServico({ tags, servico }: { tags: Tag[]; servico?: Servico 
     }
 
     try {
-      if (servico) {
+      if (servico && reprovado) {
+        await reenviarServico(servico.id, dados, accessToken);
+      } else if (servico) {
         await editarServico(servico.id, dados, accessToken);
       } else {
         await criarServico(dados, accessToken);
@@ -169,7 +172,7 @@ export function FormServico({ tags, servico }: { tags: Tag[]; servico?: Servico 
       )}
 
       <Botao type="submit" tamanho="grande" carregando={isSubmitting}>
-        {servico ? 'Salvar alterações' : 'Publicar serviço'}
+        {reprovado ? 'Reenviar para revisão' : servico ? 'Salvar alterações' : 'Publicar serviço'}
       </Botao>
     </form>
   );

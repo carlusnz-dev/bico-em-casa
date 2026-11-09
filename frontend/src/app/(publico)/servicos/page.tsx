@@ -3,20 +3,17 @@ import Link from 'next/link';
 import { buscarMediaPorServico } from '@/api/avaliacoes';
 import type { Perfil } from '@/api/contratos/perfil';
 import { buscarPerfilPorId } from '@/api/perfil';
-import { listarServicos } from '@/api/servicos';
+import { listarPrecosMedios, listarServicos } from '@/api/servicos';
 import { listarTags } from '@/api/tags';
 import { CardServico } from '@/components/CardServico';
 import { FiltroCidade } from '@/components/FiltroCidade';
+import { ListaValoresMedios } from '@/components/ListaValoresMedios';
 import { classesDoBotao } from '@/components/ui/Botao';
 
 const TAMANHO_PAGINA = 20;
 
-function normalizarTexto(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLocaleLowerCase('pt-BR')
-    .trim();
+function valorMonetario(valor: unknown): string {
+  return typeof valor === 'string' && /^\d{1,8}(\.\d{1,2})?$/.test(valor) ? valor : '';
 }
 
 export default async function ServicosPage({
@@ -27,6 +24,9 @@ export default async function ServicosPage({
     busca?: string;
     cidade?: string;
     ordenar?: string;
+    categoria?: string;
+    precoMinimo?: string;
+    precoMaximo?: string;
   }>;
 }) {
   const {
@@ -34,21 +34,36 @@ export default async function ServicosPage({
     busca: buscaParam,
     cidade: cidadeParam,
     ordenar: ordenarParam,
+    categoria: categoriaParam,
+    precoMinimo: minimoParam,
+    precoMaximo: maximoParam,
   } = await searchParams;
-  const busca = buscaParam?.trim() ?? '';
-  const cidade = cidadeParam?.trim() ?? '';
+  const busca = typeof buscaParam === 'string' ? buscaParam.trim().slice(0, 100) : '';
+  const cidade = typeof cidadeParam === 'string' ? cidadeParam.trim().slice(0, 100) : '';
+  const categoria = typeof categoriaParam === 'string' && /^[a-z0-9-]{1,100}$/.test(categoriaParam)
+    ? categoriaParam : '';
+  const precoMinimo = valorMonetario(minimoParam);
+  const precoMaximo = valorMonetario(maximoParam);
+  const faixaInvalida = Boolean(precoMinimo && precoMaximo && Number(precoMinimo) > Number(precoMaximo));
   const ordenar = ordenarParam === 'nota' ? ordenarParam : '';
-  const termoNormalizado = normalizarTexto(busca);
-  const paginaSolicitada = Math.max(0, Number(paginaParam ?? '0') || 0);
+  const numeroPagina = Number(paginaParam ?? '0');
+  const paginaSolicitada = Number.isSafeInteger(numeroPagina) && numeroPagina >= 0 && numeroPagina <= 2147483647
+    ? numeroPagina : 0;
+  const filtros = {
+    busca, categoria,
+    precoMinimo: faixaInvalida ? '' : precoMinimo,
+    precoMaximo: faixaInvalida ? '' : precoMaximo,
+  };
 
-  const [paginaConsultada, tags] = await Promise.all([
-    listarServicos(termoNormalizado || ordenar ? 0 : paginaSolicitada, TAMANHO_PAGINA, cidade),
+  const [paginaConsultada, tags, precosMedios] = await Promise.all([
+    listarServicos(ordenar ? 0 : paginaSolicitada, TAMANHO_PAGINA, cidade, filtros),
     listarTags(),
+    categoria ? listarPrecosMedios(categoria).catch(() => null) : null,
   ]);
 
   let paginaInicial = paginaConsultada;
   if (
-    !termoNormalizado && !ordenar
+    !ordenar
     && paginaInicial.totalPaginas > 0
     && paginaSolicitada >= paginaInicial.totalPaginas
   ) {
@@ -56,40 +71,28 @@ export default async function ServicosPage({
       paginaInicial.totalPaginas - 1,
       TAMANHO_PAGINA,
       cidade,
+      filtros,
     );
   }
 
-  let servicosDisponiveis = paginaInicial.conteudo;
+  let servicosFiltrados = paginaInicial.conteudo;
 
-  if ((termoNormalizado || ordenar) && paginaInicial.totalPaginas > 1) {
+  if (ordenar && paginaInicial.totalPaginas > 1) {
     const demaisPaginas = await Promise.all(
       Array.from(
         { length: paginaInicial.totalPaginas - 1 },
-        (_, indice) => listarServicos(indice + 1, TAMANHO_PAGINA, cidade),
+        (_, indice) => listarServicos(indice + 1, TAMANHO_PAGINA, cidade, filtros),
       ),
     );
 
-    servicosDisponiveis = [
+    servicosFiltrados = [
       ...paginaInicial.conteudo,
       ...demaisPaginas.flatMap((pagina) => pagina.conteudo),
     ];
   }
 
   const tagsPorId = new Map(tags.map((tag) => [tag.id, tag]));
-
-  const servicosFiltrados = termoNormalizado
-    ? servicosDisponiveis.filter((servico) => {
-      const textoServico = normalizarTexto(
-        [
-          servico.titulo,
-          servico.descricao,
-          ...servico.tagIds.map((id) => tagsPorId.get(id)?.nome ?? ''),
-        ].join(' '),
-      );
-
-      return textoServico.includes(termoNormalizado);
-    })
-    : servicosDisponiveis;
+  const categoriaSelecionada = tags.find((tag) => tag.slug === categoria);
 
   const notasPorServico = new Map<string, number>();
   if (ordenar) {
@@ -108,23 +111,21 @@ export default async function ServicosPage({
     );
   }
 
-  const totalPaginas = termoNormalizado || ordenar
+  const totalPaginas = ordenar
     ? Math.max(1, Math.ceil(servicosFiltrados.length / TAMANHO_PAGINA))
     : paginaInicial.totalPaginas;
-  const pagina = termoNormalizado || ordenar
+  const pagina = ordenar
     ? Math.min(paginaSolicitada, totalPaginas - 1)
     : paginaInicial.pagina;
 
-  const servicos = termoNormalizado || ordenar
+  const servicos = ordenar
     ? servicosFiltrados.slice(
       pagina * TAMANHO_PAGINA,
       (pagina + 1) * TAMANHO_PAGINA,
     )
     : paginaInicial.conteudo;
 
-  const totalServicos = termoNormalizado
-    ? servicosFiltrados.length
-    : paginaInicial.totalElementos;
+  const totalServicos = paginaInicial.totalElementos;
 
   const perfilIds = [...new Set(servicos.map((servico) => servico.perfilId))];
   const perfis = await Promise.all(
@@ -139,6 +140,9 @@ export default async function ServicosPage({
     if (busca) parametros.set('busca', busca);
     if (cidade) parametros.set('cidade', cidade);
     if (ordenar) parametros.set('ordenar', ordenar);
+    if (categoria) parametros.set('categoria', categoria);
+    if (precoMinimo) parametros.set('precoMinimo', precoMinimo);
+    if (precoMaximo) parametros.set('precoMaximo', precoMaximo);
     parametros.set('pagina', String(numeroPagina));
     return `/servicos?${parametros.toString()}`;
   }
@@ -162,7 +166,7 @@ export default async function ServicosPage({
               : 'Encontre um profissional para o que você precisa.'}
         </p>
 
-        {(busca || cidade || ordenar) && (
+        {(busca || cidade || ordenar || categoria || precoMinimo || precoMaximo) && (
           <div>
             <Link href="/servicos" className={classesDoBotao('secundario')}>
               Limpar filtros
@@ -171,7 +175,21 @@ export default async function ServicosPage({
         )}
       </header>
 
-      <FiltroCidade acao="/servicos" cidade={cidade} busca={busca} ordenar={ordenar} />
+      <FiltroCidade acao="/servicos" cidade={cidade} busca={busca} ordenar={ordenar}
+        categoria={categoria} categorias={tags} precoMinimo={precoMinimo} precoMaximo={precoMaximo} />
+      {faixaInvalida && (
+        <p role="alert" className="text-erro">O preço mínimo precisa ser menor ou igual ao máximo.</p>
+      )}
+      {categoriaSelecionada && (
+        <section aria-label="Preços médios da categoria" className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold">Preço médio em {categoriaSelecionada.nome}</h2>
+          {precosMedios === null
+            ? <p>Preços médios indisponíveis.</p>
+            : precosMedios.length > 0
+              ? <ListaValoresMedios valores={precosMedios} />
+              : <p>Nenhuma oferta ativa nesta categoria.</p>}
+        </section>
+      )}
 
       {servicos.length === 0 ? (
         <p className="text-texto-suave">
@@ -179,7 +197,7 @@ export default async function ServicosPage({
             ? 'Nenhum serviço corresponde à sua pesquisa. Tente outros termos.'
             : cidade
               ? 'Nenhum serviço encontrado para essa cidade.'
-              : 'Nenhum serviço ativo no momento.'}
+              : 'Nenhum serviço encontrado com os filtros selecionados.'}
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -66,7 +66,7 @@ function obterInfoStatus(status: StatusContratacao) {
 
 export default function DetalheContratacaoPage() {
   const { id } = useParams<{ id: string }>();
-  const { accessToken, status } = useSessao();
+  const { accessToken, perfil, status } = useSessao();
   const router = useRouter();
   const [contratacao, setContratacao] = useState<Contratacao | null>(null);
   const [profissional, setProfissional] = useState<Perfil | null>(null);
@@ -208,9 +208,11 @@ export default function DetalheContratacaoPage() {
         <Link href={`/contratacoes/${contratacao.id}/editar`} className={classesDoBotao('secundario')}>
           Editar
         </Link>
-        <Link href={`/contratacoes/${contratacao.id}/avaliar`} className={classesDoBotao('secundario')}>
-          Avaliar
-        </Link>
+        {perfil?.id === contratacao.clienteId && contratacao.status === 'CONCLUIDO' && (
+          <Link href={`/contratacoes/${contratacao.id}/avaliar`} className={classesDoBotao('secundario')}>
+            Avaliar
+          </Link>
+        )}
         <Link href={`/contratacoes/${contratacao.id}/denunciar`} className={classesDoBotao('fantasma')}>
           Denunciar
         </Link>
