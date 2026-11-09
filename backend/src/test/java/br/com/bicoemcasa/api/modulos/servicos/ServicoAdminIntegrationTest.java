@@ -78,7 +78,7 @@ class ServicoAdminIntegrationTest {
             .param("servico",servico).param("cliente",perfis.buscarPorUsuarioId(cliente).id()).param("profissional",profissional).query(UUID.class).single();
         admin.situacao(administrador,servico,false,"Oferta em desacordo com as regras","127.0.0.1");
         em.flush();
-        assertThat(servicos.listarAtivos(0,20).conteudo()).isEmpty();
+        assertThat(servicos.listarAtivos(0,20,null).conteudo()).isEmpty();
         assertThat(jdbc.sql("select status from contratacao where id=:id").param("id",contrato).query(String.class).single()).isEqualTo("ATIVA");
         assertThat(servicos.listarMeus(dono,0,20).conteudo().getFirst().motivoModeracao()).contains("desacordo");
         assertThatThrownBy(() -> servicos.ativar(servico,dono)).isInstanceOf(ModeracaoConflitoException.class);
@@ -87,7 +87,7 @@ class ServicoAdminIntegrationTest {
         admin.situacao(administrador,servico,false,"Oferta inadequada para o site","127.0.0.1");
         admin.situacao(administrador,servico,true,"Análise revista","127.0.0.1");
         em.flush();
-        assertThat(servicos.listarAtivos(0,20).totalElementos()).isEqualTo(1);
+        assertThat(servicos.listarAtivos(0,20,null).totalElementos()).isEqualTo(1);
         assertThat(auditoria.motivoDesativacao(servico.toString())).isNull();
         assertThat(jdbc.sql("select count(*) from log_acao where alvo_id=:id").param("id",servico.toString()).query(Long.class).single()).isEqualTo(2);
     }
