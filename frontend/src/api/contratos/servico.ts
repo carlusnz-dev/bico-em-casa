@@ -4,6 +4,15 @@ export const unidadePrecoSchema = z.enum(['SERVICO', 'HORA', 'METRO_QUADRADO']);
 
 export type UnidadePreco = z.infer<typeof unidadePrecoSchema>;
 
+export const statusRevisaoSchema = z.enum(['PENDENTE', 'APROVADO', 'REPROVADO']);
+
+export const valoresMediosSchema = z.array(z.object({
+  unidadePreco: unidadePrecoSchema,
+  precoMedio: z.number(),
+  quantidadeServicos: z.number().int().positive(),
+}));
+export type ValorMedio = z.infer<typeof valoresMediosSchema>[number];
+
 export const servicoSchema = z.object({
   id: z.uuid(),
   perfilId: z.uuid(),
@@ -13,6 +22,8 @@ export const servicoSchema = z.object({
   unidadePreco: unidadePrecoSchema,
   ativo: z.boolean(),
   motivoModeracao: z.string().nullable().optional(),
+  statusRevisao: statusRevisaoSchema.nullish(),
+  motivoReprovacao: z.string().nullish(),
   tagIds: z.array(z.uuid()),
   criadoEm: z.string(),
 });

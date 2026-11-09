@@ -47,6 +47,7 @@ const MENU_POR_TIPO: Record<Perfil['tipo'], AcaoDeNavegacao[]> = {
   ],
   ADMIN: [
     { rotulo: 'Administrar serviços', href: '/admin/servicos' },
+    { rotulo: 'Administrar usuários', href: '/admin/usuarios' },
     { rotulo: 'Contratações', href: '/contratacoes' },
     { rotulo: 'Avaliações', href: '/perfil/avaliacoes' },
     {

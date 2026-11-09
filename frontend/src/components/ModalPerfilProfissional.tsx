@@ -7,7 +7,8 @@ import { Dialog } from 'radix-ui';
 
 import { buscarMediaPorProfissional, listarAvaliacoesRecebidas } from '@/api/avaliacoes';
 import type { Perfil } from '@/api/contratos/perfil';
-import { listarPortfolios } from '@/api/portfolio';
+import { ErroApi } from '@/api/erros';
+import { buscarPortfolioPorPerfil } from '@/api/portfolio';
 import { AvaliacaoMedia } from '@/components/AvaliacaoMedia';
 import { AvatarIniciais } from '@/components/AvatarIniciais';
 import { DataFormatada } from '@/components/DataFormatada';
@@ -37,15 +38,14 @@ export function ModalPerfilProfissional({
     enabled: aberto,
   });
 
-  // Não existe endpoint de "portfólio por perfil" — filtramos a listagem
-  // pública, que já é dado real (não mock), só não indexado por perfilId.
-  const { data: portfolios } = useQuery({
-    queryKey: ['portfolios-para-modal'],
-    queryFn: () => listarPortfolios(0, 100).then((pagina) => pagina.conteudo),
+  const { data: portfolio } = useQuery({
+    queryKey: ['portfolio-por-perfil', perfil.id],
+    queryFn: () => buscarPortfolioPorPerfil(perfil.id).catch((erro: unknown) => {
+      if (erro instanceof ErroApi && erro.status === 404) return null;
+      throw erro;
+    }),
     enabled: aberto,
   });
-
-  const portfolio = portfolios?.find((item) => item.perfilId === perfil.id);
 
   return (
     <Dialog.Root open={aberto} onOpenChange={(proximoAberto) => !proximoAberto && aoFechar()}>

@@ -17,24 +17,40 @@ export function useServicosAdmin(
   autorizado: boolean,
   pagina: number,
   filtros: FiltrosAdmin,
+  emRevisao = false,
 ) {
   return useQuery({
-    queryKey: ['servicos-admin', token, pagina, filtros],
+    queryKey: ['servicos-admin', token, pagina, filtros, emRevisao],
     enabled: Boolean(token) && autorizado,
     queryFn: async () => {
       const params = new URLSearchParams({
         pagina: String(pagina),
         tamanho: '20',
-        busca: filtros.busca,
       });
-      if (filtros.ativo) params.set('ativo', filtros.ativo);
-      if (filtros.categoria) params.set('categoria', filtros.categoria);
+      if (!emRevisao) {
+        params.set('busca', filtros.busca);
+        if (filtros.ativo) params.set('ativo', filtros.ativo);
+        if (filtros.categoria) params.set('categoria', filtros.categoria);
+      }
+      const caminho = emRevisao ? '/admin/servicos/revisao' : '/admin/servicos';
       return paginaSchema(servicoAdminSchema).parse(
-        await request(`/admin/servicos?${params}`, {}, token ?? undefined),
+        await request(`${caminho}?${params}`, {}, token ?? undefined),
       );
     },
     retry: false,
   });
+}
+
+export async function aprovarServico(id: string, token: string) {
+  await request(`/admin/servicos/${id}/aprovar`, { method: 'PATCH' }, token);
+}
+
+export async function reprovarServico(id: string, motivo: string, token: string) {
+  await request(
+    `/admin/servicos/${id}/reprovar`,
+    { method: 'PATCH', body: JSON.stringify(desativacaoSchema.parse({ motivo })) },
+    token,
+  );
 }
 export async function moderarServico(id: string, dados: Moderacao, token: string) {
   await request(

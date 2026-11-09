@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { request } from './cliente';
-import { alterarSituacaoAdmin, moderarServico, useServicosAdmin } from './admin-servicos';
+import { alterarSituacaoAdmin, aprovarServico, moderarServico, reprovarServico, useServicosAdmin } from './admin-servicos';
 vi.mock('./cliente', () => ({ request: vi.fn() }));
 vi.mock('@tanstack/react-query', () => ({ useQuery: vi.fn((opcoes: unknown) => opcoes) }));
 const token = 'token-de-teste';
@@ -9,8 +9,8 @@ const filtros = { busca: 'João & elétrica', ativo: 'false', categoria: id };
 beforeEach(() => {
   vi.clearAllMocks();
 });
-function consulta(autorizado: boolean) {
-  return useServicosAdmin(token, autorizado, 2, filtros) as unknown as {
+function consulta(autorizado: boolean, emRevisao = false) {
+  return useServicosAdmin(token, autorizado, 2, filtros, emRevisao) as unknown as {
     enabled: boolean;
     queryFn: () => Promise<unknown>;
   };
@@ -38,6 +38,25 @@ describe('contratos da administração', () => {
   it('recusa desativação com motivo curto antes de enviar', async () => {
     await expect(alterarSituacaoAdmin(id, false, '  curto  ', token)).rejects.toThrow();
     expect(request).not.toHaveBeenCalled();
+  });
+  it('consulta a fila com paginação própria e sem os filtros do catálogo', async () => {
+    vi.mocked(request).mockResolvedValue({
+      conteudo: [], pagina: 2, tamanho: 20, totalElementos: 0, totalPaginas: 0,
+    });
+    await consulta(true, true).queryFn();
+    expect(request).toHaveBeenCalledWith('/admin/servicos/revisao?pagina=2&tamanho=20', {}, token);
+  });
+  it('envia a decisão com o motivo obrigatório na reprovação', async () => {
+    await expect(reprovarServico(id, 'curto', token)).rejects.toThrow();
+    expect(request).not.toHaveBeenCalled();
+    await reprovarServico(id, '  Dados incompletos  ', token);
+    expect(request).toHaveBeenCalledWith(
+      `/admin/servicos/${id}/reprovar`,
+      { method: 'PATCH', body: JSON.stringify({ motivo: 'Dados incompletos' }) },
+      token,
+    );
+    await aprovarServico(id, token);
+    expect(request).toHaveBeenCalledWith(`/admin/servicos/${id}/aprovar`, { method: 'PATCH' }, token);
   });
   it('recusa correção sem categoria antes de enviar', async () => {
     await expect(

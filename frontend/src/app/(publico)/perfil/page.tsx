@@ -1,9 +1,11 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { buscarMediaPorProfissional, listarAvaliacoesRecebidas } from '@/api/avaliacoes';
 import { listarMinhasContratacoes } from '@/api/contratacoes';
 import type { Contratacao } from '@/api/contratos/contratacao';
 import type { Perfil, PerfilTipo } from '@/api/contratos/perfil';
@@ -11,6 +13,7 @@ import type { Servico } from '@/api/contratos/servico';
 import { ErroApi } from '@/api/erros';
 import { buscarMeuPerfil } from '@/api/perfil';
 import { listarMeusServicos } from '@/api/servicos';
+import { AvaliacaoMedia } from '@/components/AvaliacaoMedia';
 import { AvatarIniciais } from '@/components/AvatarIniciais';
 import { formatarPreco } from '@/components/formatarPreco';
 import { Card } from '@/components/ui/Card';
@@ -40,6 +43,17 @@ export default function PerfilPage() {
   const [servicos, setServicos] = useState<Servico[] | null>(null);
   const [contratacoes, setContratacoes] = useState<Contratacao[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const perfilProfissionalId = perfil?.tipo === 'PROFISSIONAL' ? perfil.id : undefined;
+  const avaliacao = useQuery({
+    queryKey: ['avaliacao-media-profissional', perfilProfissionalId],
+    queryFn: () => buscarMediaPorProfissional(perfilProfissionalId!),
+    enabled: Boolean(perfilProfissionalId),
+  });
+  const avaliacoesRecebidas = useQuery({
+    queryKey: ['avaliacoes-recebidas', perfilProfissionalId],
+    queryFn: () => listarAvaliacoesRecebidas(perfilProfissionalId!),
+    enabled: Boolean(perfilProfissionalId),
+  });
 
   useEffect(() => {
     if (status === 'anonimo') {
@@ -99,6 +113,17 @@ export default function PerfilPage() {
             <p className="text-sm text-texto-suave">Na plataforma desde {formatarData(perfil.criadoEm)}</p>
 
             {perfil.bio && <p className="whitespace-pre-line text-texto-suave">{perfil.bio}</p>}
+            {perfilProfissionalId && (
+              <div className="flex flex-col gap-1">
+                <h3 className="font-semibold">Minha nota média</h3>
+                {avaliacao.isLoading && <p>Carregando nota…</p>}
+                {avaliacao.isError && <p role="alert">Não foi possível carregar a nota média.</p>}
+                {avaliacao.data === 0 && <p>Você ainda não recebeu avaliações.</p>}
+                {avaliacao.data !== undefined && avaliacao.data > 0 && (
+                  <AvaliacaoMedia nota={avaliacao.data} quantidade={avaliacoesRecebidas.data?.length} />
+                )}
+              </div>
+            )}
           </Card>
 
           {perfil.tipo === 'PROFISSIONAL' && (

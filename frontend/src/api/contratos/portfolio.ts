@@ -30,3 +30,16 @@ export const urlUploadSchema = z.object({
 });
 
 export type UrlUpload = z.infer<typeof urlUploadSchema>;
+
+export const tipoMidiaPortfolioSchema = z.enum([
+  'image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm',
+], { error: 'Selecione uma imagem JPEG, PNG ou WebP, ou um vídeo MP4 ou WebM.' });
+
+export const midiaPortfolioSchema = z.object({
+  id: z.uuid(),
+  url: z.string(),
+  contentType: tipoMidiaPortfolioSchema,
+});
+
+export const midiasPortfolioSchema = z.array(midiaPortfolioSchema);
+export type MidiaPortfolio = z.infer<typeof midiaPortfolioSchema>;

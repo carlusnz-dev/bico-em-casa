@@ -19,4 +19,9 @@ export type Moderacao = z.infer<typeof moderacaoSchema>;
 export const desativacaoSchema = z.object({
   motivo: z.string().trim().min(10, 'Informe um motivo com pelo menos 10 caracteres').max(1000),
 });
-export const avisoSchema = z.object({ id: z.uuid(), mensagem: z.string(), alvoId: z.string() });
+export const avisoSchema = z.object({
+  id: z.uuid(),
+  titulo: z.string().nullish(),
+  mensagem: z.string(),
+  alvoId: z.string(),
+});
