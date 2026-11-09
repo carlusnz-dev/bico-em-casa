@@ -211,11 +211,20 @@ export function SessaoProvider({ children }: { children: React.ReactNode }) {
   }, [aplicarSessao]);
 
   useEffect(() => {
-    renovar()
-      .then((resposta) => aplicarSessao(resposta.accessToken))
-      .catch(() => setStatus('anonimo'));
+    let ativo = true;
 
-    return limparRenovacao;
+    renovar()
+      .then((resposta) => {
+        if (ativo) return aplicarSessao(resposta.accessToken);
+      })
+      .catch(() => {
+        if (ativo) setStatus((atual) => atual === 'carregando' ? 'anonimo' : atual);
+      });
+
+    return () => {
+      ativo = false;
+      limparRenovacao();
+    };
   }, [aplicarSessao, limparRenovacao]);
 
   const login = useCallback(

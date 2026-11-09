@@ -30,12 +30,16 @@ export async function entrar(loginRequest: LoginRequest): Promise<LoginResponse>
   return loginResponseSchema.parse(resposta);
 }
 
-export async function renovar(): Promise<RenovarResponse> {
-  const resposta = await request(`/autenticacao/renovar`, {
-    method: 'POST',
-  });
+let renovacaoEmCurso: Promise<RenovarResponse> | null = null;
 
-  return renovarResponseSchema.parse(resposta);
+export function renovar(): Promise<RenovarResponse> {
+  if (!renovacaoEmCurso) {
+    renovacaoEmCurso = request('/autenticacao/renovar', { method: 'POST' })
+      .then((resposta) => renovarResponseSchema.parse(resposta))
+      .finally(() => { renovacaoEmCurso = null; });
+  }
+
+  return renovacaoEmCurso;
 }
 
 export async function sair(): Promise<LogoutResponse> {

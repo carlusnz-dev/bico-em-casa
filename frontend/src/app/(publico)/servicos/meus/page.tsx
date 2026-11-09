@@ -12,6 +12,7 @@ import type { Servico } from '@/api/contratos/servico';
 import { ErroApi } from '@/api/erros';
 import { formatarPreco } from '@/components/formatarPreco';
 import { ListaValoresMedios } from '@/components/ListaValoresMedios';
+import { SimuladorOrcamento } from '@/components/SimuladorOrcamento';
 import { Botao, classesDoBotao } from '@/components/ui/Botao';
 import { Card } from '@/components/ui/Card';
 import { useSessao } from '@/hooks/useSessao';
@@ -102,7 +103,10 @@ export default function MeusServicosPage() {
           {orcamento.isLoading && <p>Calculando orçamento médio…</p>}
           {orcamento.isError && <p role="alert">Não foi possível calcular seu orçamento médio.</p>}
           {orcamento.data && (orcamento.data.length > 0
-            ? <ListaValoresMedios valores={orcamento.data} />
+            ? <>
+                <ListaValoresMedios valores={orcamento.data} />
+                <SimuladorOrcamento valores={orcamento.data} />
+              </>
             : <p>Cadastre ou ative um serviço para ver sua estimativa.</p>)}
         </Card>
       )}

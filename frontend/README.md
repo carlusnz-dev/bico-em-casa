@@ -52,7 +52,7 @@ Outros scripts:
 
 | Variável | Papel | Padrão |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | URL base da API do backend | `http://localhost:8080` |
+| `NEXT_PUBLIC_API_URL` | URL base da API do backend | `http://localhost:8080/api` |
 
 Nenhum segredo vive no frontend: a chave RSA de assinatura de JWT e as credenciais do MinIO
 existem só no backend.
