@@ -1,9 +1,11 @@
 package br.com.bicoemcasa.api.modulos.usuarios.services;
 
+import br.com.bicoemcasa.api.core.excecao.CadastroNaoPermitidoException;
 import br.com.bicoemcasa.api.core.excecao.EntidadeNaoEncontradaException;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.PerfilService;
 import br.com.bicoemcasa.api.modulos.usuarios.contrato.UsuarioService;
 import br.com.bicoemcasa.api.modulos.usuarios.dto.*;
+import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
 import br.com.bicoemcasa.api.modulos.usuarios.models.Usuario;
 import br.com.bicoemcasa.api.modulos.usuarios.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -65,6 +67,10 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional
     public UsuarioResponse criar(UsuarioRequest request) {
+        if (request.perfil().tipo() == PerfilTipo.ADMIN) {
+            throw new CadastroNaoPermitidoException("Cadastro público não pode criar conta do tipo ADMIN");
+        }
+
         String hashSenha = encoder.encode(request.senha());
 
         // Setters
