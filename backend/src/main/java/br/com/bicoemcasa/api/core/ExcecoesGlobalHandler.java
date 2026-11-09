@@ -12,6 +12,7 @@ import br.com.bicoemcasa.api.core.excecao.PortfolioNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.SenhaNaoBateException;
 import br.com.bicoemcasa.api.core.excecao.ServicoNaoPertenceAoPerfilException;
 import br.com.bicoemcasa.api.core.excecao.TokenInvalidoException;
+import br.com.bicoemcasa.api.core.excecao.TransicaoStatusInvalidaException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -31,12 +32,6 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ExcecoesGlobalHandler {
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
-    public ProblemDetail conflitoIntegridade(org.springframework.dao.DataIntegrityViolationException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
-            "A operação conflita com um registro existente ou um vínculo em uso");
-    }
-
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ProblemDetail acessoNegado(org.springframework.security.access.AccessDeniedException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Acesso restrito ao administrador");
@@ -229,6 +224,21 @@ public class ExcecoesGlobalHandler {
                 ex.getMessage()
         );
         problemDetail.setTitle("Denúncia não está pendente");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(TransicaoStatusInvalidaException.class)
+    public ProblemDetail transicaoStatusInvalida(
+            TransicaoStatusInvalidaException ex,
+            HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Transição de status inválida");
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         problemDetail.setProperty("timestamp", Instant.now());
 

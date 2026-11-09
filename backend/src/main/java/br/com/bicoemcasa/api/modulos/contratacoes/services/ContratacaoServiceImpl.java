@@ -55,7 +55,8 @@ public class ContratacaoServiceImpl implements ContratacaoService {
         contratacao.setTituloServico(servico.titulo());
         contratacao.setPrecoServico(servico.precoPrevio());
         contratacao.setObservacao(request.observacao());
-        contratacao.setStatus(StatusContratacao.ATIVA);
+        contratacao.setStatus(StatusContratacao.EM_ANDAMENTO);
+        contratacao.setArquivada(false);
 
         contratacaoRepository.save(contratacao);
 
@@ -65,12 +66,13 @@ public class ContratacaoServiceImpl implements ContratacaoService {
     @Override
     @Transactional(readOnly = true)
     public ContratacaoResponse buscarPorId(UUID id, Long usuarioId) {
-        Contratacao contratacao = contratacaoRepository.findById(id).orElseThrow(() -> new EntidadeNaoEncontradaException("Contratação não encontrada"));
+        Contratacao contratacao = contratacaoRepository.findById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Contratação não encontrada"));
         boolean ehDoCliente = ehParticipante(contratacao.getClienteId(), usuarioId, PerfilTipo.CLIENTE);
         boolean ehDoProfissional = ehParticipante(contratacao.getProfissionalId(), usuarioId, PerfilTipo.PROFISSIONAL);
 
         if (!ehDoCliente && !ehDoProfissional) {
-            throw new ContratacaoNaoPertenceAoPerfilException("Esta contratação não é sua!");
+            throw new ContratacaoNaoPertenceAoPerfilException("Esta contratação não pertence ao seu perfil");
         }
 
         return paraResponse(contratacao);
@@ -79,18 +81,22 @@ public class ContratacaoServiceImpl implements ContratacaoService {
     @Override
     @Transactional(readOnly = true)
     public PaginaResponse<ContratacaoResponse> listarMinhas(Long usuarioId, int pagina, int tamanho) {
-        PerfilResponse cliente = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.CLIENTE);
+        PerfilResponse perfil = perfilService.buscarPorUsuarioId(usuarioId);
         var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
-        return PaginaResponse.de(contratacaoRepository.findByClienteId(cliente.id(), paginacao), this::paraResponse);
+
+        if (perfil.tipo() == PerfilTipo.PROFISSIONAL) {
+            return PaginaResponse.de(contratacaoRepository.findByProfissionalId(perfil.id(), paginacao), this::paraResponse);
+        }
+
+        return PaginaResponse.de(contratacaoRepository.findByClienteId(perfil.id(), paginacao), this::paraResponse);
     }
 
-    @Override 
+    @Override
     @Transactional(readOnly = true)
     public PaginaResponse<ContratacaoResponse> listarRecebidas(Long usuarioId, int pagina, int tamanho) {
         PerfilResponse profissional = perfilService.buscarPorUsuarioIdETipo(usuarioId, PerfilTipo.PROFISSIONAL);
         var paginacao = PageRequest.of(pagina, tamanho, Sort.by("criadoEm").descending());
-        return PaginaResponse.de(contratacaoRepository.findByProfissionalId(profissional.id(), paginacao),
-        this::paraResponse);
+        return PaginaResponse.de(contratacaoRepository.findByProfissionalId(profissional.id(), paginacao), this::paraResponse);
     }
 
     @Override
@@ -104,7 +110,7 @@ public class ContratacaoServiceImpl implements ContratacaoService {
     @Override
     public ContratacaoResponse arquivar(UUID id, Long usuarioId) {
         Contratacao contratacao = buscarContratacaoDoCliente(id, usuarioId);
-        contratacao.setStatus(StatusContratacao.ARQUIVADA);
+        contratacao.setArquivada(true);
         contratacaoRepository.save(contratacao);
         return paraResponse(contratacao);
     }
@@ -112,13 +118,13 @@ public class ContratacaoServiceImpl implements ContratacaoService {
     @Override
     public ContratacaoResponse desarquivar(UUID id, Long usuarioId) {
         Contratacao contratacao = buscarContratacaoDoCliente(id, usuarioId);
-        contratacao.setStatus(StatusContratacao.ATIVA);
+        contratacao.setArquivada(false);
         contratacaoRepository.save(contratacao);
         return paraResponse(contratacao);
     }
 
     @Override
-    public List<Contratacao> buscarPorServico(UUID servicoId){
+    public List<Contratacao> buscarPorServico(UUID servicoId) {
         return contratacaoRepository.findByServicoId(servicoId);
     }
 
@@ -144,10 +150,14 @@ public class ContratacaoServiceImpl implements ContratacaoService {
                 contratacao.getPrecoServico(),
                 contratacao.getObservacao(),
                 contratacao.getStatus(),
+                contratacao.isArquivada(),
                 contratacao.getCriadoEm()
         );
     }
+
     private boolean ehParticipante(UUID perfilIdDaContratacao, Long usuarioId, PerfilTipo tipo) {
-        return perfilService.encontrarPorUsuarioETipo(usuarioId, tipo).map(perfil -> perfil.id().equals(perfilIdDaContratacao)).orElse(false);
+        return perfilService.encontrarPorUsuarioETipo(usuarioId, tipo)
+                .map(perfil -> perfil.id().equals(perfilIdDaContratacao))
+                .orElse(false);
     }
 }
