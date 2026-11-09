@@ -46,7 +46,7 @@ class ServicoAdminIntegrationTest {
     Long administrador, dono, cliente;
 
     Long usuario(String nome) {
-        return jdbc.sql("insert into usuario(nome,email,hash_senha,cpf,ativo) values(:nome,:email,'hash',:cpf,true) returning id")
+        return jdbc.sql("insert into usuario(nome,email,hash_senha,cpf,ativo,email_verificacao) values(:nome,:email,'hash',:cpf,true,false) returning id")
             .param("nome",nome).param("email",UUID.randomUUID()+"@teste.local").param("cpf",UUID.randomUUID().toString().substring(0,11)).query(Long.class).single();
     }
     UUID perfil(Long usuario, String tipo) {

@@ -1,5 +1,6 @@
 package br.com.bicoemcasa.api.modulos.usuarios;
 
+import br.com.bicoemcasa.api.lib.armazenamento.ClienteArmazenamentoS3;
 import br.com.bicoemcasa.api.modulos.usuarios.models.Endereco;
 import br.com.bicoemcasa.api.modulos.usuarios.models.Perfil;
 import br.com.bicoemcasa.api.modulos.usuarios.models.PerfilTipo;
@@ -9,7 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -20,7 +23,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@ActiveProfiles("dev")
 @Testcontainers
 class PerfilRepositoryTest {
 
@@ -28,6 +30,10 @@ class PerfilRepositoryTest {
     @ServiceConnection
     static PostgreSQLContainer<?> postgres =
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:18.6-alpine"));
+
+    @MockitoBean JwtEncoder encoder;
+    @MockitoBean JwtDecoder decoder;
+    @MockitoBean ClienteArmazenamentoS3 armazenamento;
 
     @Autowired
     private PerfilRepository perfilRepository;
